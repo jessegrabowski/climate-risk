@@ -209,8 +209,7 @@ def aggregated_poisson_elbo(
     and an aggregated observation satisfies neither.
 
     :math:`\mathbb{E}_q[\Lambda_A]` is closed form and only :math:`\mathbb{E}_q[\log \Lambda_A]` is
-    sampled, on draws fixed once so the objective stays deterministic and a quasi-Newton optimizer
-    can be used on it.
+    sampled, by :func:`mean_log_intensity`.
 
     Parameters
     ----------
