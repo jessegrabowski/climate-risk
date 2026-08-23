@@ -146,6 +146,52 @@ def sample_log_intensity(
     return log_totals
 
 
+def mean_log_intensity(
+    svgp: SVGP,
+    aggregation: Aggregation,
+    moments: tuple[TensorVariable, TensorVariable, TensorVariable],
+    *,
+    n_draws: int = 16,
+    seed: int = 0,
+) -> TensorVariable:
+    r"""
+    :math:`\mathbb{E}_q[\log \Lambda_A]` for each row of the operator, estimated on fixed draws.
+
+    The draws are fixed once so the objective stays deterministic and a quasi-Newton optimizer can
+    be used on it.
+
+    Parameters
+    ----------
+    svgp : SVGP
+        A whitened ptgp SVGP over the cell features.
+    aggregation : Aggregation
+        The cell-to-row operator whose totals are being logged.
+    moments : tuple of TensorVariable
+        The mean, independent variance and factor from :func:`latent_moments`.
+    n_draws : int, optional
+        Draws behind the estimate. Default 16.
+    seed : int, optional
+        Seed for the fixed draw matrices. Default 0.
+
+    Returns
+    -------
+    TensorVariable
+        Shape ``(aggregation.n_units,)``.
+    """
+    rng = np.random.default_rng(seed)
+    # Shared rather than constant: at raster scale the cell draws are far too large to fold into
+    # the graph, and numba refuses to cache a function carrying one.
+    inducing_draws = shared(rng.standard_normal((svgp.inducing_variable.num_inducing, n_draws)), name="inducing_draws")
+    cell_draws = shared(rng.standard_normal((aggregation.n_cells, n_draws)), name="cell_draws")
+
+    estimate: TensorVariable = pt.mean(
+        sample_log_intensity(aggregation, *moments, inducing_draws, cell_draws),
+        axis=1,
+    )
+
+    return estimate
+
+
 def aggregated_poisson_elbo(
     svgp: SVGP,
     cell_features: TensorVariable,
@@ -200,19 +246,9 @@ def aggregated_poisson_elbo(
             elbo = aggregated_poisson_elbo(svgp, cell_features, unit_counts, aggregation)
             pm.Potential("elbo", elbo)
     """
-    mean, independent_variance, factor = latent_moments(svgp, cell_features)
-
-    rng = np.random.default_rng(seed)
-    # Shared rather than constant: at raster scale the cell draws are far too large to fold into
-    # the graph, and numba refuses to cache a function carrying one.
-    inducing_draws = shared(rng.standard_normal((svgp.inducing_variable.num_inducing, n_draws)), name="inducing_draws")
-    cell_draws = shared(rng.standard_normal((aggregation.n_cells, n_draws)), name="cell_draws")
-
-    expected = expected_intensity(aggregation, mean, independent_variance, factor)
-    log_intensity = pt.mean(
-        sample_log_intensity(aggregation, mean, independent_variance, factor, inducing_draws, cell_draws),
-        axis=1,
-    )
+    moments = latent_moments(svgp, cell_features)
+    expected = expected_intensity(aggregation, *moments)
+    log_intensity = mean_log_intensity(svgp, aggregation, moments, n_draws=n_draws, seed=seed)
 
     log_likelihood = unit_counts * log_intensity - expected - pt.gammaln(unit_counts + 1.0)
 

@@ -1,12 +1,10 @@
-import numpy as np
 import pytensor.tensor as pt
 
 from ptgp.gp import SVGP
-from pytensor.compile import shared
 from pytensor.tensor import TensorVariable
 
 from climate_risk.exceptions import DataValidationError
-from climate_risk.models.aggregated_poisson import expected_intensity, latent_moments, sample_log_intensity
+from climate_risk.models.aggregated_poisson import expected_intensity, latent_moments, mean_log_intensity
 from climate_risk.models.aggregation import Aggregation
 
 
@@ -64,19 +62,9 @@ def windowed_poisson_elbo(
             f"The region spans {region.n_cells} cells and the windows {aggregation.n_cells}; they index the same grid."
         )
 
-    mean, independent_variance, factor = latent_moments(svgp, cell_features)
-
-    rng = np.random.default_rng(seed)
-    # Shared rather than constant: at raster scale the cell draws are far too large to fold into
-    # the graph, and numba refuses to cache a function carrying one.
-    inducing_draws = shared(rng.standard_normal((svgp.inducing_variable.num_inducing, n_draws)), name="inducing_draws")
-    cell_draws = shared(rng.standard_normal((aggregation.n_cells, n_draws)), name="cell_draws")
-
-    log_intensity = pt.mean(
-        sample_log_intensity(aggregation, mean, independent_variance, factor, inducing_draws, cell_draws),
-        axis=1,
-    )
-    over_the_region = expected_intensity(region, mean, independent_variance, factor)
+    moments = latent_moments(svgp, cell_features)
+    log_intensity = mean_log_intensity(svgp, aggregation, moments, n_draws=n_draws, seed=seed)
+    over_the_region = expected_intensity(region, *moments)
 
     elbo: TensorVariable = pt.sum(window_counts * log_intensity) - pt.sum(over_the_region) - svgp.prior_kl()
 
