@@ -9,6 +9,11 @@ from pytensor.tensor import TensorVariable
 from climate_risk.exceptions import DataValidationError
 from climate_risk.models.aggregation import Aggregation
 
+# The Nystrom residual is a difference of two nearly equal quantities and lands just below zero for
+# a cell an inducing point sits on top of. Clipped to zero exactly, the square root's gradient is
+# infinite there and the clip's is zero, and their product is NaN.
+VARIANCE_FLOOR = 1e-8
+
 
 def latent_moments(svgp: SVGP, cell_features: TensorVariable) -> tuple[TensorVariable, TensorVariable, TensorVariable]:
     r"""
@@ -130,7 +135,7 @@ def sample_log_intensity(
     log_intensity : TensorVariable
         Shape ``(n_units, n_draws)``.
     """
-    spread = pt.sqrt(pt.clip(independent_variance, 0.0, np.inf))
+    spread = pt.sqrt(pt.clip(independent_variance, VARIANCE_FLOOR, np.inf))
     field = (
         mean[:, None]
         + factor @ pt.as_tensor_variable(inducing_draws)
