@@ -1,4 +1,5 @@
 import numpy as np
+import pytensor
 import pytensor.tensor as pt
 
 from ptgp.gp import SVGP
@@ -179,10 +180,13 @@ def mean_log_intensity(
         Shape ``(aggregation.n_units,)``.
     """
     rng = np.random.default_rng(seed)
+    dtype = pytensor.config.floatX
     # Shared rather than constant: at raster scale the cell draws are far too large to fold into
     # the graph, and numba refuses to cache a function carrying one.
-    inducing_draws = shared(rng.standard_normal((svgp.inducing_variable.num_inducing, n_draws)), name="inducing_draws")
-    cell_draws = shared(rng.standard_normal((aggregation.n_cells, n_draws)), name="cell_draws")
+    inducing_draws = shared(
+        rng.standard_normal((svgp.inducing_variable.num_inducing, n_draws)).astype(dtype), name="inducing_draws"
+    )
+    cell_draws = shared(rng.standard_normal((aggregation.n_cells, n_draws)).astype(dtype), name="cell_draws")
 
     estimate: TensorVariable = pt.mean(
         sample_log_intensity(aggregation, *moments, inducing_draws, cell_draws),

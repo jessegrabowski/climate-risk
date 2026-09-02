@@ -14,7 +14,7 @@ from ptgp.inducing import Points
 from ptgp.kernels import ExpQuad
 from ptgp.likelihoods import Poisson
 from ptgp.optim.training import compile_scipy_objective, get_trained_params
-from pytensor.graph.traversal import explicit_graph_inputs
+from pytensor.graph.traversal import ancestors, explicit_graph_inputs
 from pytensor.tensor.special import gammaln
 
 from climate_risk.exceptions import DataValidationError
@@ -22,6 +22,7 @@ from climate_risk.models.aggregated_poisson import (
     aggregated_poisson_elbo,
     expected_intensity,
     latent_moments,
+    mean_log_intensity,
     sample_log_intensity,
 )
 from climate_risk.models.aggregation import build_aggregation
@@ -393,3 +394,22 @@ def test_fixing_the_lengthscale_restores_recovery_in_coarse_units():
     assert recovery.flat_correlation > 0.85, f"was {recovery.flat_correlation:.3f}, 0.933 when written"
     assert recovery.within_unit_correlation > 0.6, f"was {recovery.within_unit_correlation:.3f}, 0.767 when written"
     assert recovery.correlation > recovery.flat_correlation
+
+
+def test_the_sampled_draws_follow_the_configured_precision():
+    """MLX and the other GPU linkers reject float64 at run time, and the draw matrices are the
+    largest arrays the objective folds in. Pinned to double they make it uncompilable there."""
+    mean, independent_variance, factor = latent_pieces(seed=3)
+    aggregation = build_aggregation(unit_of_cell=["a"] * 5 + ["b"] * 7, weights=np.ones(N_CELLS))
+    features = np.random.default_rng(8).uniform(0.0, 1.0, size=(N_CELLS, 2))
+    moments = (
+        pt.as_tensor_variable(mean),
+        pt.as_tensor_variable(independent_variance),
+        pt.as_tensor_variable(factor),
+    )
+
+    with pytensor.config.change_flags(floatX="float32"):
+        estimate = mean_log_intensity(small_svgp(features), aggregation, moments, n_draws=4, seed=0)
+        draws = [node for node in ancestors([estimate]) if node.name in {"inducing_draws", "cell_draws"}]
+
+    assert {node.type.dtype for node in draws} == {"float32"}
