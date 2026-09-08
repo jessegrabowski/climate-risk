@@ -6,8 +6,6 @@ from pathlib import Path
 
 root_dir = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(root_dir))
-# Local Sphinx extensions are imported by bare module name from this directory.
-sys.path.insert(0, str(root_dir / "docs" / "sphinxext"))
 
 # -- Project information -----------------------------------------------------
 project = "climate_risk"
@@ -153,9 +151,8 @@ myst_enable_extensions = [
 ]
 myst_dmath_double_inline = True
 
-# Notebooks ship pre-executed. The data cache runs to tens of gigabytes and four of the upstream
-# sources are licensed and cannot be downloaded by code, so a build-time execution is not
-# something a documentation builder can do.
+# myst-nb parses every .md page, and nothing in the docs is meant to run at build time. The data a
+# page would need runs to tens of gigabytes, and four of the sources are licensed.
 nb_execution_mode = "off"
 
 # -- Intersphinx -------------------------------------------------------------
