@@ -40,3 +40,4 @@ instead, and tell you where to obtain the file.
    get_started/index
    user_guide/index
    api
+   dev/index
