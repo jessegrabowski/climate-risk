@@ -6,3 +6,4 @@ Developer Guide
 
    contributing
    style_guide
+   docs
