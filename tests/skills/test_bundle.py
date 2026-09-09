@@ -1,3 +1,4 @@
+from climate_risk.skills import bundle
 from climate_risk.skills.bundle import available_skills, docs_source
 
 
@@ -19,3 +20,19 @@ def test_the_concept_pages_resolve_in_this_checkout(tmp_path):
 
     assert found is not None
     assert (found / "data-layer.md").is_file()
+
+
+def test_the_packaged_pages_win_over_the_repository_tree(tmp_path, monkeypatch):
+    """Every non-editable install reads the packaged copy, and only an editable one has the repo."""
+    packaged = tmp_path / "climate_risk" / "skills"
+    packaged.mkdir(parents=True)
+    (tmp_path / "climate_risk" / "docs").mkdir()
+    monkeypatch.setattr(bundle, "SKILLS_SOURCE", packaged)
+
+    assert docs_source() == tmp_path / "climate_risk" / "docs"
+
+
+def test_no_pages_are_found_when_neither_copy_is_present(tmp_path, monkeypatch):
+    monkeypatch.setattr(bundle, "SKILLS_SOURCE", tmp_path / "nowhere" / "climate_risk" / "skills")
+
+    assert docs_source() is None
