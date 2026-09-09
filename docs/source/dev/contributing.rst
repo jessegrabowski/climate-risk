@@ -69,21 +69,6 @@ marker off in the same commit. Do not delete an ``xfail`` to make the suite gree
 **Warnings are errors.** ``filterwarnings`` is set to ``error`` with a short allowlist for the
 shapefile driver's known complaints. A new warning fails the suite, which is deliberate.
 
-Two ways a test here fools you
-------------------------------
-
-Both have shipped in this repository, and both looked fine in review.
-
-**Asserting what the fixture wrote.** The warm-cache path of most loaders is a bare ``pd.read_csv``,
-so asserting its columns or values tests pandas -- the fixture supplied them. What is genuinely the
-loader's is narrow: ``index_col``, ``parse_dates``, which branch it took, which file it chose. Assert
-that.
-
-**Deriving fixture paths from the code under test.** A fixture that calls ``shapefile_dir(cache_dir)``
-writes wherever the loader looks, so the test passes with any cache path, correct or not. State the
-layout literally -- ``tmp_path / "shapefiles"`` -- so the fixture is an independent claim about what
-is on disk.
-
 Checks and CI
 -------------
 

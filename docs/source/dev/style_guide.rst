@@ -120,9 +120,8 @@ Docstrings are numpydoc, and they document the **current contract**. Write each 
 function appeared in the codebase fresh today. A reader who cloned the repository an hour ago should
 never meet a sentence that only makes sense if they know what the code used to do.
 
-That rules out, however technical the prose sounds: explaining current behavior by contrasting it
-with a previous version, references to audits, pull requests or incidents, and "Notes" sections that
-exist to justify a recent change rather than document an invariant.
+The no-changelog rule above applies here in full, and a "Notes" section justifying a recent change
+is its commonest disguise.
 
 The rest of the rules:
 
@@ -203,6 +202,14 @@ Extract a fixture when the block is long enough to bury the assertion it exists 
 encodes an invariant that must stay identical across tests, or when a signature change would
 otherwise mean editing it everywhere.
 
+Two ways a test here fools you, and both look fine in review. **Asserting what the fixture
+wrote**: the warm-cache path of most loaders is a bare ``pd.read_csv``, so asserting its columns or
+values tests pandas, since the fixture supplied them. What is genuinely the loader's is narrow,
+being ``index_col``, ``parse_dates``, which branch it took and which file it chose. And **deriving
+fixture paths from the code under test**: a fixture calling ``shapefile_dir(cache_dir)`` writes
+wherever the loader looks, so the test passes with any cache path, correct or not. State the layout
+literally, as ``tmp_path / "shapefiles"``.
+
 Beyond that, the judgment that decides whether a test is worth its runtime:
 
 * **A test must be able to fail for a real reason.** Asserting that an import worked, that ``__all__``
@@ -218,8 +225,7 @@ Beyond that, the judgment that decides whether a test is worth its runtime:
 * **Mutation-test a new fixture before trusting it.** Break the thing it covers, confirm the test
   fails, put it back. If it stays green, it is asserting nothing.
 
-The mechanics -- the offline fixture, the markers, ``xfail``, and the two ways a test here fools you
--- are in :doc:`contributing`.
+The offline fixture, the markers and ``xfail`` are in :doc:`contributing`.
 
 Commit messages
 ---------------
