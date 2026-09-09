@@ -10,3 +10,7 @@ __pycache__/
 source/api/generated/
 source/api/**/generated/
 source/api/**/classmethods/
+
+# Gallery artifacts, staged from the repo-root examples/ tree at build time
+source/examples/
+source/_thumbnails/

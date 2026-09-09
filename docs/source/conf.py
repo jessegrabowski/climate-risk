@@ -6,6 +6,8 @@ from pathlib import Path
 
 root_dir = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(root_dir))
+# The gallery extension is imported by bare module name from here.
+sys.path.insert(0, str(root_dir / "docs" / "sphinxext"))
 
 # -- Project information -----------------------------------------------------
 project = "climate_risk"
@@ -47,6 +49,7 @@ extensions = [
     "sphinx_codeautolink",
     "sphinx_sitemap",
     "notfound.extension",
+    "generate_gallery",
 ]
 
 # Use the document path as prefix for autosectionlabel anchors so the same section title in two
