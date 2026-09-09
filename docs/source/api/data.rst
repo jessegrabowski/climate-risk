@@ -142,8 +142,9 @@ candidates when one name reaches more than one place.
 Geocoders
 ---------
 
-A geocoder maps a place name to points. :func:`~placement.available_geocoders`
-returns the cascade for a country, and the scoring helpers turn candidate points into units.
+A geocoder maps a place name to points. :func:`~placement.available_geocoders` yields the point
+sources that can answer for a country, most trusted first, and the scoring helpers turn candidate
+points into units.
 
 .. autosummary::
     :toctree: generated/

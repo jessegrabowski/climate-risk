@@ -1,8 +1,8 @@
 Style Guide
 ===========
 
-``ruff`` settles anything mechanical -- formatting, import order, the 120-column line -- and CI runs
-it, so ``pixi run lint`` decides those questions before review does. This page covers the rest: the
+``ruff`` settles anything mechanical: formatting, import order, the 120-column line. CI runs it, so
+``pixi run lint`` decides those questions before review does. This page covers the rest: the
 judgment the tools cannot make.
 
 Most of it you will get right by writing code that looks like the file around it.
@@ -16,7 +16,7 @@ a clever line nobody can read is paid for by every future maintainer.
 
 Errors should be specific and loud. A bare ``except:``, or an ``except Exception: pass`` that
 swallows a failure, turns a bug into a mystery three layers away. Validate where a wrong value would
-otherwise surface as a confusing error deep in a pipeline, and nowhere else -- a check that cannot
+otherwise surface as a confusing error deep in a pipeline, and nowhere else. A check that cannot
 fire is noise.
 
 Where you do raise, name the fix in the message. It reaches the reader at the moment they need it,
@@ -52,7 +52,7 @@ The usual anti-patterns to watch for:
 * Mutable default arguments, and hidden global state.
 * A function that both computes and mutates.
 
-Two rules are specific to this package and are easy to violate with good intentions.
+Two rules here are specific to this package, and both are easy to violate with good intentions.
 
 **Constants live next to their consumer.** There is no constants module and reintroducing one is a
 regression. A URL sits in the module of the loader that fetches it, a column mapping sits in the
@@ -69,14 +69,14 @@ Naming and shape
 A name should say what something is for, so the code reads as its own documentation. Avoid names
 that describe a type rather than a role: ``data``, ``tmp``, ``obj``, ``result2``. Single letters are
 fine where they are the mathematical convention and nowhere else. Name the same concept the same way
-the surrounding code does, and name the constants -- a bare ``0.9`` tells the reader nothing where
+the surrounding code does, and name the constants. A bare ``0.9`` tells the reader nothing where
 ``decay`` tells them what it is for.
 
-Four conventions are settled and do not vary:
+These conventions are settled and do not vary:
 
 * ``lon``, never ``long``.
 * ``gpd``, never ``geo``.
-* ``cache_dir`` for every path argument -- never ``data_path``, ``output_path`` or ``folder_path``.
+* ``cache_dir`` for every path argument, never ``data_path``, ``output_path`` or ``folder_path``.
 * Function names lead with the verb.
 
 Shape carries meaning too. Prefer guard clauses to nesting, so the happy path stays prominent and
@@ -91,9 +91,9 @@ nothing, as in ``np.add(a, b)``.
 Comments
 --------
 
-Comments explain the **why**. The code already says what it does. Fewer is better -- every comment
-can drift out of sync, so it has to change a reader's understanding to earn its place. A better name
-usually beats a comment.
+Comments explain the **why**. The code already says what it does. Fewer is better, because every
+comment can drift out of sync and so has to change a reader's understanding to earn its place. A
+better name usually beats a comment.
 
 **No changelog in source.** Not in comments, not in docstrings, not in config files: a
 ``.gitignore``, a ``pyproject.toml`` and a YAML hook config are source too. The failure mode is
@@ -101,13 +101,14 @@ writing for *the person reviewing this change* rather than for the next reader o
 reviewer-facing prose belongs in the commit body. Check a comment against these before writing it --
 any one of them means cut it or move it:
 
-* It contains a contrast: "rather than", "instead of", "X does not", "still works", "previously".
-* It names an alternative that was not chosen.
-* It justifies a decision, rather than stating a fact the code cannot state itself.
+* It contrasts the code with an earlier version or a road not taken: "rather than", "instead of",
+  "X does not", "still works", "previously". Prose may draw a contrast that informs the reader. A
+  comment doing it is almost always addressing the reviewer.
+* It justifies a decision instead of stating a fact the code cannot state itself.
 * It cites a measurement, size, or date taken while doing the work.
 
 The test: **would this still make sense to someone who cloned the repository today and has never
-seen an earlier version?** What survives is short and factual -- what a thing is for, or a constraint
+seen an earlier version?** What survives is short and factual: what a thing is for, or a constraint
 that is invisible from the code. One line, usually.
 
 Do not commit comments that narrate the code (``# increment the counter``), commented-out code, or a
@@ -118,18 +119,17 @@ Docstrings
 
 Docstrings are numpydoc, and they document the **current contract**. Write each one as if the
 function appeared in the codebase fresh today. A reader who cloned the repository an hour ago should
-never meet a sentence that only makes sense if they know what the code used to do.
-
-The no-changelog rule above applies here in full, and a "Notes" section justifying a recent change
-is its commonest disguise.
+never meet a sentence that only makes sense if they know what the code used to do. The no-changelog
+rule above applies here in full, and a "Notes" section justifying a recent change is its commonest
+disguise.
 
 The rest of the rules:
 
 * **Active voice.** "Compute the gradient", not "The gradient is computed".
 * **Every parameter gets a human-readable type**: ``list of int``, not ``list[int]``. Describe a
   genuinely nested type in prose rather than pasting a type hint into the docstring.
-* **Optional arguments say so** -- ``, optional`` on the type line -- and the **default goes in the
-  last sentence** of the description, not on the type line.
+* **Optional arguments say so**, with ``, optional`` on the type line, and the **default goes in
+  the last sentence** of the description rather than on the type line.
 * **Return values are named**, even when nothing ever binds them: ``panel : DataFrame``.
 * **No Raises sections.** The error message is the documentation.
 * **No module-level docstrings.** If a module's purpose is not evident from its name and contents,
@@ -184,7 +184,7 @@ The supported floor is Python 3.12, so write for it:
   ``zip`` over index bookkeeping.
 * Comprehensions where they read more clearly than an accumulator loop, and not where they get dense
   enough to obscure what is happening.
-* **Imports at the top of the module**, and **never relative** -- a pre-commit hook rejects
+* **Imports at the top of the module**, and **never relative**. A pre-commit hook rejects
   ``from .module import name``. A function-local import is warranted only to break a genuine
   circular dependency or to guard an optional dependency.
 * Public functions and methods carry type hints. They are read as documentation.
@@ -192,7 +192,7 @@ The supported floor is Python 3.12, so write for it:
 Tests
 -----
 
-Test code is code, and everything above applies to it -- with one deliberate exception.
+Test code is code, and everything above applies to it, with one deliberate exception.
 **Duplicated setup in tests is usually worth keeping.** A test earns its value by being auditable as
 one self-contained block: what was seeded, sampled, patched and asserted, all visible without jumping
 to a fixture defined four hundred lines away. Repeated arrange-phase boilerplate is a smaller cost
@@ -203,12 +203,12 @@ encodes an invariant that must stay identical across tests, or when a signature 
 otherwise mean editing it everywhere.
 
 Two ways a test here fools you, and both look fine in review. **Asserting what the fixture
-wrote**: the warm-cache path of most loaders is a bare ``pd.read_csv``, so asserting its columns or
-values tests pandas, since the fixture supplied them. What is genuinely the loader's is narrow,
-being ``index_col``, ``parse_dates``, which branch it took and which file it chose. And **deriving
-fixture paths from the code under test**: a fixture calling ``shapefile_dir(cache_dir)`` writes
-wherever the loader looks, so the test passes with any cache path, correct or not. State the layout
-literally, as ``tmp_path / "shapefiles"``.
+wrote**: the warm-cache path of most loaders is a bare
+``pd.read_csv``, so asserting its columns or values tests pandas, since the fixture supplied them.
+What is genuinely the loader's is narrow, being ``index_col``, ``parse_dates``, which branch it took
+and which file it chose. And **deriving fixture paths from the code under test**: a fixture calling
+``shapefile_dir(cache_dir)`` writes wherever the loader looks, so the test passes with any cache
+path, correct or not. State the layout literally, as ``tmp_path / "shapefiles"``.
 
 Beyond that, the judgment that decides whether a test is worth its runtime:
 
@@ -216,8 +216,8 @@ Beyond that, the judgment that decides whether a test is worth its runtime:
   is non-empty, or that a dataclass has the fields it was declared with tests Python, not this code.
 * **Test behavior, not implementation.** Changing how a function works must not require touching its
   test, so long as the contract holds.
-* **Coverage is not the goal.** Domain edge cases -- zero-event countries, empty geometries, boundary
-  years, missing lat/lon -- catch bugs. Exhaustive enumeration does not.
+* **Coverage is not the goal.** Zero-event countries, empty geometries, boundary years and missing
+  lat/lon catch bugs. Exhaustive enumeration does not.
 * **Assert on the value, not on its existence.** ``assert result is not None`` and
   ``assert len(out) > 0`` rarely fail when the logic breaks. Bound a quantity on both sides: an
   assertion that a distance is under a thousand kilometers passes just as happily when a unit
@@ -230,7 +230,7 @@ The offline fixture, the markers and ``xfail`` are in :doc:`contributing`.
 Commit messages
 ---------------
 
-Subject line in the imperative, under 60 characters, naming the thing that changed. No "and" -- a
+Subject line in the imperative, under 60 characters, naming the thing that changed. No "and": a
 subject that needs one is two commits.
 
 **Never hard-wrap the body.** One paragraph is one line, however long. Manual line breaks at 72

@@ -19,8 +19,8 @@ becomes GADM units.
 ```
 
 `named_places` splits on commas and semicolons outside parentheses, and treats a parenthesised
-group as the container of every place since the last one. It never splits on `and`: 75 GADM units
-are named like `Newfoundland and Labrador`.
+group as the container of every place since the last one. It never splits on `and`, because GADM
+publishes units named like `Newfoundland and Labrador`.
 
 `resolve_place` matches a name against every name GADM publishes a unit under, having stripped the
 noun saying what kind of unit it is. It resolves ambiguity three ways, in order: a unit contained by

@@ -24,7 +24,7 @@ placed at.
      - Place it at
      - Read by
    * - EM-DAT
-     - The disaster event record --- one row per recorded event, with damages and dates. The panel
+     - The disaster event record: one row per recorded event, with damages and dates. The panel
        is built from this.
      - Free for non-commercial use with attribution. Redistribution is not permitted; users must
        register and download it themselves.
@@ -51,11 +51,11 @@ placed at.
 
 Where to obtain each:
 
-- EM-DAT --- https://public.emdat.be/, after registering for an account. Export the full record to
+- EM-DAT: https://public.emdat.be/, after registering for an account. Export the full record to
   ``xlsx``.
-- GADM --- https://gadm.org/download_world.html, the "Geopackage" download of version 4.1.
-- Geo-Disasters --- https://doi.org/10.5281/zenodo.15487667.
-- Penn World Table --- https://www.rug.nl/ggdc/productivity/pwt/, version 10.0.
+- GADM: https://gadm.org/download_world.html, the "Geopackage" download of version 4.1.
+- Geo-Disasters: https://doi.org/10.5281/zenodo.15487667.
+- Penn World Table: https://www.rug.nl/ggdc/productivity/pwt/, version 10.0.
 
 Rename the download to the filename in the table. The loaders look for that exact name, and PWT in
 particular publishes under a version-stamped name that does not match.
@@ -119,7 +119,7 @@ GHS-POP, so a cache can stay small as long as the geospatial models are not bein
 Services queried live
 ---------------------
 
-Four sources answer a query rather than serving a file, and are declared as
+Four sources answer a query instead of serving a file, and are declared as
 :class:`~climate_risk.data.source.ApiSource`. The response is cached like anything else, so a warm
 run does not call them again.
 
@@ -132,11 +132,13 @@ run does not call them again.
      - license
      - Loader
    * - World Bank Indicators
-     - Development indicators: population, GDP, urbanization and the rest of the panel's covariates.
+     - Development indicators: population, GDP, urbanization and the rest of the country-year
+       panel's covariates.
      - CC BY 4.0
      - :func:`~climate_risk.data.world_bank.load_wb_data`
    * - FRED
-     - The foreign block --- US and world macroeconomic series.
+     - The foreign block, meaning the external conditions a small open economy takes as given:
+       US and world macroeconomic series.
      - Terms of the St. Louis Fed
      - :func:`~climate_risk.data.fred.load_fred_data`
    * - IMF IMTS
@@ -164,5 +166,5 @@ Attribution
 
 The licenses above are the publishers', not this package's. Redistributing anything derived from
 EM-DAT, GADM or the GAUL geometries in Geo-Disasters is restricted, and the rest require
-attribution. Every source carries its citation string on its declaration --- ``CO2.citation``,
-``GADM.citation`` and so on --- so the text to credit is available from the object the loader used.
+attribution. Every source carries its citation string on its declaration, as ``CO2.citation`` or
+``GADM.citation``, so the text to credit is available from the object the loader used.

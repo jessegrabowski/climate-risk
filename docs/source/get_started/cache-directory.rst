@@ -19,7 +19,7 @@ The contract
     co2 = cr.load_co2_data(cache_dir)
     panel = cr.build_country_year_panel(cache_dir)
 
-Three things follow from the argument being required.
+Making the argument required has three consequences.
 
 **One process can work against several caches.** Comparing a run against a frozen snapshot is
 passing a different path, not editing a configuration file or exporting a variable and restarting.
@@ -38,8 +38,8 @@ answer.
 Why it is an argument
 ---------------------
 
-The alternative --- an ambient root discovered by walking up from ``__file__``, or read from an
-environment variable --- makes every function's behavior depend on state the caller cannot see in
+The alternative is an ambient root, discovered by walking up from ``__file__`` or read from an
+environment variable. That makes every function's behavior depend on state the caller cannot see in
 the call. Two runs of the same script then differ for reasons that do not appear in the script, and
 a test that forgets to isolate the variable writes into the developer's real cache. The cache here
 runs to tens of gigabytes, so that failure is expensive rather than merely confusing.
@@ -59,9 +59,9 @@ Sources that unpack into many files, or that are fetched per country or per epoc
 subdirectory of their own: ``gadm/``, ``geo_disasters/``, ``geonames/``, ``ghsl/``, ``gpcc/``,
 ``osm/``, ``rivers/`` and ``shapefiles/``.
 
-Derived frames --- anything a loader computed rather than downloaded --- are stored as parquet under
-a name built from what was asked for. :func:`~climate_risk.data.cache.cache_key` builds the stem, so
-``points`` requested with a grid size of 400 over Southeast Asia is stored as:
+Derived frames, meaning anything a loader computed rather than downloaded, are stored as parquet
+under a name built from what was asked for. :func:`~climate_risk.data.cache.cache_key` builds the
+stem, so ``points`` requested with a grid size of 400 over Southeast Asia is stored as:
 
 .. code-block:: text
 
@@ -80,7 +80,7 @@ Loaders that download take ``force_reload``:
     co2 = cr.load_co2_data(cache_dir, force_reload=True)
 
 That re-downloads the source and rebuilds anything derived from it. Deleting the file works equally
-well --- the cache holds no index, so its state is exactly what is on disk.
+well, because the cache holds no index and its state is exactly what is on disk.
 
 An entry whose *builder* has changed turns over on its own. Several loaders key their cached frame
 on :func:`~climate_risk.data.cache.builder_fingerprint`, a digest of the building function's source
@@ -99,6 +99,6 @@ rather than resumed, because nothing proves it is a prefix of the file being fet
 How large it gets
 -----------------
 
-A full cache --- every source, worldwide, at every GHS-POP epoch --- is tens of gigabytes, and GPCC
-and GHS-POP are most of it. Leaving those two out brings it to a few hundred megabytes. Nothing
+A full cache holds every source, worldwide, at every GHS-POP epoch, and runs to tens of gigabytes.
+GPCC and GHS-POP are most of that. Leaving those two out brings it to a few hundred megabytes. Nothing
 prunes the cache, so the directory only grows.

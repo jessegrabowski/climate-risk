@@ -50,7 +50,7 @@ minutes on a cold cache. It is downloaded once.
 Load a country panel
 --------------------
 
-:func:`~climate_risk.data_functions.combine_data.build_country_year_panel` is the modelling frame:
+:func:`~climate_risk.data_functions.combine_data.build_country_year_panel` is the modeling frame:
 disaster counts and damages from EM-DAT, development indicators from the World Bank, and annual
 precipitation, on one row per country and year.
 
@@ -85,13 +85,13 @@ A country is a TOML file under ``climate_risk/config/places/``, read by
 
 The returned :class:`~climate_risk.config.schema.CountryConfig` carries the ISO codes, the event
 filters and the geometry specification that the loaders and the models read. Adding a country of
-your own is one such file and no Python at all --- see :doc:`../user_guide/adding-a-country`.
+your own is one such file and no Python at all. See :doc:`../user_guide/adding-a-country`.
 
 Where to go next
 ----------------
 
-- :doc:`cache-directory` --- why the path is an argument, and what lives under it.
-- :doc:`data` --- every upstream source, what downloads itself, and what does not.
-- :doc:`../user_guide/index` --- the data layer, place configuration, and the design decisions
+- :doc:`cache-directory`: why the path is an argument, and what lives under it.
+- :doc:`data`: every upstream source, what downloads itself, and what does not.
+- :doc:`../user_guide/index`: the data layer, place configuration, and the design decisions
   behind them.
-- :doc:`../api` --- the full public surface.
+- :doc:`../api`: the full public surface.

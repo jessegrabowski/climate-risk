@@ -16,7 +16,7 @@ Everything runs through pixi, which resolves from the committed ``pixi.lock``:
 There are three environments. ``default`` carries the package and the development tools, and is what
 every task below runs in. ``notebooks`` adds Jupyter. ``docs`` carries Sphinx and its extensions and
 nothing else. A dependency needed only to build the documentation goes in the ``docs`` feature of
-``pyproject.toml``, and so does any task that uses it -- a task declared outside the feature that
+``pyproject.toml``, and so does any task that uses it. A task declared outside the feature that
 owns its dependencies cannot find them.
 
 Tasks
@@ -33,8 +33,8 @@ Tasks
 
 ``pixi run test-network`` un-skips the tests that hit real hosts. Nothing runs them automatically.
 
-The scripts under ``tools/`` are run the same way -- ``fetch-geonames``, ``verify-geocoder``,
-``verify-placement`` and ``check-corrections``. They need a real cache and take minutes, which is why
+``fetch-geonames``, ``verify-geocoder``, ``verify-placement`` and ``check-corrections`` are the
+scripts under ``tools/``, run the same way. They need a real cache and take minutes, which is why
 they are scripts rather than tests.
 
 Rebuilding the geocoder
@@ -74,8 +74,8 @@ Running the tests
 **The suite is offline, and that is enforced.** An autouse fixture refuses ``connect``,
 ``connect_ex``, ``sendto``, ``sendmsg`` and ``getaddrinfo`` for every test not marked ``network``. A
 test needing upstream data writes the file the loader expects into a ``tmp_path`` cache directory. It
-does not mock the transport -- non-blocking connects and UDP sends walk straight past a patched
-``connect``.
+does not mock the transport, because non-blocking connects and UDP sends walk straight past a
+patched ``connect``.
 
 **``tests/`` mirrors the package.** Every module has one sister file and no more:
 
@@ -117,7 +117,7 @@ gets a Read the Docs preview link posted as a comment. **Nothing in CI builds th
 run ``pixi run docs-build`` yourself before pushing a change that touches it.
 
 For the conventions no tool enforces, see the :doc:`style guide <style_guide>`. The layering rules in
-:doc:`../user_guide/layering` are among them -- nothing checks those either, so read them before
+:doc:`../user_guide/layering` are among them. Nothing checks those either, so read them before
 adding an import to ``climate_risk.data`` or ``climate_risk.geo``.
 
 Commits and pull requests
@@ -139,7 +139,7 @@ Adding a dependency
 
 Every dependency carries a real lower bound, and an upper bound at the next major for anything that
 breaks its API across majors. ``*`` is not a version specification. Lower bounds mean "verified
-against this", so they track what ``pixi.lock`` resolved -- do not invent a bound that was never
+against this", so they track what ``pixi.lock`` resolved. Do not invent a bound that was never
 solved.
 
 Adding one means editing ``pyproject.toml`` and running ``pixi lock``. Commit the updated lock in the

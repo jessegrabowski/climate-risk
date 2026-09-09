@@ -1,7 +1,7 @@
 # Design notes
 
-Four things in this package are easy to read as accidents. Each is a decision, and each is written
-down here with the reason behind it, because a reader who assumes otherwise changes the wrong thing.
+The decisions below are easy to read as accidents. Each is written down with the reason behind it,
+because a reader who assumes otherwise changes the wrong thing.
 
 ## Disaster classes are this project's vocabulary, not EM-DAT's
 
@@ -11,11 +11,11 @@ project does not use.
 
 `DISASTER_CLASSES` maps those types onto two classes of its own, `Hydrometeorological` and
 `Climatological`, and `load_emdat_events` writes the result as a `disaster_class` column. The
-grouping is a modelling decision: the two classes are the split the damage regressions are specified
+grouping is a modeling decision: the two classes are the split the damage regressions are specified
 over, and it does not correspond to any partition EM-DAT ships.
 
-Two consequences. A type EM-DAT adds is not silently absorbed --- `replace_strict` maps an unlisted
-type to null rather than guessing. And code should refer to a class through the constant,
+A type EM-DAT adds is not silently absorbed, because `replace_strict` maps an unlisted type to
+null rather than guessing. And code should refer to a class through the constant,
 `HYDROMETEOROLOGICAL` or `CLIMATOLOGICAL`, rather than repeating the string, so the vocabulary has
 one definition.
 
@@ -45,7 +45,7 @@ module's subject, not because it is a constant.
 ## Configuration is data, not code
 
 A country is a TOML file. Nothing in `climate_risk/` names a country outside
-`climate_risk/config/places/`, and there is no registry to update when a file is added -- the
+`climate_risk/config/places/`, and there is no registry to update when a file is added, because the
 directory is globbed.
 
 The test of this is the one in [adding a country](adding-a-country.md): if you find yourself editing
