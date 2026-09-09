@@ -15,6 +15,18 @@ def test_listing_names_the_skills_without_writing_anything(bundled, tmp_path, ca
     assert not (tmp_path / ".claude").exists()
 
 
+def test_a_project_that_does_not_exist_fails_instead_of_raising(bundled, tmp_path, capsys, monkeypatch):
+    """resolve() succeeds on a path that is not there, so nothing catches a typo before the write."""
+    monkeypatch.setattr(bundle, "SKILLS_SOURCE", bundled)
+
+    status = main(["--project", str(tmp_path / "absent")])
+    captured = capsys.readouterr()
+
+    assert status == 1
+    assert captured.out == ""
+    assert "No directory at" in captured.err
+
+
 def test_an_empty_source_fails_on_stderr(tmp_path, capsys, monkeypatch):
     """Reports go to stdout, so an error mixed in there corrupts whatever is reading them."""
     monkeypatch.setattr(bundle, "SKILLS_SOURCE", tmp_path / "absent")

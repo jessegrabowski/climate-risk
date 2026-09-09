@@ -69,6 +69,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     project = Path(args.project).expanduser().resolve() if args.project is not None else None
+    if project is not None and not project.is_dir():
+        print(f"No directory at {project}", file=sys.stderr)
+        return 1
+
     root = project if project is not None else Path.home()
 
     skills_dir = claude_skills_dir(root)
