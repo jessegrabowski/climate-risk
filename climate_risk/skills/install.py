@@ -55,8 +55,8 @@ def install_skill(source: Path, target: Path, docs: Path | None = None, *, force
     target : Path
         Where the skill should land.
     docs : Path or None, optional
-        Directory of concept pages to copy in, as :func:`docs_source` returns. Default None, which
-        installs the skill without them.
+        Directory of concept pages to copy in, as :func:`climate_risk.skills.bundle.docs_source`
+        returns. Default None, which installs the skill without them.
     force : bool, optional
         Replace ``target`` if something is already there, discarding it. Default False.
 
@@ -80,8 +80,7 @@ def install_skill(source: Path, target: Path, docs: Path | None = None, *, force
         if not force:
             return f"skip  {target.name}  (exists; pass --force to replace)"
 
-        # A symlink from an older install scheme must be unlinked, never followed: rmtree through
-        # one deletes whatever it points at.
+        # A symlink is unlinked, never followed: rmtree through one deletes what it points at.
         if target.is_dir() and not target.is_symlink():
             shutil.rmtree(target)
         else:
