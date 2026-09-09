@@ -76,6 +76,9 @@ version-file = "climate_risk/_version.py"
 [tool.hatch.build.targets.wheel]
 packages = ["climate_risk"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"docs/source/user_guide" = "climate_risk/docs"
+
 [tool.hatch.build.targets.sdist]
 exclude = ["/.github", "/notebooks", "/methodological_paper", "/Papers", "/data"]
 

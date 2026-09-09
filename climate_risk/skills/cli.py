@@ -72,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     if skills_dir is None:
         print(f"No {CLAUDE_CONFIG_DIRECTORY} directory under {root}, so no skills were installed.")
     else:
-        for line in install_all(skills, skills_dir, force=args.force):
+        for line in install_all(skills, skills_dir, bundle.docs_source(), force=args.force):
             print(line)
 
     return 0

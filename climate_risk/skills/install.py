@@ -4,6 +4,8 @@ from pathlib import Path
 
 CLAUDE_CONFIG_DIRECTORY = ".claude"
 
+CONCEPTS_DIRECTORY = "concepts"
+
 
 def claude_skills_dir(root: Path) -> Path | None:
     """
@@ -38,12 +40,13 @@ def claude_skills_dir(root: Path) -> Path | None:
     return config / "skills" if config.is_dir() else None
 
 
-def install_skill(source: Path, target: Path, *, force: bool = False) -> str:
+def install_skill(source: Path, target: Path, docs: Path | None = None, *, force: bool = False) -> str:
     """
     Copy one skill into place, leaving anything already there alone unless ``force``.
 
     The copy is a real copy rather than a symlink, so the installed skill keeps working when the
-    package is upgraded or removed.
+    package is upgraded or removed. The concept pages are copied in beside it, which is what makes
+    the skill readable without a checkout.
 
     Parameters
     ----------
@@ -51,6 +54,9 @@ def install_skill(source: Path, target: Path, *, force: bool = False) -> str:
         The bundled skill directory to copy.
     target : Path
         Where the skill should land.
+    docs : Path or None, optional
+        Directory of concept pages to copy in, as :func:`docs_source` returns. Default None, which
+        installs the skill without them.
     force : bool, optional
         Replace ``target`` if something is already there, discarding it. Default False.
 
@@ -65,10 +71,10 @@ def install_skill(source: Path, target: Path, *, force: bool = False) -> str:
 
         from pathlib import Path
 
-        from climate_risk.skills import available_skills, install_skill
+        from climate_risk.skills import available_skills, docs_source, install_skill
 
         skill = available_skills()[0]
-        print(install_skill(skill, Path("proj/.claude/skills") / skill.name))
+        print(install_skill(skill, Path("proj/.claude/skills") / skill.name, docs_source()))
     """
     if target.exists() or target.is_symlink():
         if not force:
@@ -84,10 +90,21 @@ def install_skill(source: Path, target: Path, *, force: bool = False) -> str:
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(source, target)
 
-    return f"install  {target.name}"
+    if docs is None:
+        return f"install  {target.name}  (concept pages not found)"
+
+    concepts = target / CONCEPTS_DIRECTORY
+    concepts.mkdir(exist_ok=True)
+    # Only the markdown pages. The toctree beside them is Sphinx plumbing, and carries directives
+    # that mean nothing to a reader who is not a browser.
+    pages = sorted(docs.glob("*.md"))
+    for page in pages:
+        shutil.copy2(page, concepts / page.name)
+
+    return f"install  {target.name}  (+{len(pages)} concept pages)"
 
 
-def install_all(skills: list[Path], skills_dir: Path, *, force: bool = False) -> list[str]:
+def install_all(skills: list[Path], skills_dir: Path, docs: Path | None = None, *, force: bool = False) -> list[str]:
     """
     Install every skill into ``skills_dir``.
 
@@ -97,6 +114,8 @@ def install_all(skills: list[Path], skills_dir: Path, *, force: bool = False) ->
         The skill directories to install.
     skills_dir : Path
         Directory the skills are written into.
+    docs : Path or None, optional
+        Directory of concept pages to copy into each skill. Default None.
     force : bool, optional
         Replace entries that already exist. Default False.
 
@@ -113,7 +132,7 @@ def install_all(skills: list[Path], skills_dir: Path, *, force: bool = False) ->
 
         from climate_risk.skills import available_skills, install_all
 
-        for line in install_all(available_skills(), Path("proj/.claude/skills")):
+        for line in install_all(available_skills(), Path("proj/.claude/skills"), docs_source()):
             print(line)
     """
-    return [install_skill(skill, skills_dir / skill.name, force=force) for skill in skills]
+    return [install_skill(skill, skills_dir / skill.name, docs, force=force) for skill in skills]
