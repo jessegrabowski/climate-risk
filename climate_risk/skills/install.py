@@ -74,7 +74,7 @@ def install_skill(source: Path, target: Path, docs: Path | None = None, *, force
         from climate_risk.skills import available_skills, docs_source, install_skill
 
         skill = available_skills()[0]
-        print(install_skill(skill, Path("proj/.claude/skills") / skill.name, docs_source()))
+        print(install_skill(skill, Path("proj/.claude/skills") / skill.name, docs=docs_source()))
     """
     if target.exists() or target.is_symlink():
         if not force:
@@ -132,7 +132,7 @@ def install_all(skills: list[Path], skills_dir: Path, docs: Path | None = None, 
 
         from climate_risk.skills import available_skills, install_all
 
-        for line in install_all(available_skills(), Path("proj/.claude/skills"), docs_source()):
+        for line in install_all(available_skills(), Path("proj/.claude/skills"), docs=docs_source()):
             print(line)
     """
-    return [install_skill(skill, skills_dir / skill.name, docs, force=force) for skill in skills]
+    return [install_skill(skill, skills_dir / skill.name, docs=docs, force=force) for skill in skills]
