@@ -113,13 +113,13 @@ These are declared as :class:`~climate_risk.data.source.DataSource` and fetched 
      - :func:`~climate_risk.data.ghsl.population_on_cells`
 
 GPCC and GHS-POP are the large ones. GPCC is fetched an archive per decade and a further archive per
-month after 2020, and GHS-POP is roughly a gigabyte per epoch. Neither is needed for a country panel
---- GPCC is, GHS-POP is not --- so a cache can stay small if the geospatial models are not being run.
+month after 2020, and GHS-POP is roughly a gigabyte per epoch. A country panel needs GPCC but not
+GHS-POP, so a cache can stay small as long as the geospatial models are not being run.
 
 Services queried live
 ---------------------
 
-Three sources answer a query rather than serving a file, and are declared as
+Four sources answer a query rather than serving a file, and are declared as
 :class:`~climate_risk.data.source.ApiSource`. The response is cached like anything else, so a warm
 run does not call them again.
 

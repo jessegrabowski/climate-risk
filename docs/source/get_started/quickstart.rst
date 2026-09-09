@@ -7,9 +7,8 @@ needs a license, so it works on a machine that has only just installed the packa
 Pick a cache directory
 ----------------------
 
-Every loader takes a cache directory as its first argument. Nothing is resolved from the working
-directory, from an environment variable, or from a project root, so the choice is yours and it is
-made once:
+Every loader takes a cache directory. Nothing is resolved from the working directory, from an
+environment variable, or from a project root, so the choice is yours and it is made once:
 
 .. code-block:: python
 
