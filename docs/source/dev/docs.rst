@@ -47,6 +47,11 @@ Source content lives under ``docs/source/``:
      - Method pages, kept out of the global toctree by ``remove_from_toctrees``. **Generated**.
    * - ``_templates/autosummary/``
      - The autosummary class template that produces per-method subpages.
+   * - ``examples/``
+     - Notebooks staged from the repository-root ``examples/`` tree, and the gallery page listing
+       them. **Generated**.
+   * - ``_thumbnails/``
+     - One image per gallery card. **Generated**.
 
 Everything marked **Generated** is written back into ``source/`` by a build and listed in
 ``docs/.gitignore``. Never commit any of it, and never edit a generated stub, because the next
@@ -74,6 +79,35 @@ page and a docstring.
 letting autodoc render the annotations too prints every signature twice. Types belong in the
 docstring's ``Parameters`` section, and every return value is named, as in ``panel : DataFrame``,
 even where the function's caller never binds it.
+
+Adding a gallery notebook
+-------------------------
+
+Gallery notebooks live in the repository-root ``examples/`` tree, not under ``docs/source/``. The
+path a notebook sits at decides where its card lands: ``examples/<section>/name.ipynb`` puts it
+under a heading named after the folder, and ``examples/name.ipynb`` puts it on the page with no
+heading. ``SECTION_ORDER`` in ``docs/sphinxext/generate_gallery.py`` pins the order of the sections
+that have one, anything unlisted follows alphabetically, and ``SECTION_TITLES`` in the same file
+overrides the folder name where title-casing it reads wrong.
+
+Commit the notebook. The extension stages only files git tracks, so a draft left untracked under
+``examples/`` stays off the published site.
+
+Commit it executed, with its outputs saved. ``nb_execution_mode`` is ``"off"``, so nothing runs a
+notebook at build time and an unexecuted one renders as a page of empty cells. The last
+``image/png`` output becomes the card thumbnail, center-cropped to a square with a border, which
+makes the closing figure worth choosing deliberately. A notebook carrying no image output gets a
+placeholder and a build warning naming it.
+
+A build stages the notebooks into ``source/examples/`` and writes their thumbnails to
+``source/_thumbnails/``. Sphinx renders the staged copy, so editing one changes nothing.
+
+**The first notebook to land also adds ``examples/gallery`` to the root toctree in ``index.rst``.**
+With no notebooks the extension writes no gallery page, and a toctree entry naming a page nothing
+wrote fails the build.
+
+``tests/test_generate_gallery.py`` covers the extension. It has no sister module, because
+``docs/sphinxext/`` is build tooling rather than package code, and the file states that reason.
 
 Writing a page
 --------------
