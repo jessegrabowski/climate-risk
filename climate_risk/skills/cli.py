@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 from pathlib import Path
 
@@ -59,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
 
     skills = bundle.available_skills()
     if not skills:
-        print(f"No skills found in {bundle.SKILLS_SOURCE}")
+        print(f"No skills found in {bundle.SKILLS_SOURCE}", file=sys.stderr)
         return 1
 
     if args.list:

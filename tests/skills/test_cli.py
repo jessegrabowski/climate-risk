@@ -15,10 +15,16 @@ def test_listing_names_the_skills_without_writing_anything(bundled, tmp_path, ca
     assert not (tmp_path / ".claude").exists()
 
 
-def test_an_empty_source_reports_failure(tmp_path, monkeypatch):
+def test_an_empty_source_fails_on_stderr(tmp_path, capsys, monkeypatch):
+    """Reports go to stdout, so an error mixed in there corrupts whatever is reading them."""
     monkeypatch.setattr(bundle, "SKILLS_SOURCE", tmp_path / "absent")
 
-    assert main(["--project", str(tmp_path)]) == 1
+    status = main(["--project", str(tmp_path)])
+    captured = capsys.readouterr()
+
+    assert status == 1
+    assert captured.out == ""
+    assert "No skills found" in captured.err
 
 
 def test_a_project_install_writes_the_skills_and_the_block(bundled, tmp_path, monkeypatch):
