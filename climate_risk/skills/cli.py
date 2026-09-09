@@ -3,6 +3,7 @@ import argparse
 from pathlib import Path
 
 from climate_risk.skills import bundle
+from climate_risk.skills.agents_file import AGENTS_FILE, render_agents_block, update_agents_file
 from climate_risk.skills.install import CLAUDE_CONFIG_DIRECTORY, claude_skills_dir, install_all
 
 
@@ -11,8 +12,8 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="install-climate-risk-skills",
         description=(
             "Install the climate_risk agent skills where a coding agent will find them. "
-            "Skills are written to .claude/skills/ when Claude Code is configured, and nothing is "
-            "written into a harness that is not installed."
+            "Skills are written to .claude/skills/ when Claude Code is configured, and a project "
+            "install also keeps an owned block in the project's AGENTS.md."
         ),
     )
     location = parser.add_mutually_exclusive_group()
@@ -66,7 +67,8 @@ def main(argv: list[str] | None = None) -> int:
             print(skill.name)
         return 0
 
-    root = Path(args.project).expanduser().resolve() if args.project is not None else Path.home()
+    project = Path(args.project).expanduser().resolve() if args.project is not None else None
+    root = project if project is not None else Path.home()
 
     skills_dir = claude_skills_dir(root)
     if skills_dir is None:
@@ -74,5 +76,11 @@ def main(argv: list[str] | None = None) -> int:
     else:
         for line in install_all(skills, skills_dir, bundle.docs_source(), force=args.force):
             print(line)
+
+    # AGENTS.md is a project-level convention, and no standard location exists for a user-level one,
+    # so a user-scoped install writes skills and nothing else.
+    if project is not None:
+        listed = skills_dir.relative_to(project) if skills_dir is not None else None
+        print(update_agents_file(project / AGENTS_FILE, render_agents_block(skills, listed)))
 
     return 0
