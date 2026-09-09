@@ -16,6 +16,8 @@ clean:
 	rm -rf "$(SOURCEDIR)"/api/generated
 	rm -rf "$(SOURCEDIR)"/api/*/generated
 	rm -rf "$(SOURCEDIR)"/api/*/classmethods
+	rm -rf "$(SOURCEDIR)"/_thumbnails
+	rm -rf "$(SOURCEDIR)"/examples
 
 html:
 	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

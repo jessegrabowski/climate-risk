@@ -155,11 +155,13 @@ ipython = ">=9.16,<10"
 
 [tool.pixi.feature.docs.tasks]
 docs-build = { cmd = "sphinx-build -b html source build/html", cwd = "docs" }
-# Autosummary writes its stubs back into source/, which would otherwise retrigger the watcher and
-# rebuild forever. The ignored paths are the same set docs/.gitignore lists.
+# A build writes these back into source/, which would otherwise retrigger the watcher and rebuild
+# forever. The ignored paths are the same set docs/.gitignore lists.
 docs-serve = { cmd = """\
     sphinx-autobuild source build/html --port 8000 --open-browser \
-    --ignore '*/source/api/generated/*'\
+    --ignore '*/source/api/generated/*' \
+    --ignore '*/source/examples/*' \
+    --ignore '*/source/_thumbnails/*'\
 """, cwd = "docs" }
 
 # pymc-extras caps pytensor and pymc at the minor it was built against. The caps are
