@@ -1,8 +1,8 @@
 # Locating events
 
-EM-DAT gives most events a country and nothing finer. About 28% carry administrative units it
-coded itself; the rest carry a free-text `Location` column, or nothing at all. This is how that
-text becomes GADM units, and what to run to reproduce it from a fresh clone.
+EM-DAT gives most events a country and nothing finer. A minority carry administrative units EM-DAT
+coded itself. The rest carry a free-text `Location` column, or nothing at all. This is how that text
+becomes GADM units.
 
 ## The path a location takes
 
@@ -31,34 +31,5 @@ Where the whole string reaches nothing and every part of an `and` does, the part
 What is left over goes to a gazetteer of points. `geonames_geocoder` answers with a longitude and
 latitude, and the point is placed in whichever GADM unit contains it.
 
-## Getting the data
-
-Two archives are placed by hand, because their terms forbid automated download: `emdat.xlsx` at the
-top of the cache directory, and `gadm_410.gpkg` under `gadm/`. [Getting the
-data](../get_started/data.rst) has the licenses and the download pages.
-
-Everything else downloads itself:
-
-```
-pixi run fetch-geonames          # every country EM-DAT names, ~200 dumps
-pixi run fetch-geonames PHL IDN  # or just the ones you need
-```
-
-Each dump is indexed into `<cache_dir>/geonames/places__iso=XXX.parquet`, one row per distinct
-name, the most populous place keeping a name where several share it. Re-running skips whatever is
-already there.
-
-## Checking it still works
-
-```
-pixi run verify-geocoder             # how many names have a unit to be scored against
-pixi run verify-geocoder geonames    # score the geocoder against them
-```
-
-The answer key is every written name that already resolves to exactly one GADM unit. A point is
-scored as landing in that unit, in the level-1 unit containing it, or somewhere else. Names
-reaching more than one unit are excluded — whichever the geocoder picked, the other was available,
-so they cannot judge anything.
-
-This is a check, not a test: it needs both hand-placed archives and takes minutes, so it is a
-script rather than part of the suite.
+Reproducing this from a fresh clone, and scoring the geocoder against GADM, is in
+[the contributor guide](../dev/contributing.rst).

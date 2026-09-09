@@ -37,6 +37,37 @@ The scripts under ``tools/`` are run the same way -- ``fetch-geonames``, ``verif
 ``verify-placement`` and ``check-corrections``. They need a real cache and take minutes, which is why
 they are scripts rather than tests.
 
+Rebuilding the geocoder
+-----------------------
+
+Placing an event on a map needs two archives placed by hand, ``emdat.xlsx`` at the top of the cache
+directory and ``gadm_410.gpkg`` under ``gadm/``. :doc:`../get_started/data` has the licenses and the
+download pages. The gazetteer downloads itself:
+
+.. code-block:: bash
+
+    pixi run fetch-geonames          # every country EM-DAT names, around 200 dumps
+    pixi run fetch-geonames PHL IDN  # or just the ones you need
+
+Each dump is indexed into ``<cache_dir>/geonames/places__iso=XXX.parquet``, one row per distinct
+name, the most populous place keeping a name where several share it. Re-running skips whatever is
+already there.
+
+To score the result:
+
+.. code-block:: bash
+
+    pixi run verify-geocoder             # how many names have a unit to be scored against
+    pixi run verify-geocoder geonames    # score the geocoder against them
+
+The answer key is every written name that already resolves to exactly one GADM unit. A point is
+scored as landing in that unit, in the level-1 unit containing it, or somewhere else. Names reaching
+more than one unit are excluded, because whichever the geocoder picked the other was available, so
+they cannot judge anything.
+
+:doc:`../user_guide/locating-events` explains what the pipeline does with a location before any of
+this runs.
+
 Running the tests
 -----------------
 
