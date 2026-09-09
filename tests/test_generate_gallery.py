@@ -6,11 +6,16 @@ notebooks to stage."""
 import base64
 import importlib.util
 import json
+import struct
 import subprocess
+import zlib
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+
+from matplotlib import image
 
 EXTENSION = Path(__file__).resolve().parents[1] / "docs" / "sphinxext" / "generate_gallery.py"
 
@@ -19,28 +24,37 @@ assert _spec is not None and _spec.loader is not None, f"no extension at {EXTENS
 gallery = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(gallery)
 
-# A 1x1 red PNG, small enough to inline and real enough for matplotlib to read back.
-RED_PIXEL = base64.b64encode(
-    bytes.fromhex(
-        "89504e470d0a1a0a0000000d494844520000000100000001080200000090"
-        "7753de0000000c4944415408d763f8cfc00000030101003e5c9c2d000000"
-        "0049454e44ae426082"
+SHIPPED_PLACEHOLDER = EXTENSION.parent / "no_thumbnail.png"
+
+
+def png(width: int, height: int, *, grayscale: bool = False) -> str:
+    """Return a base64 PNG, single-channel when grayscale, which matplotlib reads as a 2D array."""
+
+    def chunk(tag: bytes, payload: bytes) -> bytes:
+        body = tag + payload
+
+        return struct.pack(">I", len(payload)) + body + struct.pack(">I", zlib.crc32(body))
+
+    row = bytes([64, 128, 192][: 1 if grayscale else 3] * width)
+    header = struct.pack(">IIBBBBB", width, height, 8, 0 if grayscale else 2, 0, 0, 0)
+    data = (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", header)
+        + chunk(b"IDAT", zlib.compress(b"".join(b"\x00" + row for _ in range(height))))
+        + chunk(b"IEND", b"")
     )
-).decode()
 
-# A 1x1 grayscale PNG, which matplotlib reads as a 2D array with no channel axis.
-GRAY_PIXEL = base64.b64encode(
-    bytes.fromhex(
-        "89504e470d0a1a0a0000000d49484452000000010000000108000000003a"
-        "7e9b550000000a49444154789c636800000082008177cd72b60000000049"
-        "454e44ae426082"
-    )
-).decode()
+    return base64.b64encode(data).decode()
 
 
-def write_notebook(path: Path, *, image: str | None = RED_PIXEL) -> Path:
+# Wider than it is tall, so a thumbnail that skipped the square crop is visible in the output.
+WIDE_IMAGE = png(4, 2)
+WIDE_GRAYSCALE_IMAGE = png(4, 2, grayscale=True)
+
+
+def write_notebook(path: Path, *, output_image: str | None = WIDE_IMAGE) -> Path:
     """Write a notebook with one cell, optionally carrying a base64 PNG output."""
-    outputs = [{"output_type": "display_data", "data": {"image/png": image}}] if image else []
+    outputs = [{"output_type": "display_data", "data": {"image/png": output_image}}] if output_image else []
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps({"cells": [{"cell_type": "code", "source": [], "outputs": outputs}]}))
 
@@ -97,31 +111,36 @@ def test_the_hidden_toctree_lists_every_staged_notebook(examples, tmp_path):
     assert "data_loaders/gpcc" in toctree
 
 
-def test_a_notebook_with_an_image_gets_a_thumbnail(examples, tmp_path):
+def test_a_notebook_with_an_image_gets_a_square_thumbnail_of_its_own(examples, tmp_path):
+    """A card grid lays out square images, and the source is wider than it is tall."""
     track(examples, write_notebook(examples / "data_loaders" / "co2.ipynb"))
 
     _, _, thumbnails = render(examples, tmp_path)
+    thumbnail = thumbnails / "data_loaders" / "co2.png"
+    height, width = image.imread(thumbnail).shape[:2]
 
-    assert (thumbnails / "data_loaders" / "co2.png").stat().st_size > 0
+    assert height == width
+    assert thumbnail.read_bytes() != SHIPPED_PLACEHOLDER.read_bytes()
 
 
 def test_a_notebook_without_an_image_gets_the_placeholder(examples, tmp_path):
     """The card names a thumbnail path either way, so writing nothing leaves a broken image."""
-    track(examples, write_notebook(examples / "data_loaders" / "bare.ipynb", image=None))
+    track(examples, write_notebook(examples / "data_loaders" / "bare.ipynb", output_image=None))
 
     page, _, thumbnails = render(examples, tmp_path)
 
-    assert (thumbnails / "data_loaders" / "bare.png").read_bytes() == gallery.PLACEHOLDER.read_bytes()
+    assert (thumbnails / "data_loaders" / "bare.png").read_bytes() == SHIPPED_PLACEHOLDER.read_bytes()
     assert ":img-top: /_thumbnails/data_loaders/bare.png" in page
 
 
 def test_a_single_channel_image_gets_a_thumbnail(examples, tmp_path):
     """A grayscale PNG has no channel axis for the thumbnail border to be written into."""
-    track(examples, write_notebook(examples / "data_loaders" / "gray.ipynb", image=GRAY_PIXEL))
+    track(examples, write_notebook(examples / "data_loaders" / "gray.ipynb", output_image=WIDE_GRAYSCALE_IMAGE))
 
     _, _, thumbnails = render(examples, tmp_path)
+    thumbnail = thumbnails / "data_loaders" / "gray.png"
 
-    assert (thumbnails / "data_loaders" / "gray.png").stat().st_size > 0
+    assert thumbnail.read_bytes() != SHIPPED_PLACEHOLDER.read_bytes()
 
 
 def test_an_existing_thumbnail_is_kept(examples, tmp_path):
@@ -138,12 +157,14 @@ def test_an_existing_thumbnail_is_kept(examples, tmp_path):
 
 def test_an_untracked_notebook_is_left_out(examples, tmp_path):
     """Work in progress under examples/ would otherwise reach the published gallery."""
+    track(examples, write_notebook(examples / "data_loaders" / "co2.ipynb"))
     write_notebook(examples / "data_loaders" / "draft.ipynb")
 
     page, staged, _ = render(examples, tmp_path)
 
-    assert page == ""
+    assert "draft" not in page
     assert not (staged / "data_loaders" / "draft.ipynb").exists()
+    assert (staged / "data_loaders" / "co2.ipynb").is_file()
 
 
 def test_no_notebooks_writes_no_page(examples, tmp_path):
@@ -202,3 +223,37 @@ def test_a_dotted_notebook_name_reaches_the_staged_tree_intact(examples, tmp_pat
 
     assert (staged / "data_loaders" / "co2.v2.ipynb").is_file()
     assert "data_loaders/co2.v2" in page
+
+
+def test_a_checkpoint_copy_is_left_out(examples, tmp_path):
+    """Jupyter writes .ipynb_checkpoints beside a notebook, and a committed one is tracked."""
+    track(examples, write_notebook(examples / "data_loaders" / "co2.ipynb"))
+    track(examples, write_notebook(examples / "data_loaders" / ".ipynb_checkpoints" / "co2-checkpoint.ipynb"))
+
+    page, staged, _ = render(examples, tmp_path)
+
+    assert "co2-checkpoint" not in page
+    assert not (staged / "data_loaders" / ".ipynb_checkpoints").exists()
+
+
+def test_the_gallery_page_is_written_under_the_source_tree(examples, tmp_path):
+    track(examples, write_notebook(examples / "data_loaders" / "co2.ipynb"))
+    source = tmp_path / "source"
+    source.mkdir()
+
+    gallery.build_gallery(SimpleNamespace(builder=SimpleNamespace(srcdir=source)))
+
+    assert (source / "examples" / "gallery.rst").is_file()
+    assert (source / "examples" / "data_loaders" / "co2.ipynb").is_file()
+    assert (source / "_thumbnails" / "data_loaders" / "co2.png").is_file()
+
+
+def test_no_notebooks_leaves_the_source_tree_without_a_gallery_page(examples, tmp_path):
+    """Every build takes this path until the first notebook lands, and a page here would be a
+    toctree entry naming a document nothing wrote."""
+    source = tmp_path / "source"
+    source.mkdir()
+
+    gallery.build_gallery(SimpleNamespace(builder=SimpleNamespace(srcdir=source)))
+
+    assert not (source / "examples" / "gallery.rst").exists()
