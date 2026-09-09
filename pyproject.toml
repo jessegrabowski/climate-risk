@@ -62,7 +62,7 @@ dev = [
 notebooks = ["notebook>=7.6,<8", "ipywidgets>=8.1,<9", "openai>=2.0", "nbclassic>=1.3.3,<2", "nbclassic-mcp-bridge>=1.1.0,<2", "gEconpy>=2.2,<3"]
 
 [project.scripts]
-install-climate-risk-skills = "climate_risk.skills:main"
+install-climate-risk-skills = "climate_risk.skills.cli:main"
 
 [project.urls]
 Repository = "https://github.com/jessegrabowski/climate-risk"

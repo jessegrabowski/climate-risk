@@ -52,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
     --------
     .. code-block:: python
 
-        from climate_risk.skills import main
+        from climate_risk.skills.cli import main
 
         main(["--list"])
     """
