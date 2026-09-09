@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
+VENDORED_DIR = Path(__file__).parent / "vendored"
+
 
 @dataclass(frozen=True, slots=True)
 class DataSource:
@@ -138,6 +140,55 @@ class ApiSource:
             date.fromisoformat(self.retrieved)
         except ValueError as err:
             raise ValueError(f"{self.url}: retrieved must be an ISO date, got {self.retrieved!r}") from err
+
+
+@dataclass(frozen=True, slots=True)
+class VendoredSource:
+    """
+    One upstream file redistributed inside this package.
+
+    Carries no URL: the publisher no longer serves the file to an unattended client, so there is
+    nothing for :func:`climate_risk.data.fetch.fetch` to consume and nothing to register for the
+    reachability check. The file ships in the wheel and is read where it sits, so no cache
+    directory is involved.
+
+    Parameters
+    ----------
+    filename : str
+        Name the file ships under, inside ``climate_risk/data/vendored/``. A bare name, never a
+        path.
+    homepage : str
+        Where the file was published.
+    license : str
+        Terms the file is redistributed under, which are not this package's own. ``ATTRIBUTION.md``
+        beside the file carries the full notice.
+    citation : str
+        How to credit the publisher.
+    retrieved : str
+        ISO date this declaration was last checked against the publisher.
+    """
+
+    filename: str
+    homepage: str
+    license: str
+    citation: str
+    retrieved: str
+
+    def __post_init__(self) -> None:
+        if not self.filename or Path(self.filename).name != self.filename:
+            raise ValueError(f"{self.homepage}: filename must be a bare name, got {self.filename!r}")
+
+        if not self.homepage.startswith(("http://", "https://")):
+            raise ValueError(f"{self.filename}: homepage must be http(s), got {self.homepage!r}")
+
+        try:
+            date.fromisoformat(self.retrieved)
+        except ValueError as err:
+            raise ValueError(f"{self.filename}: retrieved must be an ISO date, got {self.retrieved!r}") from err
+
+    def path(self) -> Path:
+        """Return where this file ships inside the package."""
+        return VENDORED_DIR / self.filename
 
 
 @dataclass(frozen=True, slots=True)

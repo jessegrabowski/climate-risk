@@ -1,9 +1,11 @@
+import re
+
 from datetime import date
 
 import polars as pl
 import pytest
 
-from climate_risk.data.ipcc import IPCC_FILE, IPCC_SHEET, SCENARIO_COLUMNS, transform_ipcc
+from climate_risk.data.ipcc import IPCC, IPCC_SHEET, SCENARIO_COLUMNS, transform_ipcc
 
 # The published series runs five-yearly and the projection ends in 2100. Stated literally, not
 # imported, so a changed constant fails instead of moving the expectation with it.
@@ -94,7 +96,7 @@ def test_a_missing_observation_leaves_the_level_missing(scenarios, co2_observati
 
 def test_the_vendored_workbook_carries_what_the_loader_reads():
     """The workbook ships with the package, so replacing it must not quietly change what is read."""
-    published = pl.read_excel(IPCC_FILE, sheet_name=IPCC_SHEET)
+    published = pl.read_excel(IPCC.path(), sheet_name=IPCC_SHEET)
 
     assert set(SCENARIO_COLUMNS) <= set(published.columns)
     assert published["Panel emissions - SSP1-19 - x (year)"].to_list() == list(range(2015, 2101, STEP_YEARS))
@@ -102,7 +104,17 @@ def test_the_vendored_workbook_carries_what_the_loader_reads():
 
 def test_the_vendored_workbook_keeps_its_attribution():
     """It is redistributed under CC BY, which is only satisfied while the credit ships beside it."""
-    attribution = (IPCC_FILE.parent / "ATTRIBUTION.md").read_text()
+    attribution = (IPCC.path().parent / "ATTRIBUTION.md").read_text()
 
-    assert IPCC_FILE.name in attribution
+    assert IPCC.filename in attribution
     assert "CC BY 4.0" in attribution
+
+
+def test_the_declaration_agrees_with_the_attribution_notice():
+    """Terms are now stated twice, and the notice beside the file is the one a redistributor reads."""
+    attribution = (IPCC.path().parent / "ATTRIBUTION.md").read_text()
+    stated = re.search(r"\*\*License\.\*\* (.+?),", attribution, re.DOTALL)
+
+    assert stated is not None, "ATTRIBUTION.md states no license"
+    assert " ".join(stated.group(1).split()) == IPCC.license
+    assert IPCC.homepage in attribution
