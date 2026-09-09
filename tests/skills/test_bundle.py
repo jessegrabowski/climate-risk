@@ -22,7 +22,7 @@ def test_discovery_of_a_missing_source_is_empty_rather_than_an_error(tmp_path):
     assert available_skills(tmp_path / "absent") == []
 
 
-def test_the_concept_pages_resolve_in_this_checkout(tmp_path):
+def test_the_concept_pages_resolve_in_this_checkout():
     """An editable install has no packaged copy, so the repository tree is the only source."""
     found = docs_source()
 
@@ -44,6 +44,12 @@ def test_no_pages_are_found_when_neither_copy_is_present(tmp_path, monkeypatch):
     monkeypatch.setattr(bundle, "SKILLS_SOURCE", tmp_path / "nowhere" / "climate_risk" / "skills")
 
     assert docs_source() is None
+
+
+def test_the_package_ships_at_least_one_skill():
+    """Discovery finding nothing leaves every test below it passing over an empty loop, and leaves
+    the installer with nothing to install."""
+    assert available_skills()
 
 
 def test_every_shipped_skill_declares_a_name_and_a_description():
@@ -71,10 +77,10 @@ def test_every_router_link_reaches_a_file_that_will_exist():
             assert source.is_file(), f"{skill.name} routes to {link}, which is not there"
 
 
-def test_the_skill_states_the_real_filename_for_every_licensed_source():
+def test_the_shipped_prose_states_the_real_filename_for_every_licensed_source():
     """These four cannot be downloaded, so a wrong filename in the prose is a reader stuck at the
     first step with no error to search for."""
-    prose = "\n".join(page.read_text() for page in (available_skills()[0] / "references").glob("*.md"))
+    prose = "\n".join(page.read_text() for skill in available_skills() for page in (skill / "references").glob("*.md"))
 
     for source in (EMDAT, GADM, GEO_DISASTERS, PWT):
         assert source.filename in prose, source.filename
