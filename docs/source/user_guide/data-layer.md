@@ -7,7 +7,7 @@ it, and every derived frame is written through one caching function. Two ideas, 
 ## Declaring a source
 
 A source is a frozen dataclass carrying where the data comes from, what it is stored as, and the
-terms it is published under. There are three kinds, and which one a publisher gets is decided by
+terms it is published under. There are four kinds, and which one a publisher gets is decided by
 what it is possible to do with them.
 
 `DataSource` is for a file the library can fetch: it has a `url`, a bare `filename`, a `license`, a
@@ -31,6 +31,12 @@ path the file is missing from. The four licensed sources are listed in the getti
 
 `ApiSource` is for a service answering a query rather than serving a file. It has neither a
 `filename` nor anything to fetch, so it carries only the documented entry point and the terms.
+
+`VendoredSource` is for a file that ships inside the package. It carries a `homepage` rather than a
+`url`, and its `path()` takes no cache directory, because the file is read from
+`climate_risk/data/vendored/` where the wheel puts it. The IPCC scenario workbook is the one of
+these: SEDAC published it and was decommissioned, so no host serves it any more. A file redistributed
+this way is under someone else's terms, and `ATTRIBUTION.md` beside it carries the full notice.
 
 The declarations validate themselves on construction. A `url` that is not http(s) is refused, and so
 is a `filename` carrying a directory separator. A source able to write outside the cache directory
