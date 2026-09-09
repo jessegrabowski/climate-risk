@@ -5,9 +5,10 @@ Data sources and loaders
 
 .. currentmodule:: climate_risk.data
 
-Every loader takes the cache directory as its first argument and returns a frame. There is no
-default cache directory and no environment variable: the path is resolved once at the edge and
-passed down.
+Every loader takes the cache directory and returns a frame. It comes first, except where a loader
+is scoped to one country, shapefile or epoch, which takes that first: ``load_shapefile("world",
+cache_dir)``. There is no default cache directory and no environment variable, so the path is
+resolved once at the edge and passed down.
 
 Loaders
 -------
@@ -141,8 +142,9 @@ candidates when one name reaches more than one place.
 Geocoders
 ---------
 
-A geocoder maps a place name to points. :func:`~placement.available_geocoders`
-returns the cascade for a country, and the scoring helpers turn candidate points into units.
+A geocoder maps a place name to points. :func:`~placement.available_geocoders` yields the point
+sources that can answer for a country, most trusted first, and the scoring helpers turn candidate
+points into units.
 
 .. autosummary::
     :toctree: generated/

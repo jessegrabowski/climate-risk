@@ -15,4 +15,5 @@ API reference
     api/sample
     api/plotting
     api/stats
+    api/skills
     api/exceptions

@@ -33,7 +33,7 @@ path the file is missing from. The four licensed sources are listed in the getti
 `filename` nor anything to fetch, so it carries only the documented entry point and the terms.
 
 The declarations validate themselves on construction. A `url` that is not http(s) is refused, and so
-is a `filename` carrying a directory separator -- a source able to write outside the cache directory
+is a `filename` carrying a directory separator. A source able to write outside the cache directory
 would break the one guarantee the cache makes.
 
 A zipped shapefile needs one more thing: which layer inside the archive to read. `ShapefileArchive`
@@ -52,8 +52,8 @@ makes the multi-hundred-megabyte rasters obtainable at all. A `.part` file left 
 is deleted rather than resumed: nothing proves it is a prefix of the file being fetched now, and
 appending to bytes from somewhere else writes a corrupt archive that looks complete.
 
-Downloads carry a browser-shaped user agent. Some hosts -- the World Bank boundaries archive among
-them -- answer 403 to `Python-urllib` and 200 to the same URL otherwise.
+Downloads carry a browser-shaped user agent. Some hosts, the World Bank boundaries archive among
+them, answer 403 to `Python-urllib` and 200 to the same URL otherwise.
 
 ## Caching derived frames
 
@@ -69,9 +69,9 @@ return cached(cache_dir, "co2", build, polars_parquet(), force=force_reload)
 cache never touches the network.
 
 The format argument is a `CacheFormat`: a matched reader and writer declared together, so the two
-cannot drift apart. Three are shipped -- `pandas_parquet`, `polars_parquet` and `geo_parquet` -- and
-parquet is used throughout because it carries dtypes, the index, and in the geospatial case the CRS,
-so nothing has to be restored by hand on the way back in.
+cannot drift apart. Three are shipped: `pandas_parquet`, `polars_parquet` and `geo_parquet`.
+Parquet is used throughout because it carries dtypes, the index, and in the geospatial case the
+CRS, so nothing has to be restored by hand on the way back in.
 
 ### Keys
 
@@ -95,8 +95,8 @@ under rules that have since changed reads back as a hit and quietly poisons ever
 `builder_fingerprint` closes that: it digests the builder function's source together with any values
 the builder reads that its source does not show, and the digest goes into the key as a parameter.
 Editing the transformation therefore writes a new entry instead of returning the old one. Editing a
-comment inside the builder does too -- the fingerprint is over the source text, so a formatting
-change turns the cache over. That is the cost of the guarantee, and it is deliberate.
+comment inside the builder does too, because the fingerprint is over the source text, so a
+formatting change turns the cache over. That is the cost of the guarantee, and it is deliberate.
 
 Rules passed as fingerprint inputs must `repr` identically in every process. One that does not moves
 the digest between runs, and nothing ever reads back.

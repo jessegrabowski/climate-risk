@@ -4,14 +4,14 @@ A place is a country or a group of countries, described by a TOML file and read 
 dataclass. Nothing in `climate_risk/` names a country outside `climate_risk/config/places/`, and
 that is the property the configuration exists to hold.
 
-For the practical recipe -- what to put in a file and what you get for free -- see
+For the practical recipe, meaning what to put in a file and what you get for free, see
 [adding a country](adding-a-country.md). This page is what the objects are and how they are read.
 
 ## The two shapes
 
 `CountryConfig` is one country. It requires `iso3` and `name` and defaults everything else:
 
-- `island`, a flag the point features record.
+- `island`, recorded as a feature on the model's point data.
 - `boundary`, a `ShapefileArchive` for a country-specific admin file, or `None` to slice the country
   out of the world shapefile by its ISO code.
 - `geometry`, a `GeometrySpec`.
@@ -43,15 +43,15 @@ the window, `min_total_affected` and `min_deaths` set severity floors. The defau
 window the published panel uses.
 
 It says nothing about *which country's* events. Selecting a country is an ordinary polars predicate
-on the frame, not a property of the filter -- `event_filter(place.events) & (pl.col("ISO") ==
-place.iso3)`. Keeping the two apart is what lets the same filters apply to a region.
+on the frame rather than a property of the filter, as in `event_filter(place.events) &
+(pl.col("ISO") == place.iso3)`. Keeping the two apart is what lets the same filters apply to a region.
 
 An `EventFilters` whose window ends before it starts is refused at construction.
 
 ## Reading a file
 
 The directory a file sits in decides its schema: `places/` builds a `CountryConfig`, `regions/`
-builds a `RegionConfig`. There is no registration step and no list to keep in sync -- the directory
+builds a `RegionConfig`. There is no registration step and no list to keep in sync. The directory
 is globbed, so a new file is picked up by existing it.
 
 `load_place(key)` takes the file stem: a lower-case ISO alpha-3 code for a country, a short name for
@@ -65,7 +65,7 @@ Neither caches. A file edited on disk is read fresh on the next call.
 
 The sub-tables map onto the nested dataclasses by name: `[geometry]` builds a `GeometrySpec`,
 `[events]` an `EventFilters`, `[boundary]` a `ShapefileArchive`. Everything else is passed through.
-Two conversions are not one-to-one: a TOML array of members becomes a tuple, because the schema
+Two conversions are not one-to-one. A TOML array of members becomes a tuple, because the schema
 promises immutability, and each override's coordinate pair becomes floats.
 
 `[boundary]` is split rather than mapped. Its `member` names the layer to read inside the archive

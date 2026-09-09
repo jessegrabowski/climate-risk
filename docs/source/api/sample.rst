@@ -5,7 +5,8 @@ Sampling and replication
 
 .. currentmodule:: climate_risk
 
-Fitting a model, caching the trace, and rebuilding the frames behind the paper's figures.
+Fitting a model, caching the trace, and resolving the CatDSGE model files. ``.gcn`` is gEconpy's
+model format, and each variant is a separate file.
 
 .. autosummary::
     :toctree: generated/

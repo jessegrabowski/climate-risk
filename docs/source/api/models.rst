@@ -9,7 +9,7 @@ Aggregated Poisson likelihood
 -----------------------------
 
 Event counts are observed per administrative unit, while the latent intensity lives on the cell
-grid. These implement the change of support.
+grid. These reconcile the two, which geostatistics calls a change of support.
 
 .. autosummary::
     :toctree: generated/

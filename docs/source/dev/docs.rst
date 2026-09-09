@@ -14,7 +14,7 @@ Building
 
 Both run in the ``docs`` environment, which carries Sphinx and its extensions and not the package's
 own development tools. A new documentation dependency goes in the ``docs`` feature of
-``pyproject.toml``, and so does any task that needs it --- a task declared outside the feature that
+``pyproject.toml``, and so does any task that needs it. A task declared outside the feature that
 owns its dependencies cannot find them.
 
 Nothing in CI builds the site. Read the Docs is the only other builder, so a broken build is caught
@@ -36,7 +36,7 @@ Source content lives under ``docs/source/``:
    * - ``get_started/``
      - Install, quickstart, the ``cache_dir`` contract, data acquisition. Hand-written narrative.
    * - ``user_guide/``
-     - Concept pages. Plain MyST, no Sphinx-only syntax -- see below.
+     - Concept pages. Plain MyST, no Sphinx-only syntax. See below.
    * - ``dev/``
      - This page, the contributing guide and the style guide.
    * - ``api.rst`` and ``api/*.rst``
@@ -49,9 +49,9 @@ Source content lives under ``docs/source/``:
      - The autosummary class template that produces per-method subpages.
 
 Everything marked **Generated** is written back into ``source/`` by a build and listed in
-``docs/.gitignore``. Never commit any of it, and never edit a generated stub -- the next build
-overwrites it. ``docs-serve`` also has to ignore every generated path, or writing one retriggers the
-watcher and the build never settles.
+``docs/.gitignore``. Never commit any of it, and never edit a generated stub, because the next
+build overwrites it. ``docs-serve`` also has to ignore every generated path, or writing one
+retriggers the watcher and the build never settles.
 
 Adding an API page
 ------------------
@@ -72,8 +72,8 @@ page and a docstring.
 
 ``autodoc_typehints`` is ``"none"``. numpydoc renders parameter types out of the docstring, so
 letting autodoc render the annotations too prints every signature twice. Types belong in the
-docstring's ``Parameters`` section, and every return value is named --- ``panel : DataFrame``, even
-where the function's caller never binds it.
+docstring's ``Parameters`` section, and every return value is named, as in ``panel : DataFrame``,
+even where the function's caller never binds it.
 
 Writing a page
 --------------
@@ -84,8 +84,8 @@ Pages are reStructuredText or MyST markdown. ``source_suffix`` accepts ``.rst``,
 
 **One rule constrains ``user_guide/`` specifically: those pages carry no Sphinx-only syntax.** No
 ``{eval-rst}``, no ``{jupyter-execute}``, no roles. Standard markdown, fenced code blocks, and
-dollar-math only. These pages have to stay legible as plain text -- on GitHub, in an editor, or
-anywhere the source is read directly -- and a page full of roles is not. Cross-reference them with
+dollar-math only. These pages have to stay legible as plain text, on GitHub or in an editor or
+anywhere the source is read directly, and a page full of roles is not. Cross-reference them with
 plain markdown links, which read correctly either way.
 
 Elsewhere the full role set is available. Cross-reference code with ``:func:``, ``:class:`` and
@@ -109,11 +109,11 @@ The version in the sidebar comes from installed package metadata, not from ``cli
 does not re-export ``__version__``. hatch-vcs writes ``climate_risk/_version.py`` at build time from
 git tags and does not track it.
 
-Read the Docs builds through pixi. ``.readthedocs.yaml`` overrides ``build.commands`` entirely ---
+Read the Docs builds through pixi. ``.readthedocs.yaml`` overrides ``build.commands`` entirely:
 mamba installs pixi, pixi installs the ``docs`` environment from the committed lock, and pixi runs
-Sphinx --- so Read the Docs builds no environment of its own. The ``sphinx``, ``python`` and ``conda``
-keys must stay absent from that file, and the checkout is unshallowed first so the tags hatch-vcs
-needs are present.
+Sphinx. Read the Docs therefore builds no environment of its own. The ``sphinx``, ``python`` and
+``conda`` keys must stay absent from that file, and the checkout is unshallowed first so the tags
+hatch-vcs needs are present.
 
 Checking links
 --------------

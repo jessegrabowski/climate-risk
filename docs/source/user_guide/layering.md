@@ -2,19 +2,19 @@
 
 The package is arranged so that heavy dependencies stay out of the parts that only move data
 around. The rules are short, they hold today, and none of them is visible from inside any single
-module -- which is why they are written down here.
+module, which is why they are written down here.
 
 ## The subpackages
 
-- `climate_risk.exceptions` -- the error types. Imports nothing from the package.
-- `climate_risk.geo` -- coordinate systems, grids, distances and raster reduction. Imports only
+- `climate_risk.exceptions`: the error types. Imports nothing from the package.
+- `climate_risk.geo`: coordinate systems, grids, distances and raster reduction. Imports only
   `exceptions`.
-- `climate_risk.data` -- source declarations, fetching, caching and one loader per upstream source.
-- `climate_risk.config` -- place files and the schema they parse into.
-- `climate_risk.data_functions` -- the frames built by combining loaders: EM-DAT processing,
-  shapefiles, rivers, and the country-year panel.
-- `climate_risk.models` -- the PyMC models and the aggregations they are built from.
-- `climate_risk.stats`, `climate_risk.dsge`, `climate_risk.sample`, `climate_risk.plotting` -- leaves
+- `climate_risk.data`: source declarations, fetching, caching and one loader per upstream source.
+- `climate_risk.config`: place files and the schema they parse into.
+- `climate_risk.data_functions`: the frames built by combining loaders, covering EM-DAT
+  processing, shapefiles, rivers, and the country-year panel.
+- `climate_risk.models`: the PyMC models and the aggregations they are built from.
+- `climate_risk.stats`, `climate_risk.dsge`, `climate_risk.sample`, `climate_risk.plotting`: leaves
   that import nothing else in the package.
 
 ## What may not be imported
@@ -35,8 +35,8 @@ the other library's reader.
 
 ## Checking
 
-The rules are conventions rather than machinery -- there is no import-graph test enforcing them. A
-grep is enough to check the first:
+The rules are conventions rather than machinery. No import-graph test enforces them, and a grep is
+enough to check the first:
 
 ```
 grep -rn "pymc\|arviz\|sklearn\|matplotlib" climate_risk/data/ climate_risk/geo/
