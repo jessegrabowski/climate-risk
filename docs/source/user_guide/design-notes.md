@@ -24,10 +24,9 @@ one definition.
 There is no default `cache_dir`, no environment variable, and no search for a project root. The
 package reads no environment variables at all.
 
-A path discovered from ambient state makes every function's behavior depend on something the caller
-cannot see in the call, so two runs of the same script differ for reasons the script does not
-record, and a test that forgets to isolate the variable writes into a real cache that runs to tens
-of gigabytes. The full contract is in [the cache directory](../get_started/cache-directory.rst).
+The absence is deliberate. A path discovered from ambient state would make every function's
+behavior depend on something the caller cannot see in the call.
+[The cache directory](../get_started/cache-directory.rst) has the contract and the reasoning.
 
 ## Constants live next to their consumer
 

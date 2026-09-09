@@ -31,6 +31,10 @@ subdirectories if they are absent, but it never writes outside the path it was h
 its first line and threads the value down. Library code never asks where it is, because there is
 nobody to ask.
 
+If threading the argument through a deep call stack becomes tedious, bind it once with
+:func:`functools.partial` or a small wrapper of your own. Adding a default to the library is not the
+answer.
+
 Why it is an argument
 ---------------------
 

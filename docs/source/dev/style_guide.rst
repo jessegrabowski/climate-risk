@@ -60,8 +60,8 @@ module that renames the columns. A constant genuinely shared by two modules goes
 the concept, and the other imports it.
 
 **Path resolution is functional.** ``cache_dir`` is an argument, resolved once at the edge and
-threaded down. There is no default, no environment variable, and no search for a project root, and
-the package reads no environment variables at all. See :doc:`../get_started/cache-directory`.
+threaded down, and the package reads no environment variables at all. Do not add a default: see
+:doc:`../get_started/cache-directory` for why.
 
 Naming and shape
 ----------------
