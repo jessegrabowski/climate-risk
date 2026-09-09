@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 
 from climate_risk.skills import bundle
-from climate_risk.skills.agents_file import AGENTS_FILE, render_agents_block, update_agents_file
+from climate_risk.skills.agents_file import AGENTS_FILE, agents_block, update_agents_file
 from climate_risk.skills.install import CLAUDE_CONFIG_DIRECTORY, claude_skills_dir, install_all
 
 
@@ -74,13 +74,12 @@ def main(argv: list[str] | None = None) -> int:
     if skills_dir is None:
         print(f"No {CLAUDE_CONFIG_DIRECTORY} directory under {root}, so no skills were installed.")
     else:
-        for line in install_all(skills, skills_dir, bundle.docs_source(), force=args.force):
+        for line in install_all(skills, skills_dir, docs=bundle.docs_source(), force=args.force):
             print(line)
 
     # AGENTS.md is a project-level convention, and no standard location exists for a user-level one,
     # so a user-scoped install writes skills and nothing else.
     if project is not None:
-        listed = skills_dir.relative_to(project) if skills_dir is not None else None
-        print(update_agents_file(project / AGENTS_FILE, render_agents_block(skills, listed)))
+        print(update_agents_file(project / AGENTS_FILE, agents_block()))
 
     return 0

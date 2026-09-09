@@ -2,62 +2,32 @@ from pathlib import Path
 
 AGENTS_FILE = "AGENTS.md"
 
+BLOCK_SOURCE = Path(__file__).resolve().parent / "agents_block.md"
+
 # The installer owns what sits between these and nothing else in the file. Both must be present, in
 # order, for the block to be replaced.
 BLOCK_START = "<!-- BEGIN climate_risk -->"
 BLOCK_END = "<!-- END climate_risk -->"
 
-# The two things an agent working against this package predictably gets wrong, and which cost a
-# reader an afternoon each.
-GUIDANCE = """\
-Every loader takes a `cache_dir` argument. There is no default, no environment variable and no
-project-root search, so resolve the path once and pass it down.
 
-EM-DAT, GADM, Geo-Disasters and the Penn World Table cannot be downloaded by code. A loader that
-needs one raises with the license and the exact path the file belongs at. Do not write a downloader
-for them."""
-
-
-def render_agents_block(skills: list[Path], skills_dir: Path | None) -> str:
+def agents_block() -> str:
     """
-    Render the block the installer owns inside an ``AGENTS.md``.
-
-    Parameters
-    ----------
-    skills : list of Path
-        The skills that were installed.
-    skills_dir : Path or None
-        Where they landed, relative to the project, or None when no harness was configured to
-        receive them. A path from outside the project would be meaningless to everyone else who
-        reads the committed file.
+    Return the block the installer owns inside an ``AGENTS.md``.
 
     Returns
     -------
     block : str
-        The block, markers included.
+        The block as shipped, markers included.
 
     Examples
     --------
     .. code-block:: python
 
-        from pathlib import Path
+        from climate_risk.skills import agents_block
 
-        from climate_risk.skills import available_skills, render_agents_block
-
-        print(render_agents_block(available_skills(), Path(".claude/skills")))
+        print(agents_block())
     """
-    lines = [BLOCK_START, "", "## climate_risk", "", GUIDANCE, ""]
-
-    if skills_dir is not None and skills:
-        lines.append("Skills for this package, with the concept pages they route to:")
-        lines.append("")
-        lines += [f"- `{skills_dir / skill.name}/SKILL.md`" for skill in skills]
-    else:
-        lines.append("Run `install-climate-risk-skills` to place the skills where an agent finds them.")
-
-    lines += ["", BLOCK_END, ""]
-
-    return "\n".join(lines)
+    return BLOCK_SOURCE.read_text()
 
 
 def update_agents_file(path: Path, block: str) -> str:
@@ -73,7 +43,7 @@ def update_agents_file(path: Path, block: str) -> str:
     path : Path
         The ``AGENTS.md`` to update. Created if absent.
     block : str
-        The rendered block, as :func:`render_agents_block` returns.
+        The block to write, as :func:`agents_block` returns.
 
     Returns
     -------
@@ -86,9 +56,9 @@ def update_agents_file(path: Path, block: str) -> str:
 
         from pathlib import Path
 
-        from climate_risk.skills import render_agents_block, update_agents_file
+        from climate_risk.skills import agents_block, update_agents_file
 
-        print(update_agents_file(Path("AGENTS.md"), render_agents_block([], None)))
+        print(update_agents_file(Path("AGENTS.md"), agents_block()))
     """
     body = path.read_text() if path.is_file() else ""
 

@@ -21,16 +21,6 @@ def test_an_empty_source_reports_failure(tmp_path, monkeypatch):
     assert main(["--project", str(tmp_path)]) == 1
 
 
-def test_the_block_carries_no_path_from_outside_the_project(bundled, tmp_path, monkeypatch):
-    """AGENTS.md is committed, so an absolute path from one machine is noise on every other."""
-    monkeypatch.setattr(bundle, "SKILLS_SOURCE", bundled)
-    (tmp_path / ".claude").mkdir()
-
-    main(["--project", str(tmp_path)])
-
-    assert str(tmp_path) not in (tmp_path / "AGENTS.md").read_text()
-
-
 def test_a_project_install_writes_the_skills_and_the_block(bundled, tmp_path, monkeypatch):
     monkeypatch.setattr(bundle, "SKILLS_SOURCE", bundled)
     (tmp_path / ".claude").mkdir()
