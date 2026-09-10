@@ -130,6 +130,13 @@ def test_a_vendored_filename_carrying_a_path_is_rejected(filename):
         vendored(filename=filename)
 
 
+@pytest.mark.parametrize("homepage", ["ftp://doi.org", "doi.org", ""], ids=repr)
+def test_a_vendored_homepage_that_is_not_a_web_page_is_rejected(homepage):
+    """It is the only record of where a redistributed file came from."""
+    with pytest.raises(ValueError, match="homepage must be http"):
+        vendored(homepage=homepage)
+
+
 def test_a_vendored_source_is_never_fetchable():
     """It ships in the wheel, so a url would put a dead publisher into the reachability check."""
     assert not hasattr(vendored(), "url")
