@@ -25,7 +25,7 @@ def configure_plot_style(add_grid: bool = False) -> None:
     Parameters
     ----------
     add_grid : bool, optional
-        Draw a dashed grid on every axes. Default False.
+        Draw a dashed horizontal grid on every axes. Default False.
 
     Examples
     --------
@@ -44,11 +44,10 @@ def configure_plot_style(add_grid: bool = False) -> None:
     plt.rcParams["figure.constrained_layout.use"] = True
     plt.rcParams["figure.facecolor"] = "w"
     plt.rcParams["axes.grid"] = add_grid
+    plt.rcParams["axes.grid.axis"] = "y"
     plt.rcParams["grid.linewidth"] = 0.5
     plt.rcParams["grid.linestyle"] = "--"
     plt.rcParams["axes.spines.top"] = False
-    plt.rcParams["axes.spines.bottom"] = False
-    plt.rcParams["axes.spines.left"] = False
     plt.rcParams["axes.spines.right"] = False
 
 

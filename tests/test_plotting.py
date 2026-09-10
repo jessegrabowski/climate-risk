@@ -263,6 +263,23 @@ def test_configuring_the_style_turns_the_grid_on_and_off():
     assert plt.rcParams["axes.grid"] is False
 
 
+def test_the_style_leaves_the_axis_lines_the_ticks_sit_on():
+    """Dropping all four spines leaves tick marks pointing at nothing, which reads as unfinished."""
+    configure_plot_style()
+
+    assert plt.rcParams["axes.spines.left"] is True
+    assert plt.rcParams["axes.spines.bottom"] is True
+    assert plt.rcParams["axes.spines.top"] is False
+    assert plt.rcParams["axes.spines.right"] is False
+
+
+def test_the_grid_runs_horizontally_only():
+    """A vertical grid competes with the series on a time axis, where x is not a measurement."""
+    configure_plot_style(add_grid=True)
+
+    assert plt.rcParams["axes.grid.axis"] == "y"
+
+
 def test_a_single_column_frame_plots_without_unwrapping_it_first():
     """A one-column DataFrame took the single-panel branch and reached `data.name`, which a frame
     does not have, so every caller with one variable raised AttributeError."""
