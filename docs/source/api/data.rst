@@ -69,11 +69,12 @@ returns the frame the loader caches.
 Declaring a source
 ------------------
 
-A source is declared beside the loader that reads it, carrying its license and citation. The three
+A source is declared beside the loader that reads it, carrying its license and citation. The four
 kinds differ in what they can do: :class:`~source.DataSource` is fetchable,
 :class:`~source.ManualSource` has no URL because automated download is
-forbidden, and :class:`~source.ApiSource` answers queries rather than serving a
-file.
+forbidden, :class:`~source.ApiSource` answers queries rather than serving a
+file, and :class:`~source.VendoredSource` ships inside the package because
+nothing serves it any more.
 
 .. autosummary::
     :toctree: generated/
@@ -81,6 +82,7 @@ file.
     ~source.DataSource
     ~source.ManualSource
     ~source.ApiSource
+    ~source.VendoredSource
     ~source.ShapefileArchive
     ~fetch.fetch
 

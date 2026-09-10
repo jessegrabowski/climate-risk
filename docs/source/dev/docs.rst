@@ -95,9 +95,17 @@ Commit the notebook. The extension stages only files git tracks, so a draft left
 
 Commit it executed, with its outputs saved. ``nb_execution_mode`` is ``"off"``, so nothing runs a
 notebook at build time and an unexecuted one renders as a page of empty cells. The last
-``image/png`` output becomes the card thumbnail, center-cropped to a square with a border, which
-makes the closing figure worth choosing deliberately. A notebook carrying no image output gets a
-placeholder and a build warning naming it.
+``image/png`` output becomes the card thumbnail, so the most recognizable figure goes last. A
+notebook carrying no image output gets a placeholder and a build warning naming it.
+
+The thumbnail is the center square of that figure, which constrains ``figsize``. A 7x4 figure loses
+its left and right thirds, and on a time series that means the y-axis label and the most recent
+years. Something near square, like 5.5x4.5, keeps the whole plot on the card.
+
+An existing file at the target path wins, so a build that ran while the notebook had no outputs
+leaves a placeholder that every later build preserves. Delete
+``docs/source/_thumbnails/<section>/<name>.png`` and rebuild once the outputs are saved. ``make
+clean`` removes the whole tree and has the same effect.
 
 A build stages the notebooks into ``source/examples/`` and writes their thumbnails to
 ``source/_thumbnails/``. Sphinx renders the staged copy, so editing one changes nothing.

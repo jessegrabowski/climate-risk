@@ -15,6 +15,16 @@ from scipy import stats
 REGIONS = ("Asia", "Europe", "Africa", "Oceania", "Americas")
 
 
+# Matplotlib's cycle assigns a color per call site, so one series drawn in two figures comes out in
+# two colors. Figures name a role here instead.
+PALETTE = {
+    "primary": "tab:blue",
+    "secondary": "tab:red",
+    "observed": "0.15",
+    "divider": "0.35",
+}
+
+
 def configure_plot_style(add_grid: bool = False) -> None:
     """
     Apply the project's matplotlib and pandas display settings to the current session.
@@ -25,7 +35,7 @@ def configure_plot_style(add_grid: bool = False) -> None:
     Parameters
     ----------
     add_grid : bool, optional
-        Draw a dashed grid on every axes. Default False.
+        Draw a dashed horizontal grid on every axes. Default False.
 
     Examples
     --------
@@ -44,11 +54,10 @@ def configure_plot_style(add_grid: bool = False) -> None:
     plt.rcParams["figure.constrained_layout.use"] = True
     plt.rcParams["figure.facecolor"] = "w"
     plt.rcParams["axes.grid"] = add_grid
+    plt.rcParams["axes.grid.axis"] = "y"
     plt.rcParams["grid.linewidth"] = 0.5
     plt.rcParams["grid.linestyle"] = "--"
     plt.rcParams["axes.spines.top"] = False
-    plt.rcParams["axes.spines.bottom"] = False
-    plt.rcParams["axes.spines.left"] = False
     plt.rcParams["axes.spines.right"] = False
 
 
@@ -170,7 +179,7 @@ def plot_fan(
     axis: plt.Axes,
     observed: pd.Series | None = None,
     probs: Sequence[float] = (0.50, 0.89),
-    color: str = "tab:blue",
+    color: str = PALETTE["primary"],
     divider: Any = None,
     shades: tuple[float, float] = (0.16, 0.34),
 ) -> None:
@@ -191,7 +200,7 @@ def plot_fan(
     probs : sequence of float, optional
         Credible masses, one band each. Default (0.50, 0.89).
     color : str, optional
-        Color of the bands and the median line. Default 'tab:blue'.
+        Color of the bands and the median line. Default ``PALETTE["primary"]``.
     divider : optional
         X position for a vertical rule, typically the last observation. Default None, drawing none.
     shades : tuple of float, optional
@@ -217,10 +226,10 @@ def plot_fan(
     axis.plot(time, draws.median(dim=["chain", "draw"]), color=color, lw=1.6)
 
     if observed is not None:
-        axis.plot(observed.index, observed.to_numpy(), color="0.15", lw=1.0, ls="--")
+        axis.plot(observed.index, observed.to_numpy(), color=PALETTE["observed"], lw=1.0, ls="--")
 
     if divider is not None:
-        axis.axvline(divider, color="0.35", ls=":", lw=0.9)
+        axis.axvline(divider, color=PALETTE["divider"], ls=":", lw=0.9)
 
     axis.margins(x=0)
 
@@ -229,7 +238,7 @@ def _plot_single_kde(
     data: pd.Series,
     axis: plt.Axes | None = None,
     bins: int = 30,
-    color: str = "tab:blue",
+    color: str = PALETTE["primary"],
     leg_loc: str = "upper left",
     set_title: bool = True,
     add_sum_box: bool = True,
@@ -246,7 +255,7 @@ def _plot_single_kde(
     bins : int, optional
         Histogram bins. Default 30.
     color : str, optional
-        Fill color of the histogram. Default ``"tab:blue"``.
+        Fill color of the histogram. Default ``PALETTE["primary"]``.
     leg_loc : str, optional
         Where to anchor the summary box. Default ``"upper left"``.
     set_title : bool, optional
@@ -301,7 +310,7 @@ def plot_descriptive(
     df: pd.DataFrame | pd.Series,
     n_cols: int = 3,
     bins: int = 30,
-    color: str = "tab:blue",
+    color: str = PALETTE["primary"],
     leg_loc: str = "upper left",
     labels_size: int = 14,
     add_sum_box: bool = True,
@@ -319,7 +328,7 @@ def plot_descriptive(
     bins : int, optional
         Histogram bins. Default 30.
     color : str, optional
-        Fill color of the histograms. Default ``"tab:blue"``.
+        Fill color of the histograms. Default ``PALETTE["primary"]``.
     leg_loc : str, optional
         Where to anchor each summary box. Default ``"upper left"``.
     labels_size : int, optional
@@ -636,7 +645,7 @@ def plot_predicted_counts(idata: xr.DataTree, df: pd.DataFrame, country: str) ->
         data["Start_Year"],
         data["predictions"],
         zorder=1000,
-        color="tab:red",
+        color=PALETTE["secondary"],
         label="Mean Predicted Disaster Count",
     )
     ax.scatter(data["Start_Year"], data["is_disaster"], color="k", label="Actual prob")

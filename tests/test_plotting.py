@@ -22,6 +22,17 @@ from climate_risk.plotting import (
     prepare_gridspec_figure,
 )
 
+
+@pytest.fixture(autouse=True)
+def matplotlib_defaults():
+    """`configure_plot_style` mutates global rcParams, so a test inherits whatever ran before it."""
+    plt.rcdefaults()
+
+    yield
+
+    plt.rcdefaults()
+
+
 OBSERVATIONS = 4
 ISO_CODES = ["AAA", "AAA", "BBB", "BBB"]
 YEARS = pd.to_datetime(["1990", "1991", "1990", "1991"])
@@ -261,6 +272,23 @@ def test_configuring_the_style_turns_the_grid_on_and_off():
 
     configure_plot_style()
     assert plt.rcParams["axes.grid"] is False
+
+
+def test_the_style_leaves_the_axis_lines_the_ticks_sit_on():
+    """Dropping all four spines leaves tick marks pointing at nothing, which reads as unfinished."""
+    configure_plot_style()
+
+    assert plt.rcParams["axes.spines.left"] is True
+    assert plt.rcParams["axes.spines.bottom"] is True
+    assert plt.rcParams["axes.spines.top"] is False
+    assert plt.rcParams["axes.spines.right"] is False
+
+
+def test_the_grid_runs_horizontally_only():
+    """A vertical grid competes with the series on a time axis, where x is not a measurement."""
+    configure_plot_style(add_grid=True)
+
+    assert plt.rcParams["axes.grid.axis"] == "y"
 
 
 def test_a_single_column_frame_plots_without_unwrapping_it_first():

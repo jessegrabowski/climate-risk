@@ -12,7 +12,7 @@ from climate_risk.data.geonames import COUNTRY_INFO, country_dump
 from climate_risk.data.gpcc import FULL_DATA, MONITORING
 from climate_risk.data.hadcrut import HADCRUT
 from climate_risk.data.ocean_heat import OCEAN_HEAT
-from climate_risk.data.source import DataSource, ManualSource, ShapefileArchive
+from climate_risk.data.source import DataSource, ManualSource, ShapefileArchive, VendoredSource
 from climate_risk.data_functions.emdat_processing import EMDAT
 from climate_risk.data_functions.rivers_data_loader import RIVERS
 from climate_risk.data_functions.shapefiles_data_loader import COASTLINE, WORLD
@@ -108,6 +108,43 @@ def test_every_manual_source_says_where_to_get_it_and_on_what_terms(declared):
 def test_a_manual_source_is_never_fetchable(declared):
     """Both forbid redistribution or automated download; a url would let `fetch` take one anyway."""
     assert not hasattr(declared, "url")
+
+
+VENDORED_FIELDS = {
+    "filename": "ipcc_ar6_syr_csb2_fig1a.xlsx",
+    "homepage": "https://doi.org/10.7927/baxv-nj53",
+    "license": "Attribution 4.0 International (CC BY 4.0)",
+    "citation": "IPCC, 2024",
+    "retrieved": "2026-09-09",
+}
+
+
+def vendored(**overrides) -> VendoredSource:
+    return VendoredSource(**(VENDORED_FIELDS | overrides))
+
+
+@pytest.mark.parametrize("filename", ["../escape.xlsx", "nested/f.xlsx", "/absolute.xlsx", ""], ids=repr)
+def test_a_vendored_filename_carrying_a_path_is_rejected(filename):
+    """`path()` joins onto the packaged directory, so a directory component reads outside it."""
+    with pytest.raises(ValueError, match="bare name"):
+        vendored(filename=filename)
+
+
+@pytest.mark.parametrize("homepage", ["ftp://doi.org", "doi.org", ""], ids=repr)
+def test_a_vendored_homepage_that_is_not_a_web_page_is_rejected(homepage):
+    """It is the only record of where a redistributed file came from."""
+    with pytest.raises(ValueError, match="homepage must be http"):
+        vendored(homepage=homepage)
+
+
+def test_a_vendored_source_is_never_fetchable():
+    """It ships in the wheel, so a url would put a dead publisher into the reachability check."""
+    assert not hasattr(vendored(), "url")
+
+
+def test_a_vendored_source_resolves_inside_the_package():
+    """It takes no cache directory, so the packaged tree is the only place it can name."""
+    assert vendored().path().parent.name == "vendored"
 
 
 def test_an_unparseable_retrieved_date_is_rejected():

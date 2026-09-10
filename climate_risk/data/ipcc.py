@@ -6,12 +6,23 @@ import polars as pl
 
 from climate_risk.data.cache import cached, polars_parquet
 from climate_risk.data.co2 import load_co2_data
+from climate_risk.data.source import VendoredSource
 
 _log = logging.getLogger(__name__)
 
-# SEDAC, which published this figure's data, was decommissioned in June 2025, so the workbook is
-# redistributed with the package. Its license and citation are in vendored/ATTRIBUTION.md.
-IPCC_FILE = Path(__file__).parent / "vendored" / "ipcc_ar6_syr_csb2_fig1a.xlsx"
+# SEDAC was decommissioned in June 2025 and no successor serves this workbook, so it ships with the
+# package rather than being fetched.
+IPCC = VendoredSource(
+    filename="ipcc_ar6_syr_csb2_fig1a.xlsx",
+    homepage="https://doi.org/10.7927/baxv-nj53",
+    license="Attribution 4.0 International (CC BY 4.0)",
+    citation=(
+        "IPCC, 2024. IPCC AR6 Synthesis Report LR Cross-Section Box.2, Figure 1 (a). Palisades, "
+        "New York: NASA Socioeconomic Data and Applications Center (SEDAC). "
+        "https://doi.org/10.7927/baxv-nj53"
+    ),
+    retrieved="2026-09-09",
+)
 
 IPCC_SHEET = "CO2 Emissions"
 
@@ -106,7 +117,7 @@ def process_ipcc_scenarios(cache_dir: Path, *, force_reload: bool = False) -> pl
 
     def build() -> pl.DataFrame:
         _log.info("Reading IPCC scenario emissions")
-        published = pl.read_excel(IPCC_FILE, sheet_name=IPCC_SHEET)
+        published = pl.read_excel(IPCC.path(), sheet_name=IPCC_SHEET)
         scenarios = published.select(pl.col(code).alias(name) for code, name in SCENARIO_COLUMNS.items())
 
         return transform_ipcc(scenarios, load_co2_data(cache_dir).rename({"Date": "year"}).sort("year"))
