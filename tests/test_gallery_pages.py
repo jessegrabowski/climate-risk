@@ -2,6 +2,7 @@
 sister file. They earn a test because each one renders its source declaration into a committed cell
 output, and nothing re-runs a notebook when the declaration beneath it changes."""
 
+import dataclasses
 import json
 
 from pathlib import Path
@@ -49,11 +50,10 @@ def test_every_declared_page_exists():
 
 
 @pytest.mark.parametrize("name", DECLARED, ids=DECLARED)
-def test_a_page_shows_the_terms_its_declaration_carries(name):
-    """A license stated more narrowly than the declaration is a legal claim, not a wording choice."""
-    assert DECLARED[name].license in provenance(name)
+def test_a_page_shows_every_field_its_declaration_carries(name):
+    """A license stated more narrowly than the declaration is a legal claim, not a wording choice.
+    Every other field goes stale by the same route, so the whole row set is pinned."""
+    table = provenance(name)
 
-
-@pytest.mark.parametrize("name", DECLARED, ids=DECLARED)
-def test_a_page_credits_the_publisher_its_declaration_names(name):
-    assert DECLARED[name].citation in provenance(name)
+    for field, value in dataclasses.asdict(DECLARED[name]).items():
+        assert f"| {field} | {value} |" in table, field
