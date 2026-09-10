@@ -2,7 +2,7 @@ from pathlib import Path
 
 import polars as pl
 
-from climate_risk.data.cache import cached, polars_parquet
+from climate_risk.data.cache import builder_fingerprint, cached, polars_parquet
 from climate_risk.data.fetch import fetch
 from climate_risk.data.source import DataSource
 
@@ -81,6 +81,9 @@ def load_ocean_heat_data(cache_dir: Path, *, force_reload: bool = False) -> pl.D
     def build() -> pl.DataFrame:
         raw = fetch(OCEAN_HEAT, cache_dir, force=force_reload)
 
-        return transform_ocean_heat(pl.read_csv(raw, has_header=True, new_columns=["Date", "Temp"]))
+        # NCEI serves the seasonal file without a header, so reading one consumes the first season.
+        return transform_ocean_heat(pl.read_csv(raw, has_header=False, new_columns=["Date", "Temp"]))
 
-    return cached(cache_dir, "ocean_heat", build, polars_parquet(), force=force_reload)
+    reading = builder_fingerprint(build, transform_ocean_heat, OCEAN_HEAT_BASELINE_OFFSET)
+
+    return cached(cache_dir, "ocean_heat", build, polars_parquet(), params={"reading": reading}, force=force_reload)

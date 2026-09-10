@@ -89,34 +89,34 @@ def render(examples_root: Path, tmp_path: Path) -> tuple[str, Path, Path]:
 
 def test_a_notebook_becomes_a_card_linking_to_where_it_was_staged(examples, tmp_path):
     """A card whose link does not match the staged path renders fine and goes nowhere."""
-    notebook = write_notebook(examples / "data_loaders" / "co2.ipynb")
+    notebook = write_notebook(examples / "climate" / "co2.ipynb")
     track(examples, notebook)
 
     page, staged, _ = render(examples, tmp_path)
 
-    assert ":link: data_loaders/co2" in page
-    assert (staged / "data_loaders" / "co2.ipynb").is_file()
+    assert ":link: climate/co2" in page
+    assert (staged / "climate" / "co2.ipynb").is_file()
 
 
 def test_the_hidden_toctree_lists_every_staged_notebook(examples, tmp_path):
     """Sphinx warns that a document is in no toctree, and the cards still work, so an unpopulated
     toctree survives review."""
     for name in ("co2.ipynb", "gpcc.ipynb"):
-        track(examples, write_notebook(examples / "data_loaders" / name))
+        track(examples, write_notebook(examples / "climate" / name))
 
     page, _, _ = render(examples, tmp_path)
     toctree = page[page.index(".. toctree::") : page.index(".. grid::")]
 
-    assert "data_loaders/co2" in toctree
-    assert "data_loaders/gpcc" in toctree
+    assert "climate/co2" in toctree
+    assert "climate/gpcc" in toctree
 
 
 def test_a_notebook_with_an_image_gets_a_square_thumbnail_of_its_own(examples, tmp_path):
     """A card grid lays out square images, and the source is wider than it is tall."""
-    track(examples, write_notebook(examples / "data_loaders" / "co2.ipynb"))
+    track(examples, write_notebook(examples / "climate" / "co2.ipynb"))
 
     _, _, thumbnails = render(examples, tmp_path)
-    thumbnail = thumbnails / "data_loaders" / "co2.png"
+    thumbnail = thumbnails / "climate" / "co2.png"
     height, width = image.imread(thumbnail).shape[:2]
 
     assert height == width
@@ -125,28 +125,28 @@ def test_a_notebook_with_an_image_gets_a_square_thumbnail_of_its_own(examples, t
 
 def test_a_notebook_without_an_image_gets_the_placeholder(examples, tmp_path):
     """The card names a thumbnail path either way, so writing nothing leaves a broken image."""
-    track(examples, write_notebook(examples / "data_loaders" / "bare.ipynb", output_image=None))
+    track(examples, write_notebook(examples / "climate" / "bare.ipynb", output_image=None))
 
     page, _, thumbnails = render(examples, tmp_path)
 
-    assert (thumbnails / "data_loaders" / "bare.png").read_bytes() == SHIPPED_PLACEHOLDER.read_bytes()
-    assert ":img-top: /_thumbnails/data_loaders/bare.png" in page
+    assert (thumbnails / "climate" / "bare.png").read_bytes() == SHIPPED_PLACEHOLDER.read_bytes()
+    assert ":img-top: /_thumbnails/climate/bare.png" in page
 
 
 def test_a_single_channel_image_gets_a_thumbnail(examples, tmp_path):
     """A grayscale PNG has no channel axis for the thumbnail border to be written into."""
-    track(examples, write_notebook(examples / "data_loaders" / "gray.ipynb", output_image=WIDE_GRAYSCALE_IMAGE))
+    track(examples, write_notebook(examples / "climate" / "gray.ipynb", output_image=WIDE_GRAYSCALE_IMAGE))
 
     _, _, thumbnails = render(examples, tmp_path)
-    thumbnail = thumbnails / "data_loaders" / "gray.png"
+    thumbnail = thumbnails / "climate" / "gray.png"
 
     assert thumbnail.read_bytes() != SHIPPED_PLACEHOLDER.read_bytes()
 
 
 def test_an_existing_thumbnail_is_kept(examples, tmp_path):
     """A hand-made thumbnail overrides extraction, so a rebuild must not overwrite it."""
-    track(examples, write_notebook(examples / "data_loaders" / "co2.ipynb"))
-    thumbnails = tmp_path / "thumbs" / "data_loaders"
+    track(examples, write_notebook(examples / "climate" / "co2.ipynb"))
+    thumbnails = tmp_path / "thumbs" / "climate"
     thumbnails.mkdir(parents=True)
     (thumbnails / "co2.png").write_bytes(b"hand made")
 
@@ -157,14 +157,14 @@ def test_an_existing_thumbnail_is_kept(examples, tmp_path):
 
 def test_an_untracked_notebook_is_left_out(examples, tmp_path):
     """Work in progress under examples/ would otherwise reach the published gallery."""
-    track(examples, write_notebook(examples / "data_loaders" / "co2.ipynb"))
-    write_notebook(examples / "data_loaders" / "draft.ipynb")
+    track(examples, write_notebook(examples / "climate" / "co2.ipynb"))
+    write_notebook(examples / "climate" / "draft.ipynb")
 
     page, staged, _ = render(examples, tmp_path)
 
     assert "draft" not in page
-    assert not (staged / "data_loaders" / "draft.ipynb").exists()
-    assert (staged / "data_loaders" / "co2.ipynb").is_file()
+    assert not (staged / "climate" / "draft.ipynb").exists()
+    assert (staged / "climate" / "co2.ipynb").is_file()
 
 
 def test_no_notebooks_writes_no_page(examples, tmp_path):
@@ -180,20 +180,20 @@ def test_sections_follow_the_declared_order(examples, tmp_path):
     """The unlisted section is named so that alphabetical order would put it first, which is what
     the page falls back to when SECTION_ORDER stops being consulted."""
     track(examples, write_notebook(examples / "aaa_other" / "unlisted.ipynb"))
-    track(examples, write_notebook(examples / "data_loaders" / "listed.ipynb"))
+    track(examples, write_notebook(examples / "climate" / "listed.ipynb"))
 
     page, _, _ = render(examples, tmp_path)
 
-    assert page.index("Data loaders") < page.index("Aaa Other")
+    assert page.index("Data: Climate") < page.index("Aaa Other")
 
 
 def test_an_unsectioned_notebook_leads_the_page(examples, tmp_path):
     track(examples, write_notebook(examples / "intro.ipynb"))
-    track(examples, write_notebook(examples / "data_loaders" / "co2.ipynb"))
+    track(examples, write_notebook(examples / "climate" / "co2.ipynb"))
 
     page, _, _ = render(examples, tmp_path)
 
-    assert page.index(":link: intro") < page.index("Data loaders")
+    assert page.index(":link: intro") < page.index("Data: Climate")
 
 
 def test_every_toctree_entry_resolves_to_a_staged_notebook(examples, tmp_path):
@@ -201,7 +201,7 @@ def test_every_toctree_entry_resolves_to_a_staged_notebook(examples, tmp_path):
     was never staged fails the build with a message pointing at the generated page rather than at
     the extension that wrote it."""
     track(examples, write_notebook(examples / "intro.ipynb"))
-    track(examples, write_notebook(examples / "data_loaders" / "co2.ipynb"))
+    track(examples, write_notebook(examples / "climate" / "co2.ipynb"))
 
     page, staged, _ = render(examples, tmp_path)
     body = page[page.index(".. toctree::") : page.index(".. grid::")]
@@ -217,35 +217,35 @@ def test_every_toctree_entry_resolves_to_a_staged_notebook(examples, tmp_path):
 def test_a_dotted_notebook_name_reaches_the_staged_tree_intact(examples, tmp_path):
     """A stem carrying a dot reads as a suffix, and a name truncated on the way to the staged tree
     leaves the toctree entry resolving to nothing."""
-    track(examples, write_notebook(examples / "data_loaders" / "co2.v2.ipynb"))
+    track(examples, write_notebook(examples / "climate" / "co2.v2.ipynb"))
 
     page, staged, _ = render(examples, tmp_path)
 
-    assert (staged / "data_loaders" / "co2.v2.ipynb").is_file()
-    assert "data_loaders/co2.v2" in page
+    assert (staged / "climate" / "co2.v2.ipynb").is_file()
+    assert "climate/co2.v2" in page
 
 
 def test_a_checkpoint_copy_is_left_out(examples, tmp_path):
     """Jupyter writes .ipynb_checkpoints beside a notebook, and a committed one is tracked."""
-    track(examples, write_notebook(examples / "data_loaders" / "co2.ipynb"))
-    track(examples, write_notebook(examples / "data_loaders" / ".ipynb_checkpoints" / "co2-checkpoint.ipynb"))
+    track(examples, write_notebook(examples / "climate" / "co2.ipynb"))
+    track(examples, write_notebook(examples / "climate" / ".ipynb_checkpoints" / "co2-checkpoint.ipynb"))
 
     page, staged, _ = render(examples, tmp_path)
 
     assert "co2-checkpoint" not in page
-    assert not (staged / "data_loaders" / ".ipynb_checkpoints").exists()
+    assert not (staged / "climate" / ".ipynb_checkpoints").exists()
 
 
 def test_the_gallery_page_is_written_under_the_source_tree(examples, tmp_path):
-    track(examples, write_notebook(examples / "data_loaders" / "co2.ipynb"))
+    track(examples, write_notebook(examples / "climate" / "co2.ipynb"))
     source = tmp_path / "source"
     source.mkdir()
 
     gallery.build_gallery(SimpleNamespace(builder=SimpleNamespace(srcdir=source)))
 
     assert (source / "examples" / "gallery.rst").is_file()
-    assert (source / "examples" / "data_loaders" / "co2.ipynb").is_file()
-    assert (source / "_thumbnails" / "data_loaders" / "co2.png").is_file()
+    assert (source / "examples" / "climate" / "co2.ipynb").is_file()
+    assert (source / "_thumbnails" / "climate" / "co2.png").is_file()
 
 
 def test_no_notebooks_leaves_the_source_tree_without_a_gallery_page(examples, tmp_path):

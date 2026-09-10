@@ -4,7 +4,7 @@ from pathlib import Path
 
 import polars as pl
 
-from climate_risk.data.cache import cached, polars_parquet
+from climate_risk.data.cache import builder_fingerprint, cached, polars_parquet
 from climate_risk.data.co2 import load_co2_data
 from climate_risk.data.source import VendoredSource
 
@@ -35,26 +35,44 @@ SCENARIO_COLUMNS = {
     "Panel emissions - SSP5-85 - y": "SSP5-85",
 }
 
-# The projection starts here, taking the observed level, and accumulates changes from it.
+# The projection starts here, taking the observed level, and accumulates emissions from it.
 ANCHOR_YEAR = 2020
 LAST_PROJECTED_YEAR = 2100
+
+# The workbook's Metadata sheet gives the unit as GtCO2/year, sampled every five years, so a
+# published value is a rate and covers the step that follows it.
+PUBLISHED_STEP_YEARS = 5
+
+# One ppm of atmospheric CO2 is 2.13 GtC, and CO2 masses 44/12 times its carbon.
+GTCO2_PER_PPM = 7.81
+
+# The share of emitted CO2 that stays in the atmosphere rather than entering a sink.
+AIRBORNE_FRACTION = 0.45
 
 
 def transform_ipcc(scenarios: pl.DataFrame, co2_observations: pl.DataFrame) -> pl.DataFrame:
     """
-    Turn five-yearly emission changes into annual levels, anchored on observed CO2.
+    Turn five-yearly emission rates into annual concentrations, anchored on observed CO2.
+
+    A published rate covers the step that follows it, so it becomes a quantity of CO2, of which
+    ``AIRBORNE_FRACTION`` reaches the atmosphere at ``GTCO2_PER_PPM``. Holding the airborne fraction
+    constant is an approximation: the real one rises with cumulative emissions, so the highest
+    pathways come out low against the concentrations AR6 reports.
 
     Parameters
     ----------
     scenarios : DataFrame
-        Published changes, with a ``year`` column and one column per SSP scenario.
+        Published emissions in GtCO2 per year, with a ``year`` column and one column per SSP
+        scenario.
     co2_observations : DataFrame
-        Observed CO2, with a dated ``year`` column and a ``co2`` column.
+        Observed CO2 in ppm, with a dated ``year`` column and a ``co2`` column.
 
     Returns
     -------
     projections : DataFrame
-        One row per year from the anchor to ``LAST_PROJECTED_YEAR``, one column per scenario.
+        One row per year from the anchor to ``LAST_PROJECTED_YEAR``, carrying the published rate per
+        scenario as ``<scenario>_emissions`` and the concentration it accumulates to as
+        ``<scenario>``.
     """
     observed = co2_observations.select(pl.col("year").dt.year().alias("year"), "co2")
     scenario_names = [name for name in SCENARIO_COLUMNS.values() if name != "year"]
@@ -62,16 +80,16 @@ def transform_ipcc(scenarios: pl.DataFrame, co2_observations: pl.DataFrame) -> p
     anchor_level = pl.col("co2").filter(pl.col("year") == ANCHOR_YEAR).first()
 
     def level(name: str) -> pl.Expr:
-        # Each published row is a change from the one before, so a level is the anchor plus every
-        # change since it. Years at or before the anchor contribute nothing to that running total.
-        accumulated = pl.when(pl.col("year") > ANCHOR_YEAR).then(pl.col(f"{name}_change")).otherwise(0.0).cum_sum()
+        # Years at or before the anchor contribute nothing to the running total.
+        rate = pl.when(pl.col("year") > ANCHOR_YEAR).then(pl.col(f"{name}_emissions")).otherwise(0.0)
+        emitted = (rate * PUBLISHED_STEP_YEARS).cum_sum()
 
-        return (anchor_level + accumulated).alias(name)
+        return (anchor_level + emitted * AIRBORNE_FRACTION / GTCO2_PER_PPM).alias(name)
 
     published = (
         scenarios.join(observed, on="year", how="left")
         .sort("year")
-        .rename({name: f"{name}_change" for name in scenario_names})
+        .rename({name: f"{name}_emissions" for name in scenario_names})
     )
     levels = published.with_columns(level(name) for name in scenario_names)
 
@@ -102,7 +120,8 @@ def process_ipcc_scenarios(cache_dir: Path, *, force_reload: bool = False) -> pl
     Returns
     -------
     scenarios : DataFrame
-        One row per year from the anchor onward, one column per scenario.
+        One row per year from the anchor onward, with the published emission rate and the
+        concentration it accumulates to per scenario.
 
     Examples
     --------
@@ -122,4 +141,13 @@ def process_ipcc_scenarios(cache_dir: Path, *, force_reload: bool = False) -> pl
 
         return transform_ipcc(scenarios, load_co2_data(cache_dir).rename({"Date": "year"}).sort("year"))
 
-    return cached(cache_dir, "ipcc_scenarios", build, polars_parquet(), force=force_reload)
+    reading = builder_fingerprint(
+        build,
+        transform_ipcc,
+        ANCHOR_YEAR,
+        PUBLISHED_STEP_YEARS,
+        GTCO2_PER_PPM,
+        AIRBORNE_FRACTION,
+    )
+
+    return cached(cache_dir, "ipcc_scenarios", build, polars_parquet(), params={"reading": reading}, force=force_reload)

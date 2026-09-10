@@ -6,9 +6,9 @@ import requests
 
 from climate_risk.data.ocean_heat import OCEAN_HEAT, load_ocean_heat_data, transform_ocean_heat
 
-# Upstream names its columns date and anomaly; the loader replaces the header row. The record is
-# quarterly and the month is written unpadded below October, so both spellings appear here.
-PUBLISHED = "date,anomaly\n1960-3,0.0\n1960-6,2.0\n1961-9,10.0\n1961-12,20.0\n"
+# NCEI serves no header row, so the first line is an observation. The record is quarterly and the
+# month is written unpadded below October, so both spellings appear here.
+PUBLISHED = "1960-3,0.0\n1960-6,2.0\n1961-9,10.0\n1961-12,20.0\n"
 
 
 @pytest.fixture
@@ -67,10 +67,19 @@ def test_years_are_stamped_at_their_start(seasonal):
     assert annual["Date"].to_list() == [date(1960, 1, 1), date(1961, 1, 1)]
 
 
-def test_the_published_header_is_replaced(tmp_path, published):
+def test_the_columns_are_named_by_the_loader(tmp_path, published):
     frame = load_ocean_heat_data(tmp_path)
 
     assert frame.columns == ["Date", "Temp"]
+
+
+def test_the_first_published_season_is_not_read_as_a_header(tmp_path, published):
+    """Reading a header off a headerless file drops the earliest observation, and the year it falls
+    in is then averaged over the seasons that survive."""
+    frame = load_ocean_heat_data(tmp_path)
+
+    assert len(frame) == 2, "both years survive"
+    assert frame["Temp"].to_list() == pytest.approx([153.0, 167.0]), "1960 averages 0.0 and 2.0"
 
 
 def test_a_warm_cache_does_not_reach_the_network(tmp_path, published):
@@ -103,4 +112,4 @@ def test_the_raw_download_is_named_for_the_file_upstream_serves(tmp_path, publis
     load_ocean_heat_data(tmp_path)
 
     assert OCEAN_HEAT.path(tmp_path).name == "ohc_levitus_climdash_seasonal.csv"
-    assert (tmp_path / "ocean_heat.parquet").exists()
+    assert [path.name for path in tmp_path.glob("ocean_heat*.parquet")], "the processed rows land elsewhere"

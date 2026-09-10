@@ -29,7 +29,7 @@ def level(levels: pl.DataFrame, year: int, scenario: str) -> float | None:
 
 @pytest.fixture
 def scenarios():
-    """One unit of change per five-year step, so accumulated levels are countable by hand."""
+    """One GtCO2 per year in every step, so each step emits five and the rise is one arithmetic."""
     return pl.DataFrame({"year": PUBLISHED_YEARS} | {name: [1.0] * len(PUBLISHED_YEARS) for name in SCENARIOS})
 
 
@@ -39,17 +39,19 @@ def co2_observations():
 
 
 def test_the_anchor_years_take_the_observed_level(scenarios, co2_observations):
-    """The published series holds changes, so the levels have to start somewhere real."""
+    """The published series holds emissions, so the concentrations have to start somewhere real."""
     levels = transform_ipcc(scenarios, co2_observations)
 
     assert level(levels, FIRST_PROJECTED_YEAR, "SSP1-19") == 400.0
 
 
-def test_changes_accumulate_from_the_anchor(scenarios, co2_observations):
+def test_a_published_rate_accumulates_as_a_concentration(scenarios, co2_observations):
+    """The workbook publishes GtCO2 per year, so a step emits five of them. At a 0.45 airborne
+    fraction that is 2.25 GtCO2 reaching the atmosphere, and 7.81 GtCO2 is one ppm."""
     levels = transform_ipcc(scenarios, co2_observations)
 
-    assert level(levels, 2025, "SSP1-19") == pytest.approx(401.0)
-    assert level(levels, 2030, "SSP1-19") == pytest.approx(402.0)
+    assert level(levels, 2025, "SSP1-19") == pytest.approx(400.288092, abs=1e-6)
+    assert level(levels, 2030, "SSP1-19") == pytest.approx(400.576184, abs=1e-6)
 
 
 def test_the_five_yearly_series_becomes_annual(scenarios, co2_observations):
@@ -62,7 +64,7 @@ def test_the_years_between_steps_are_interpolated(scenarios, co2_observations):
     """A published point every five years, so the intervening levels are straight lines."""
     levels = transform_ipcc(scenarios, co2_observations)
 
-    assert level(levels, 2027, "SSP1-19") == pytest.approx(401.4)
+    assert level(levels, 2027, "SSP1-19") == pytest.approx(400.403329, abs=1e-6)
 
 
 def test_the_observed_column_does_not_survive(scenarios, co2_observations):
@@ -83,6 +85,14 @@ def test_every_scenario_is_carried_through(scenarios, co2_observations):
     levels = transform_ipcc(scenarios, co2_observations)
 
     assert set(SCENARIOS) <= set(levels.columns)
+
+
+def test_the_published_rate_survives_beside_the_concentration(scenarios, co2_observations):
+    """A caller wanting emissions rather than concentration should not have to undo the conversion."""
+    levels = transform_ipcc(scenarios, co2_observations)
+
+    assert {f"{name}_emissions" for name in SCENARIOS} <= set(levels.columns)
+    assert levels["SSP1-19_emissions"].to_list() == [1.0] * len(levels)
 
 
 def test_a_missing_observation_leaves_the_level_missing(scenarios, co2_observations):
