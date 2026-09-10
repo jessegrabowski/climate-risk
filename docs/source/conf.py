@@ -158,6 +158,9 @@ myst_dmath_double_inline = True
 # page would need runs to tens of gigabytes, and four of the sources are licensed.
 nb_execution_mode = "off"
 
+# A cell emitting text/markdown is parsed as commonmark by default, which has no table syntax.
+nb_render_markdown_format = "myst"
+
 # -- Intersphinx -------------------------------------------------------------
 # Bound the per-inventory fetch. An unreachable or throttled docs host otherwise stalls the whole
 # build; with a timeout its cross-references degrade to plain text and the build finishes.
