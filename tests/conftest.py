@@ -716,16 +716,39 @@ def _refuse_lookup(*args, **kwargs):
     )
 
 
+# Captured before anything is patched, so a `network` test can be handed the real ones back.
+CONNECTED_SOCKET_METHODS = {method: getattr(socket.socket, method) for method in OUTBOUND_SOCKET_METHODS}
+RESOLVE = socket.getaddrinfo
+
+
+@pytest.fixture(autouse=True, scope="session")
+def block_network():
+    """Refuse the socket for the whole session.
+
+    Session scope rather than function scope because a module- or session-scoped fixture is set up
+    before any function-scoped one, so a guard at function scope leaves fixture bodies free to reach
+    upstream. A seeded cache that stops matching then downloads instead of failing.
+    """
+    with pytest.MonkeyPatch.context() as patch:
+        for method in OUTBOUND_SOCKET_METHODS:
+            patch.setattr(socket.socket, method, _refuse_outbound)
+
+        # Refusing name resolution turns an offline run's DNS timeout into an immediate error.
+        patch.setattr(socket, "getaddrinfo", _refuse_lookup)
+
+        yield
+
+
 @pytest.fixture(autouse=True)
-def block_network(request, monkeypatch):
-    if "network" in request.keywords:
+def allow_network_when_marked(request, monkeypatch):
+    """Hand the real socket back to a test marked `network`, which the session guard has taken."""
+    if "network" not in request.keywords:
         return
 
-    for method in OUTBOUND_SOCKET_METHODS:
-        monkeypatch.setattr(socket.socket, method, _refuse_outbound)
+    for method, connect in CONNECTED_SOCKET_METHODS.items():
+        monkeypatch.setattr(socket.socket, method, connect)
 
-    # Refusing name resolution turns an offline run's DNS timeout into an immediate error.
-    monkeypatch.setattr(socket, "getaddrinfo", _refuse_lookup)
+    monkeypatch.setattr(socket, "getaddrinfo", RESOLVE)
 
 
 def pytest_addoption(parser):
