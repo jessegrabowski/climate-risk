@@ -21,6 +21,7 @@ PALETTE = {
     "primary": "tab:blue",
     "secondary": "tab:red",
     "observed": "0.15",
+    "divider": "0.35",
 }
 
 
@@ -199,7 +200,7 @@ def plot_fan(
     probs : sequence of float, optional
         Credible masses, one band each. Default (0.50, 0.89).
     color : str, optional
-        Color of the bands and the median line. Default 'tab:blue'.
+        Color of the bands and the median line. Default ``PALETTE["primary"]``.
     divider : optional
         X position for a vertical rule, typically the last observation. Default None, drawing none.
     shades : tuple of float, optional
@@ -228,7 +229,7 @@ def plot_fan(
         axis.plot(observed.index, observed.to_numpy(), color=PALETTE["observed"], lw=1.0, ls="--")
 
     if divider is not None:
-        axis.axvline(divider, color="0.35", ls=":", lw=0.9)
+        axis.axvline(divider, color=PALETTE["divider"], ls=":", lw=0.9)
 
     axis.margins(x=0)
 
@@ -254,7 +255,7 @@ def _plot_single_kde(
     bins : int, optional
         Histogram bins. Default 30.
     color : str, optional
-        Fill color of the histogram. Default ``"tab:blue"``.
+        Fill color of the histogram. Default ``PALETTE["primary"]``.
     leg_loc : str, optional
         Where to anchor the summary box. Default ``"upper left"``.
     set_title : bool, optional
@@ -327,7 +328,7 @@ def plot_descriptive(
     bins : int, optional
         Histogram bins. Default 30.
     color : str, optional
-        Fill color of the histograms. Default ``"tab:blue"``.
+        Fill color of the histograms. Default ``PALETTE["primary"]``.
     leg_loc : str, optional
         Where to anchor each summary box. Default ``"upper left"``.
     labels_size : int, optional
