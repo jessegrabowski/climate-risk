@@ -718,8 +718,8 @@ def _refuse_lookup(*args, **kwargs):
 
 
 # Captured before anything is patched, so a `network` test can be handed the real ones back.
-CONNECTED_SOCKET_METHODS = {method: getattr(socket.socket, method) for method in OUTBOUND_SOCKET_METHODS}
-RESOLVE = socket.getaddrinfo
+REAL_SOCKET_METHODS = {method: getattr(socket.socket, method) for method in OUTBOUND_SOCKET_METHODS}
+REAL_GETADDRINFO = socket.getaddrinfo
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -746,10 +746,10 @@ def allow_network_when_marked(request, monkeypatch):
     if "network" not in request.keywords:
         return
 
-    for method, connect in CONNECTED_SOCKET_METHODS.items():
-        monkeypatch.setattr(socket.socket, method, connect)
+    for method, original in REAL_SOCKET_METHODS.items():
+        monkeypatch.setattr(socket.socket, method, original)
 
-    monkeypatch.setattr(socket, "getaddrinfo", RESOLVE)
+    monkeypatch.setattr(socket, "getaddrinfo", REAL_GETADDRINFO)
 
 
 def pytest_addoption(parser):
