@@ -39,5 +39,6 @@ instead, and tell you where to obtain the file.
 
    get_started/index
    user_guide/index
+   examples/gallery
    api
    dev/index
