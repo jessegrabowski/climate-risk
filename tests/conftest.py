@@ -15,7 +15,7 @@ import xarray as xr
 
 from shapely.geometry import LineString, Point, box
 
-from climate_risk.data import world_bank
+from climate_risk.data import ocean_heat, world_bank
 from climate_risk.data.gpcc import GriddedProduct
 from climate_risk.data.osm import LOOKUP_COLUMNS
 from climate_risk.data.source import DataSource
@@ -247,6 +247,24 @@ def seed_world_bank_cache(cache_dir, rows):
         world_bank.load_wb_data(cache_dir)
 
 
+def seed_ocean_heat_cache(cache_dir, annual):
+    """
+    Write ``annual`` into the ocean heat cache, as the seasonal file NCEI publishes.
+
+    The processed entry is keyed on a fingerprint of how it was built, so it cannot be written by
+    name. Seeding the download the loader reads instead lets it build its own entry, which also
+    exercises the headerless read. Each year is four identical seasons, so their mean is the value
+    asked for once the baseline offset is added back.
+    """
+    seasons = [
+        f"{row['Date'].year}-{month},{row['Temp'] - ocean_heat.OCEAN_HEAT_BASELINE_OFFSET}"
+        for row in annual.iter_rows(named=True)
+        for month in (3, 6, 9, 12)
+    ]
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    ocean_heat.OCEAN_HEAT.path(cache_dir).write_text("\n".join(seasons) + "\n")
+
+
 def write_merge_cache(cache_dir):
     """Seed every cache `load_all_data` reads, so the whole merge runs offline.
 
@@ -303,9 +321,7 @@ def write_merge_cache(cache_dir):
     pl.DataFrame({"Date": [date(1990, 1, 1), date(1991, 1, 1)], "co2": [354.0, 355.0]}).write_parquet(
         cache_dir / "co2.parquet"
     )
-    pl.DataFrame({"Date": [date(1990, 1, 1), date(1991, 1, 1)], "Temp": [1.0, 2.0]}).write_parquet(
-        cache_dir / "ocean_heat.parquet"
-    )
+    seed_ocean_heat_cache(cache_dir, pl.DataFrame({"Date": [date(1990, 1, 1), date(1991, 1, 1)], "Temp": [1.0, 2.0]}))
     # GPCC publishes monthly, and only whole years survive the annual total, so each year here
     # carries all twelve months. A total stays distinguishable from an average.
     pd.DataFrame(

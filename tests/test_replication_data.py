@@ -6,7 +6,13 @@ import polars as pl
 import pytest
 
 from climate_risk.replication_data import create_replication_data
-from tests.conftest import GPCC_CACHE_FILE, emdat_event, seed_world_bank_cache, write_emdat_workbook
+from tests.conftest import (
+    GPCC_CACHE_FILE,
+    emdat_event,
+    seed_ocean_heat_cache,
+    seed_world_bank_cache,
+    write_emdat_workbook,
+)
 
 # Long enough that `iloc[1:-1]` still leaves an STL-able series: STL(period=3) needs 2*3+1 points.
 YEARS = tuple(range(1985, 2021))
@@ -69,9 +75,12 @@ def wide_cache(tmp_path_factory):
         {"Date": [date(year, 1, 1) for year in YEARS], "co2": [float(350 + i) for i in range(len(YEARS))]}
     ).write_parquet(tmp_path / "co2.parquet")
     # A wave rather than a ramp, so STL has a trend to separate a deviation from.
-    pl.DataFrame(
-        {"Date": [date(year, 1, 1) for year in YEARS], "Temp": [i + np.sin(i) for i in range(len(YEARS))]}
-    ).write_parquet(tmp_path / "ocean_heat.parquet")
+    seed_ocean_heat_cache(
+        tmp_path,
+        pl.DataFrame(
+            {"Date": [date(year, 1, 1) for year in YEARS], "Temp": [i + np.sin(i) for i in range(len(YEARS))]}
+        ),
+    )
     # A whole year of months, since only years the record covers in full survive the annual total.
     # They share the year's total evenly, so the annual series is the 100(n + 1) + 5i below.
     precipitation = [
