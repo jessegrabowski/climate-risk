@@ -8,6 +8,10 @@ Plotting
 Figure setup
 ------------
 
+``configure_plot_style`` sets the rcParams every figure in the project shares, and ``PALETTE`` names
+the colors by role, as ``PALETTE["primary"]``, ``PALETTE["secondary"]`` and ``PALETTE["observed"]``.
+Naming a role rather than a color is what keeps one series the same color across two figures.
+
 .. autosummary::
     :toctree: generated/
 
