@@ -22,6 +22,17 @@ from climate_risk.plotting import (
     prepare_gridspec_figure,
 )
 
+
+@pytest.fixture(autouse=True)
+def matplotlib_defaults():
+    """`configure_plot_style` mutates global rcParams, so a test inherits whatever ran before it."""
+    plt.rcdefaults()
+
+    yield
+
+    plt.rcdefaults()
+
+
 OBSERVATIONS = 4
 ISO_CODES = ["AAA", "AAA", "BBB", "BBB"]
 YEARS = pd.to_datetime(["1990", "1991", "1990", "1991"])
