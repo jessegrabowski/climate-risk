@@ -20,6 +20,20 @@ def gridded(rows) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["time", "lat", "lon", "precip"]).assign(time=lambda x: pd.to_datetime(x["time"]))
 
 
+def one_country(geometry) -> gpd.GeoDataFrame:
+    """A world holding a single country, shaped as the test needs."""
+    return gpd.GeoDataFrame(
+        {
+            "ISO_A3": ["AAA"],
+            "FORMAL_EN": ["Aland"],
+            "CONTINENT": ["Asia"],
+            "REGION_UN": ["Asia"],
+            "geometry": [geometry],
+        },
+        crs="EPSG:4326",
+    )
+
+
 def extracted_name(archive: str) -> str:
     return archive.removesuffix(".gz")
 
@@ -151,16 +165,7 @@ def test_a_country_smaller_than_a_cell_still_gets_a_value():
     """No cell center falls inside a country this small, so joining on centers leaves it with no
     precipitation at all rather than with the reading over the ground it sits on.
     """
-    tiny = gpd.GeoDataFrame(
-        {
-            "ISO_A3": ["AAA"],
-            "FORMAL_EN": ["Aland"],
-            "CONTINENT": ["Asia"],
-            "REGION_UN": ["Asia"],
-            "geometry": [box(0.1, 0.1, 0.3, 0.3)],
-        },
-        crs="EPSG:4326",
-    )
+    tiny = one_country(box(0.1, 0.1, 0.3, 0.3))
     grid = gridded(
         [
             ("1981-01-01", 0.5, 0.5, 7.0),
@@ -179,16 +184,7 @@ def test_a_cell_counts_only_for_the_land_it_holds():
     """The country fills one cell and half of the next, so the fuller cell carries twice the weight.
     An unweighted mean of the two would read 1.5 instead.
     """
-    straddling = gpd.GeoDataFrame(
-        {
-            "ISO_A3": ["AAA"],
-            "FORMAL_EN": ["Aland"],
-            "CONTINENT": ["Asia"],
-            "REGION_UN": ["Asia"],
-            "geometry": [box(0.0, 0.0, 1.5, 1.0)],
-        },
-        crs="EPSG:4326",
-    )
+    straddling = one_country(box(0.0, 0.0, 1.5, 1.0))
     grid = gridded([("1981-01-01", 0.5, 0.5, 0.0), ("1981-01-01", 0.5, 1.5, 3.0)])
 
     monthly = transform_gpcc([grid], straddling)
