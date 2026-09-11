@@ -192,6 +192,22 @@ def test_a_cell_counts_only_for_the_land_it_holds():
     assert monthly.loc[("AAA", pd.Timestamp("1981-01-01")), "precip"] == pytest.approx(1.0)
 
 
+def test_an_unevenly_spaced_grid_is_refused():
+    """A weight is measured over a cell the lattice places by index, so an axis with uneven gaps
+    would credit a country with ground the reading never covered.
+    """
+    grid = gridded(
+        [
+            ("1981-01-01", 0.5, 0.5, 1.0),
+            ("1981-01-01", 0.5, 1.5, 1.0),
+            ("1981-01-01", 0.5, 9.5, 1.0),
+        ]
+    )
+
+    with pytest.raises(ValueError, match="not a grid"):
+        transform_gpcc([grid], toy_world())
+
+
 def test_cells_over_the_ocean_are_dropped():
     """The countries of `toy_world` all lie below one degree north, so the upper row is open water."""
     grid = gridded(
