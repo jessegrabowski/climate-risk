@@ -93,10 +93,16 @@ def test_each_amount_moves_by_the_price_level_of_its_own_year():
     assert frame["damage"].to_list() == [pytest.approx(125.0), pytest.approx(80.0)]
 
 
-def test_a_column_the_caller_did_not_name_passes_through():
-    frame = deflate(damages([(2010, 100.0)]), priced({2010: 80.0, 2015: 100.0}), [], base_year=2015)
+def test_a_money_column_the_caller_did_not_name_passes_through():
+    """Only the named columns are money. A count or a rate beside them would be nonsense deflated."""
+    frame = deflate(
+        damages([(2010, 100.0)]).with_columns(pl.lit(3).alias("events")),
+        priced({2010: 80.0, 2015: 100.0}),
+        ["damage"],
+        base_year=2015,
+    )
 
-    assert frame.rows() == [(2010, 100.0)]
+    assert frame.rows() == [(2010, pytest.approx(125.0), 3)]
 
 
 def test_a_year_the_index_does_not_cover_is_rejected():
