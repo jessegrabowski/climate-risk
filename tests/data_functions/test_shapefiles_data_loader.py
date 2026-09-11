@@ -181,7 +181,13 @@ SHIPPED_PLACE_KEYS = sorted(path.stem for path in (CONFIG_ROOT / "places").glob(
 
 # Where `toy_world_with_places` puts each shipped country. Stated here rather than read from the
 # fixture, so a place resolving to the wrong ISO fails instead of agreeing with itself.
-SHIPPED_BOUNDS = {"lao": (20.0, 21.0), "zmb": (23.0, 24.0), "cri": (29.5, 30.5), "npl": (34.0, 35.0)}
+SHIPPED_BOUNDS = {
+    "lao": (20.0, 21.0),
+    "zmb": (23.0, 24.0),
+    "cri": (29.5, 30.5),
+    "npl": (34.0, 35.0),
+    "ind": (39.0, 40.0),
+}
 
 
 @pytest.mark.parametrize("key", SHIPPED_PLACE_KEYS)
