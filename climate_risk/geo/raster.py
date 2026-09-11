@@ -42,8 +42,10 @@ def dissolve_place_boundary(boundary: gpd.GeoDataFrame, *, iso3: str | None = No
     boundary : GeoDataFrame
         The place's geometry, in any CRS.
     iso3 : str, optional
-        Code to label the geometry with when it carries no ``ISO_A3`` column. Default None, which
-        requires the geometry to label itself.
+        Code to label the geometry with when it carries no ``ISO_A3`` column. It labels, and never
+        filters: a frame that already carries the column is dissolved whole, whatever is passed
+        here, so select the country first. Default None, which requires the geometry to label
+        itself.
 
     Returns
     -------
@@ -60,7 +62,7 @@ def dissolve_place_boundary(boundary: gpd.GeoDataFrame, *, iso3: str | None = No
         from climate_risk.geo.raster import dissolve_place_boundary
 
         world = load_shapefile("world", Path("data"))
-        laos = dissolve_place_boundary(world, iso3="LAO")
+        laos = dissolve_place_boundary(world.query('ISO_A3 == "LAO"'))
     """
     if boundary.empty:
         raise DataValidationError("The boundary holds no geometry, so there would be nothing to grid.")
@@ -418,7 +420,7 @@ def build_cell_grid(boundary: gpd.GeoDataFrame, *, resolution_km: float) -> Cell
         from climate_risk.geo.raster import build_cell_grid, dissolve_place_boundary
 
         world = load_shapefile("world", Path("data"))
-        boundary = dissolve_place_boundary(world, iso3="LAO")
+        boundary = dissolve_place_boundary(world.query('ISO_A3 == "LAO"'))
         grid = build_cell_grid(boundary, resolution_km=25.0)
     """
     # A country is mostly border at any resolution coarse enough to model, and a dropped border
