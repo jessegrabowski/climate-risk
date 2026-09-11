@@ -6,16 +6,35 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from shapely.geometry import box
+
 from climate_risk.data.gpcc import GPCC_PRODUCTS, PRECIPITATION, _as_timestamps, load_gpcc_data, transform_gpcc
 from tests.conftest import TOY_ARCHIVES, toy_gpcc_products, toy_world
 
-# Stated literally, so a wrong cache key fails rather than agreeing with itself. The span is the
-# toy manifest's, not the published one.
-UNREPAIRED_CACHE = "gpcc__coverage=1981-2021__precision=float64__repaired_iso=False.parquet"
+# Every parameter but the reading digest is spelled out, so a key that lost one fails rather than
+# agreeing with whatever the loader happened to write. The span is the toy manifest's.
+UNREPAIRED_CACHE = "gpcc__coverage=1981-2021__precision=float64__reading=*__repaired_iso=False.parquet"
 
 
-def gridded(rows) -> pd.DataFrame:
-    return pd.DataFrame(rows, columns=["time", "lat", "lon", "precip"]).assign(time=lambda x: pd.to_datetime(x["time"]))
+def gridded(rows, gauges=1.0) -> pd.DataFrame:
+    """Rows of time, lat, lon and precipitation, with a uniform station count unless one is given."""
+    return pd.DataFrame(rows, columns=["time", "lat", "lon", "precip"]).assign(
+        time=lambda frame: pd.to_datetime(frame["time"]), gauges=gauges
+    )
+
+
+def one_country(geometry) -> gpd.GeoDataFrame:
+    """A world holding a single country, shaped as the test needs."""
+    return gpd.GeoDataFrame(
+        {
+            "ISO_A3": ["AAA"],
+            "FORMAL_EN": ["Aland"],
+            "CONTINENT": ["Asia"],
+            "REGION_UN": ["Asia"],
+            "geometry": [geometry],
+        },
+        crs="EPSG:4326",
+    )
 
 
 def extracted_name(archive: str) -> str:
@@ -42,6 +61,24 @@ def test_cold_run_aggregates_precipitation_by_country(write_gpcc_archives, write
     assert sorted(frame.index.get_level_values("country_code").unique()) == ["AAA", "BBB", "CCC"]
 
 
+def test_each_product_is_read_under_its_own_grid_names(write_gpcc_archives, write_shapefile_cache):
+    """The full-data archives name the grids `precip` and `numgauge`, the monitoring ones `p` and
+    `s`. Wiring either product to the wrong pair swaps its two columns without raising, because
+    both grids are read and both are floats.
+    """
+    cache_dir = write_gpcc_archives()
+    write_shapefile_cache("world", toy_world())
+
+    frame = load_gpcc_data(cache_dir, products=toy_gpcc_products(), repair_ISO_codes=False)
+    full_data = frame.xs(pd.Timestamp("1981-01-01"), level="time")
+    monitoring = frame.xs(pd.Timestamp("2021-01-01"), level="time")
+
+    assert full_data.loc["AAA", "precip"] == pytest.approx(0.0)
+    assert full_data.loc["AAA", "gauges"] == pytest.approx(2.0)
+    assert monitoring.loc["CCC", "precip"] == pytest.approx(2.0)
+    assert monitoring.loc["CCC", "gauges"] == pytest.approx(4.0)
+
+
 def test_the_cache_is_written_in_double_precision(write_gpcc_archives, write_shapefile_cache):
     """The archives are float32, and every total taken from this cache adds partial results.
 
@@ -63,7 +100,7 @@ def test_the_cold_run_writes_the_cache_it_will_read(write_gpcc_archives, write_s
 
     load_gpcc_data(cache_dir, products=toy_gpcc_products(), repair_ISO_codes=False)
 
-    assert (cache_dir / UNREPAIRED_CACHE).exists()
+    assert len(list(cache_dir.glob(UNREPAIRED_CACHE))) == 1
 
 
 def test_the_monitoring_dates_are_decoded_rather_than_read_as_numbers(write_gpcc_archives, write_shapefile_cache):
@@ -127,11 +164,15 @@ def test_a_warm_cache_does_not_touch_the_archives(write_gpcc_archives, write_sha
 
 
 def test_cells_are_averaged_per_country_and_month():
+    """Half-degree cells on one row, so the two inside AAA sit at one latitude and weigh the same."""
     grid = gridded(
         [
-            ("1981-01-01", 0.5, 0.5, 4.0),
-            ("1981-01-01", 0.75, 0.75, 6.0),
-            ("1981-01-01", 0.5, 2.5, 100.0),
+            ("1981-01-01", 0.5, 0.25, 4.0),
+            ("1981-01-01", 0.5, 0.75, 6.0),
+            ("1981-01-01", 0.5, 1.25, 0.0),
+            ("1981-01-01", 0.5, 1.75, 0.0),
+            ("1981-01-01", 0.5, 2.25, 100.0),
+            ("1981-01-01", 0.5, 2.75, 100.0),
         ]
     )
 
@@ -141,8 +182,75 @@ def test_cells_are_averaged_per_country_and_month():
     assert monthly.loc[("BBB", pd.Timestamp("1981-01-01")), "precip"] == pytest.approx(100.0)
 
 
+def test_a_country_smaller_than_a_cell_still_gets_a_value():
+    """No cell center falls inside a country this small, so joining on centers leaves it with no
+    precipitation at all rather than with the reading over the ground it sits on.
+    """
+    tiny = one_country(box(0.1, 0.1, 0.3, 0.3))
+    grid = gridded(
+        [
+            ("1981-01-01", 0.5, 0.5, 7.0),
+            ("1981-01-01", 0.5, 1.5, 99.0),
+            ("1981-01-01", 1.5, 0.5, 99.0),
+            ("1981-01-01", 1.5, 1.5, 99.0),
+        ]
+    )
+
+    monthly = transform_gpcc([grid], tiny)
+
+    assert monthly.loc[("AAA", pd.Timestamp("1981-01-01")), "precip"] == pytest.approx(7.0)
+
+
+def test_a_cell_counts_only_for_the_land_it_holds():
+    """The country fills one cell and half of the next, so the fuller cell carries twice the weight.
+    An unweighted mean of the two would read 1.5 instead.
+    """
+    straddling = one_country(box(0.0, 0.0, 1.5, 1.0))
+    grid = gridded([("1981-01-01", 0.5, 0.5, 0.0), ("1981-01-01", 0.5, 1.5, 3.0)])
+
+    monthly = transform_gpcc([grid], straddling)
+
+    assert monthly.loc[("AAA", pd.Timestamp("1981-01-01")), "precip"] == pytest.approx(1.0)
+
+
+def test_an_unevenly_spaced_grid_is_refused():
+    """A weight is measured over a cell the lattice places by index, so an axis with uneven gaps
+    would credit a country with ground the reading never covered.
+    """
+    grid = gridded(
+        [
+            ("1981-01-01", 0.5, 0.5, 1.0),
+            ("1981-01-01", 0.5, 1.5, 1.0),
+            ("1981-01-01", 0.5, 9.5, 1.0),
+        ]
+    )
+
+    with pytest.raises(ValueError, match="not a grid"):
+        transform_gpcc([grid], toy_world())
+
+
+def test_station_counts_are_weighted_like_the_precipitation():
+    """The count says how much gauge evidence stands behind a reading, so a cell contributing half
+    the land contributes half its stations to the country's figure.
+    """
+    straddling = one_country(box(0.0, 0.0, 1.5, 1.0))
+    grid = gridded([("1981-01-01", 0.5, 0.5, 0.0), ("1981-01-01", 0.5, 1.5, 0.0)], gauges=[6.0, 0.0])
+
+    monthly = transform_gpcc([grid], straddling)
+
+    assert monthly.loc[("AAA", pd.Timestamp("1981-01-01")), "gauges"] == pytest.approx(4.0)
+
+
 def test_cells_over_the_ocean_are_dropped():
-    grid = gridded([("1981-01-01", 0.5, 0.5, 4.0), ("1981-01-01", 50.0, 50.0, 999.0)])
+    """The countries of `toy_world` all lie below one degree north, so the upper row is open water."""
+    grid = gridded(
+        [
+            ("1981-01-01", 0.5, 0.5, 4.0),
+            ("1981-01-01", 0.5, 1.5, 999.0),
+            ("1981-01-01", 1.5, 0.5, 999.0),
+            ("1981-01-01", 1.5, 1.5, 999.0),
+        ]
+    )
 
     monthly = transform_gpcc([grid], toy_world())
 

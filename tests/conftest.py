@@ -16,7 +16,7 @@ import xarray as xr
 from shapely.geometry import LineString, Point, box
 
 from climate_risk.data import world_bank
-from climate_risk.data.gpcc import GriddedProduct
+from climate_risk.data.gpcc import GriddedProduct, _reading_fingerprint
 from climate_risk.data.ocean_heat import OCEAN_HEAT, OCEAN_HEAT_BASELINE_OFFSET
 from climate_risk.data.osm import LOOKUP_COLUMNS
 from climate_risk.data.source import DataSource
@@ -154,13 +154,16 @@ UPSTREAM_SHAPEFILE_LAYOUT = {
 
 
 def toy_precipitation(year_range):
-    """A full-data grid with one point inside each country of `toy_world`.
+    """A full-data grid with one cell over each country of `toy_world`, and its station counts.
 
     Single precision, as the archives publish it, so a loader that keeps that dtype is visible here.
     """
     start = int(year_range.split("_")[0])
     return xr.Dataset(
-        {"precip": (("time", "lat", "lon"), np.arange(3.0, dtype="float32").reshape(1, 1, 3))},
+        {
+            "precip": (("time", "lat", "lon"), np.arange(3.0, dtype="float32").reshape(1, 1, 3)),
+            "numgauge": (("time", "lat", "lon"), np.array([[[2.0, 0.0, 7.0]]], dtype="float32")),
+        },
         coords={
             "time": np.array([f"{start}-01-01"], dtype="datetime64[ns]"),
             "lat": [0.5],
@@ -170,9 +173,12 @@ def toy_precipitation(year_range):
 
 
 def toy_monitoring(year, month):
-    """A monitoring grid, which names its variable ``p`` and dates it with a YYYYMMDD float."""
+    """A monitoring grid, which names its grids ``p`` and ``s`` and dates rows with a YYYYMMDD float."""
     return xr.Dataset(
-        {"p": (("time", "lat", "lon"), np.arange(3.0, dtype="float32").reshape(1, 1, 3))},
+        {
+            "p": (("time", "lat", "lon"), np.arange(3.0, dtype="float32").reshape(1, 1, 3)),
+            "s": (("time", "lat", "lon"), np.array([[[1.0, 0.0, 4.0]]], dtype="float32")),
+        },
         coords={
             "time": ("time", [float(f"{year}{month:02d}01")], {"units": "day as %Y%m%d.%f"}),
             "lat": [0.5],
@@ -187,8 +193,11 @@ def toy_monitoring(year, month):
 TOY_ARCHIVES = ("full_data_monthly_v2022_1981_1990_10.nc.gz", "monitoring_v2022_10_2021_01.nc.gz")
 
 # The processed cache the published manifest writes. The key carries the span, so extending the
-# record renames the entry instead of shadowing it.
-GPCC_CACHE_FILE = "gpcc__coverage=1891-2025__precision=float64__repaired_iso=True.parquet"
+# record renames the entry instead of shadowing it. Every parameter is spelled out but the reading
+# digest, which cannot be, so a key that loses one of the others still fails here.
+GPCC_CACHE_FILE = (
+    f"gpcc__coverage=1891-2025__precision=float64__reading={_reading_fingerprint()}__repaired_iso=True.parquet"
+)
 
 
 def toy_gpcc_products() -> tuple[GriddedProduct, ...]:
@@ -206,8 +215,10 @@ def toy_gpcc_products() -> tuple[GriddedProduct, ...]:
     full_data, monitoring = TOY_ARCHIVES
 
     return (
-        GriddedProduct(variable="precip", first_year=1981, last_year=1990, sources=(source(full_data),)),
-        GriddedProduct(variable="p", first_year=2021, last_year=2021, sources=(source(monitoring),)),
+        GriddedProduct(
+            variable="precip", gauges="numgauge", first_year=1981, last_year=1990, sources=(source(full_data),)
+        ),
+        GriddedProduct(variable="p", gauges="s", first_year=2021, last_year=2021, sources=(source(monitoring),)),
     )
 
 
