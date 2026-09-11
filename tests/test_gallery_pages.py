@@ -18,6 +18,7 @@ from climate_risk.data.gpcc import FULL_DATA
 from climate_risk.data.hadcrut import HADCRUT
 from climate_risk.data.ipcc import IPCC
 from climate_risk.data.ocean_heat import OCEAN_HEAT
+from climate_risk.data.pwt import PWT
 from climate_risk.data.source import ApiSource, DataSource, ManualSource, VendoredSource
 from climate_risk.data.world_bank import WORLD_BANK
 from climate_risk.data_functions.emdat_processing import EMDAT
@@ -38,6 +39,7 @@ DECLARED: dict[str, DataSource | VendoredSource | ApiSource | ManualSource] = {
     "hazard/geo_disasters": GEO_DISASTERS,
     "economic/world_bank": WORLD_BANK,
     "economic/fred": FRED,
+    "economic/pwt": PWT,
     "geospatial/ghsl": population_source(2020),
     "geospatial/geonames": country_dump("KH"),
     "geospatial/rivers": RIVERS,
