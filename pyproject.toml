@@ -260,6 +260,7 @@ enable_error_code = ["possibly-undefined"]
 module = [
     "arviz.*",
     "pymc.*",
+    "preliz.*",
     "pymc_extras.*",
     "pytensor.*",
     "ptgp.*",
