@@ -28,9 +28,13 @@ def downloaded(rows) -> pl.DataFrame:
 
 def row(country: str = "Aruba", year: str = "1990", **values: float) -> tuple:
     """One tidy row, each indicator numbered by its position unless named under its readable name."""
-    numbered = {name: float(position) for position, name in enumerate(INDICATOR_NAMES.values())}
+    unknown = sorted(set(values) - set(INDICATOR_NAMES.values()))
+    if unknown:
+        raise KeyError(f"{unknown} are not indicator names, so a test naming one would assert nothing")
 
-    return (country, year, *(values.get(name, numbered[name]) for name in INDICATOR_NAMES.values()))
+    filled = (values.get(name, float(position)) for position, name in enumerate(INDICATOR_NAMES.values()))
+
+    return (country, year, *filled)
 
 
 @pytest.fixture
@@ -69,6 +73,15 @@ def test_indicator_codes_become_readable_names():
 
     assert "NY.GDP.PCAP.KD" not in frame.columns
     assert frame["gdp_per_cap_usd"].to_list() == [1000.0]
+
+
+def test_every_indicator_reaches_the_panel():
+    """The select names each code by hand. One missing would leave the panel an indicator short, and
+    every page and model reading a different column would run on without noticing.
+    """
+    frame = transform_world_bank(downloaded([row()]), INDICATOR_NAMES)
+
+    assert set(INDICATOR_NAMES.values()) <= set(frame.columns)
 
 
 def test_a_constant_price_series_says_which_currency_in_its_name():
