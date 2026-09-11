@@ -15,7 +15,7 @@ def warm_cache(write_rivers_cache):
 
 
 @pytest.mark.parametrize(("cutoff", "kept"), [(5, [4]), (6, [4, 5])])
-def test_the_stream_order_cutoff_excludes_its_own_order(cutoff, kept):
+def test_the_discharge_class_cutoff_excludes_its_own_class(cutoff, kept):
     """The warm-cache tests read back what a fixture wrote, so this is where the filter is tested."""
     kept_rivers = transform_rivers(toy_rivers(), cutoff)
 

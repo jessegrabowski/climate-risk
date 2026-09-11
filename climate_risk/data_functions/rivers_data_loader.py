@@ -31,11 +31,11 @@ RIVERS_SUBDIRECTORY = "rivers"
 # ORD_FLOW is a discharge class, not a topological order: class 1 is every reach at or above
 # 100,000 m3/s and each class down is a factor of ten, so a lower cutoff keeps fewer, bigger rivers.
 # The panel uses the major rivers alone; the wider set exists for sensitivity checks.
-BIG_RIVER_ORDER = 5
-MEDIUM_RIVER_ORDER = 6
+BIG_RIVER_CLASS = 5
+MEDIUM_RIVER_CLASS = 6
 
 
-def transform_rivers(rivers: gpd.GeoDataFrame, stream_order_cutoff: int) -> gpd.GeoDataFrame:
+def transform_rivers(rivers: gpd.GeoDataFrame, discharge_class_cutoff: int) -> gpd.GeoDataFrame:
     """
     Keep the rivers whose discharge class is below the cutoff.
 
@@ -43,7 +43,7 @@ def transform_rivers(rivers: gpd.GeoDataFrame, stream_order_cutoff: int) -> gpd.
     ----------
     rivers : GeoDataFrame
         The HydroRIVERS network, carrying an ``ORD_FLOW`` discharge class.
-    stream_order_cutoff : int
+    discharge_class_cutoff : int
         The exclusive upper bound on ``ORD_FLOW``. The class counts down from the largest discharge,
         so a lower cutoff keeps fewer and bigger rivers.
 
@@ -52,7 +52,7 @@ def transform_rivers(rivers: gpd.GeoDataFrame, stream_order_cutoff: int) -> gpd.
     kept : GeoDataFrame
         The rivers that clear the cutoff.
     """
-    return rivers.query(f"ORD_FLOW < {stream_order_cutoff}")
+    return rivers.query(f"ORD_FLOW < {discharge_class_cutoff}")
 
 
 def _extract_rivers(cache_dir: Path) -> Path:
@@ -99,7 +99,7 @@ def load_rivers_data(cache_dir: Path, *, include_medium: bool = False) -> gpd.Ge
 
         rivers = load_rivers_data(Path("data"), include_medium=True)
     """
-    cutoff = MEDIUM_RIVER_ORDER if include_medium else BIG_RIVER_ORDER
+    cutoff = MEDIUM_RIVER_CLASS if include_medium else BIG_RIVER_CLASS
 
     def build() -> gpd.GeoDataFrame:
         return transform_rivers(gpd.read_file(_extract_rivers(cache_dir)), cutoff)
@@ -109,5 +109,5 @@ def load_rivers_data(cache_dir: Path, *, include_medium: bool = False) -> gpd.Ge
         "rivers",
         build,
         geo_parquet(),
-        params={"stream_order_below": cutoff},
+        params={"discharge_class_below": cutoff},
     )

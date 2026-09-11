@@ -661,7 +661,7 @@ def write_rivers_cache(tmp_path):
         rivers_dir.mkdir(parents=True, exist_ok=True)
         # The cache key is stated literally, so a wrong one fails rather than agreeing with itself.
         cutoff = 6 if include_medium else 5
-        gdf.to_parquet(rivers_dir / f"rivers__stream_order_below={cutoff}.parquet")
+        gdf.to_parquet(rivers_dir / f"rivers__discharge_class_below={cutoff}.parquet")
         return tmp_path
 
     return write
