@@ -88,7 +88,8 @@ These are declared as :class:`~climate_risk.data.source.DataSource` and fetched 
      - :func:`~climate_risk.data.hadcrut.load_hadcrut_data`
    * - GPCC
      - Gridded monthly precipitation from gauges: the reanalyzed record to 2020, continued by the
-       near-real-time monitoring product.
+       near-real-time monitoring product. The loader returns the station count behind each reading
+       alongside it.
      - CC BY 4.0
      - :func:`~climate_risk.data.gpcc.load_gpcc_data`
    * - GeoNames
