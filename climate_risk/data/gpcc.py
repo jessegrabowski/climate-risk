@@ -185,10 +185,12 @@ def _axis_steps(latitudes: np.ndarray, longitudes: np.ndarray) -> tuple[float, f
     latitude_step = spacing(latitudes, "latitude")
     longitude_step = spacing(longitudes, "longitude")
 
-    return (
-        latitude_step or longitude_step or LONE_CELL_DEGREES,
-        longitude_step or latitude_step or LONE_CELL_DEGREES,
-    )
+    if latitude_step is None:
+        latitude_step = longitude_step if longitude_step is not None else LONE_CELL_DEGREES
+    if longitude_step is None:
+        longitude_step = latitude_step
+
+    return latitude_step, longitude_step
 
 
 def _cell_weights(cells: pd.DataFrame, countries: gpd.GeoDataFrame) -> pd.DataFrame:
@@ -233,18 +235,29 @@ def _cell_weights(cells: pd.DataFrame, countries: gpd.GeoDataFrame) -> pd.DataFr
 
 def _weighted_by_country(gridded: pd.DataFrame, countries: gpd.GeoDataFrame) -> pd.DataFrame:
     """
-    Reduce one grid to the weighted precipitation total and weight per country and month.
+    Reduce one grid to the weighted precipitation total and the weight behind it.
 
-    The two are returned rather than their ratio, because a country's cells are spread across
-    archives and a mean cannot be summed.
+    Parameters
+    ----------
+    gridded : DataFrame
+        One grid as read, with ``lat``, ``lon``, ``time`` and ``precip``.
+    countries : GeoDataFrame
+        Country boundaries carrying ``country_code``.
+
+    Returns
+    -------
+    totals : DataFrame
+        Indexed by ``country_code`` and ``time``, with ``weighted`` and ``weight``. The ratio is
+        left to the caller, because a country's cells are spread across archives and a mean cannot
+        be summed.
     """
     weights = _cell_weights(gridded[["lat", "lon"]].drop_duplicates(), countries)
 
     # A cell the product did not measure carries no weight either, or the mean is biased toward zero.
     reported = gridded.dropna(subset=[PRECIPITATION]).merge(weights, on=["lat", "lon"], how="inner")
-    reported["weighted"] = reported[PRECIPITATION].astype("float64") * reported["weight"]
+    scaled = reported.assign(weighted=reported[PRECIPITATION].astype("float64") * reported["weight"])
 
-    return reported.groupby(["country_code", "time"], observed=True)[["weighted", "weight"]].sum()
+    return scaled.groupby(["country_code", "time"], observed=True)[["weighted", "weight"]].sum()
 
 
 def transform_gpcc(grids: Iterable[pd.DataFrame], world: gpd.GeoDataFrame) -> pd.DataFrame:
