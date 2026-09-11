@@ -121,7 +121,7 @@ def _key_part(value: object, described_as: str) -> str:
     return text
 
 
-def builder_fingerprint(builder: Callable[[], object], *rules: object) -> str:
+def builder_fingerprint(builder: Callable[..., object], *rules: object) -> str:
     """
     Fingerprint how an artifact is built, so a change to the builder turns over what it cached.
 
@@ -132,7 +132,8 @@ def builder_fingerprint(builder: Callable[[], object], *rules: object) -> str:
     Parameters
     ----------
     builder : callable
-        The function that produces the artifact.
+        The function that produces the artifact. Only its source is read, so its arity does not
+        matter and a transform taking arguments serves as well as a closure taking none.
     *rules : object
         Values the builder reads that its own source does not show, such as a table it consults, the
         columns it selects, or a function it calls. A function or class is read for its source and
