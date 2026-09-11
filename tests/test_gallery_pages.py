@@ -11,14 +11,18 @@ import pytest
 
 from climate_risk.data.co2 import CO2
 from climate_risk.data.fred import FRED
+from climate_risk.data.gadm import GADM
+from climate_risk.data.geo_disasters import GEO_DISASTERS
 from climate_risk.data.geonames import country_dump
 from climate_risk.data.ghsl import population_source
 from climate_risk.data.gpcc import FULL_DATA
 from climate_risk.data.hadcrut import HADCRUT
 from climate_risk.data.ipcc import IPCC
 from climate_risk.data.ocean_heat import OCEAN_HEAT
-from climate_risk.data.source import ApiSource, DataSource, VendoredSource
+from climate_risk.data.pwt import PWT
+from climate_risk.data.source import ApiSource, DataSource, ManualSource, VendoredSource
 from climate_risk.data.world_bank import WORLD_BANK
+from climate_risk.data_functions.emdat_processing import EMDAT
 from climate_risk.data_functions.rivers_data_loader import RIVERS
 
 GALLERY = Path(__file__).resolve().parents[1] / "examples"
@@ -26,14 +30,18 @@ GALLERY = Path(__file__).resolve().parents[1] / "examples"
 # Every page and the declaration it renders, keyed by the section folder and stem the gallery uses.
 # A new vignette is added here, and a license-walled source will widen the annotation to its own
 # declaration type.
-DECLARED: dict[str, DataSource | VendoredSource | ApiSource] = {
+DECLARED: dict[str, DataSource | VendoredSource | ApiSource | ManualSource] = {
     "climate/co2": CO2,
     "climate/ocean_heat": OCEAN_HEAT,
     "climate/hadcrut": HADCRUT,
     "climate/gpcc": FULL_DATA.sources[0],
     "climate/ipcc": IPCC,
+    "hazard/emdat": EMDAT,
+    "hazard/geo_disasters": GEO_DISASTERS,
     "economic/world_bank": WORLD_BANK,
     "economic/fred": FRED,
+    "economic/pwt": PWT,
+    "geospatial/gadm": GADM,
     "geospatial/ghsl": population_source(2020),
     "geospatial/geonames": country_dump("KH"),
     "geospatial/rivers": RIVERS,
