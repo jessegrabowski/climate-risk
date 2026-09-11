@@ -30,9 +30,9 @@ DECLARED: dict[str, DataSource | VendoredSource | ApiSource] = {
     "climate/hadcrut": HADCRUT,
     "climate/gpcc": FULL_DATA.sources[0],
     "climate/ipcc": IPCC,
-    "exposure/ghsl": population_source(2020),
     "economic/world_bank": WORLD_BANK,
     "economic/fred": FRED,
+    "geospatial/ghsl": population_source(2020),
 }
 
 

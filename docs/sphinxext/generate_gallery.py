@@ -34,13 +34,12 @@ GALLERY_TITLE = "Example gallery"
 # A notebook's path decides where it lands. `examples/<section>/nb.ipynb` puts it under a section
 # heading, and `examples/nb.ipynb` puts it on the page with no heading. List a folder in
 # SECTION_ORDER to pin where it sits on the page. Anything unlisted follows, alphabetically.
-SECTION_ORDER: tuple[str, ...] = ("climate", "hazard", "exposure", "economic", "geospatial")
+SECTION_ORDER: tuple[str, ...] = ("climate", "hazard", "economic", "geospatial")
 
 # Only where title-casing the folder name would get it wrong.
 SECTION_TITLES: dict[str, str] = {
     "climate": "Data: Climate",
     "hazard": "Data: Hazard",
-    "exposure": "Data: Exposure",
     "economic": "Data: Economic",
     "geospatial": "Data: Geospatial",
 }
