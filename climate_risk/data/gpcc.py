@@ -274,7 +274,7 @@ def _weighted_by_country(gridded: pd.DataFrame, countries: gpd.GeoDataFrame) -> 
 
 def transform_gpcc(grids: Iterable[pd.DataFrame], world: gpd.GeoDataFrame) -> pd.DataFrame:
     """
-    Average gridded precipitation onto countries, weighting each cell by the land it contributes.
+    Average the gridded readings onto countries, weighting each cell by the land it contributes.
 
     Every month is attributed to the boundaries ``world`` carries, which are current ones. The
     record opens in 1891, so a long series describes rainfall over a country's present-day footprint
@@ -284,14 +284,15 @@ def transform_gpcc(grids: Iterable[pd.DataFrame], world: gpd.GeoDataFrame) -> pd
     Parameters
     ----------
     grids : iterable of DataFrame
-        Gridded precipitation, one frame per archive, with ``lat``, ``lon``, ``time`` and ``precip``.
+        One frame per archive, with ``lat``, ``lon``, ``time``, ``precip`` and ``gauges``.
     world : GeoDataFrame
         Country boundaries, carrying the columns named in ``WORLD_COLUMNS``.
 
     Returns
     -------
     precipitation : DataFrame
-        One row per country and month, indexed by ``country_code`` and ``time``.
+        One row per country and month, indexed by ``country_code`` and ``time``, carrying ``precip``
+        in millimeters and ``gauges``, the stations behind an average cell.
     """
     countries = world.rename(columns=WORLD_COLUMNS)
 
@@ -381,7 +382,7 @@ def load_gpcc_data(
     repair_ISO_codes: bool = True,
 ) -> pd.DataFrame:
     """
-    Load GPCC gridded precipitation, averaged onto countries.
+    Load GPCC gridded precipitation and station counts, averaged onto countries.
 
     GPCC publishes the record as more than one product, and every product named in ``products`` is
     read and combined into a single frame.
@@ -400,7 +401,8 @@ def load_gpcc_data(
     Returns
     -------
     precipitation : DataFrame
-        One row per country and month, indexed by ``country_code`` and ``time``.
+        One row per country and month, indexed by ``country_code`` and ``time``, carrying ``precip``
+        in millimeters and ``gauges``, the stations behind an average cell.
 
     Examples
     --------
