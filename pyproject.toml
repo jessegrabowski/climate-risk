@@ -257,7 +257,17 @@ enable_error_code = ["possibly-undefined"]
 
 # No stubs exist for these, on the index or in the packages themselves.
 [[tool.mypy.overrides]]
-module = ["arviz.*", "pymc.*", "pytensor.*", "ptgp.*", "exactextract.*", "rasterio.*", "sklearn.*", "statsmodels.*"]
+module = [
+    "arviz.*",
+    "pymc.*",
+    "pymc_extras.*",
+    "pytensor.*",
+    "ptgp.*",
+    "exactextract.*",
+    "rasterio.*",
+    "sklearn.*",
+    "statsmodels.*",
+]
 ignore_missing_imports = true
 
 # Test functions carry no annotations, so their bodies need checking on their own terms.
