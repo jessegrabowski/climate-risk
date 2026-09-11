@@ -42,10 +42,9 @@ def dissolve_place_boundary(boundary: gpd.GeoDataFrame, *, iso3: str | None = No
     boundary : GeoDataFrame
         The place's geometry, in any CRS.
     iso3 : str, optional
-        Code to label the geometry with when it carries no ``ISO_A3`` column. It labels, and never
-        filters: a frame that already carries the column is dissolved whole, whatever is passed
-        here, so select the country first. Default None, which requires the geometry to label
-        itself.
+        Code to label the geometry with when it carries no ``ISO_A3`` column. A geometry that labels
+        itself keeps its own codes, so passing one that disagrees is refused rather than ignored.
+        Default None, which requires the geometry to label itself.
 
     Returns
     -------
@@ -74,6 +73,13 @@ def dissolve_place_boundary(boundary: gpd.GeoDataFrame, *, iso3: str | None = No
     if not labeled and iso3 is None:
         raise DataValidationError(
             f"The geometry carries no {ISO_COLUMN} column, so pass iso3 to say which country it covers."
+        )
+
+    if labeled and iso3 is not None and set(boundary[ISO_COLUMN]) != {iso3}:
+        carried = sorted(set(boundary[ISO_COLUMN]))
+        raise DataValidationError(
+            f"The boundary carries {len(carried)} code(s), {carried[:3]}, so iso3={iso3!r} would not "
+            f"label it and every country in it would be dissolved. Select the country first."
         )
 
     located = boundary.to_crs(GEOGRAPHIC_CRS)
