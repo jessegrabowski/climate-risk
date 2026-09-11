@@ -26,6 +26,8 @@ _spec.loader.exec_module(gallery)
 
 SHIPPED_PLACEHOLDER = EXTENSION.parent / "no_thumbnail.png"
 
+PUBLISHED_EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
+
 
 def png(width: int, height: int, *, grayscale: bool = False) -> str:
     """Return a base64 PNG, single-channel when grayscale, which matplotlib reads as a 2D array."""
@@ -185,6 +187,17 @@ def test_sections_follow_the_declared_order(examples, tmp_path):
     page, _, _ = render(examples, tmp_path)
 
     assert page.index("Data: Climate") < page.index("Aaa Other")
+
+
+def test_every_published_section_is_declared():
+    """Every other test here renders a fixture, so nothing looks at the sections the repository
+    actually publishes. A folder in neither constant still renders, last on the page and headed by
+    its own name title-cased, which is a section heading nobody chose.
+    """
+    sections = {path.parent.name for path in PUBLISHED_EXAMPLES.glob("*/*.ipynb")}
+
+    assert sections <= set(gallery.SECTION_ORDER)
+    assert sections <= set(gallery.SECTION_TITLES)
 
 
 def test_an_unsectioned_notebook_leads_the_page(examples, tmp_path):
