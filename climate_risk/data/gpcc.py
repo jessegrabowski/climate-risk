@@ -279,7 +279,7 @@ def transform_gpcc(grids: Iterable[pd.DataFrame], world: gpd.GeoDataFrame) -> pd
     return (summed["weighted"] / summed["weight"]).rename(PRECIPITATION).to_frame()
 
 
-def reading_fingerprint() -> str:
+def _reading_fingerprint() -> str:
     """
     Digest the rules that turn grids into country readings.
 
@@ -408,7 +408,7 @@ def load_gpcc_data(
             "repaired_iso": repair_ISO_codes,
             "coverage": coverage_of(products),
             "precision": "float64",
-            "reading": reading_fingerprint(),
+            "reading": _reading_fingerprint(),
         },
         force=force_reload,
     )
