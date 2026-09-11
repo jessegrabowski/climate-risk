@@ -61,6 +61,24 @@ def test_cold_run_aggregates_precipitation_by_country(write_gpcc_archives, write
     assert sorted(frame.index.get_level_values("country_code").unique()) == ["AAA", "BBB", "CCC"]
 
 
+def test_each_product_is_read_under_its_own_grid_names(write_gpcc_archives, write_shapefile_cache):
+    """The full-data archives name the grids `precip` and `numgauge`, the monitoring ones `p` and
+    `s`. Wiring either product to the wrong pair swaps its two columns without raising, because
+    both grids are read and both are floats.
+    """
+    cache_dir = write_gpcc_archives()
+    write_shapefile_cache("world", toy_world())
+
+    frame = load_gpcc_data(cache_dir, products=toy_gpcc_products(), repair_ISO_codes=False)
+    full_data = frame.xs(pd.Timestamp("1981-01-01"), level="time")
+    monitoring = frame.xs(pd.Timestamp("2021-01-01"), level="time")
+
+    assert full_data.loc["AAA", "precip"] == pytest.approx(0.0)
+    assert full_data.loc["AAA", "gauges"] == pytest.approx(2.0)
+    assert monitoring.loc["CCC", "precip"] == pytest.approx(2.0)
+    assert monitoring.loc["CCC", "gauges"] == pytest.approx(4.0)
+
+
 def test_the_cache_is_written_in_double_precision(write_gpcc_archives, write_shapefile_cache):
     """The archives are float32, and every total taken from this cache adds partial results.
 
