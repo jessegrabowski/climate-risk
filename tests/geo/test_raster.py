@@ -56,13 +56,32 @@ def test_a_region_keeps_one_row_per_country():
     assert dissolved.loc[dissolved["ISO_A3"] == "LAO"].geometry.iloc[0].equals(box(0, 0, 2, 1))
 
 
-def test_a_labeled_boundary_ignores_the_fallback_code():
-    """A geometry that labels itself wins, matching `create_grid_from_shape`. Stamping the caller's
-    code over a multi-country slice would relabel every country as one.
+def test_a_fallback_code_the_boundary_disagrees_with_is_refused():
+    """A geometry that labels itself keeps its own codes, so stamping the caller's over it would
+    relabel every country as one. Returning the boundary unchanged instead hands back a result that
+    is not the country asked for, and gridding it lays a lattice over all of them.
     """
-    dissolved = dissolve_place_boundary(tiles([(0, 0, 1, 1)], ISO_A3=["THA"]), iso3="LAO")
+    with pytest.raises(DataValidationError, match="iso3='LAO'"):
+        dissolve_place_boundary(tiles([(0, 0, 1, 1)], ISO_A3=["THA"]), iso3="LAO")
 
-    assert dissolved["ISO_A3"].tolist() == ["THA"]
+
+def test_a_fallback_code_the_boundary_agrees_with_is_allowed():
+    """A place resolves either to its own archive, which carries no code, or to a world slice, which
+    does. A caller handling both passes iso3 either way, and it is right both times.
+    """
+    dissolved = dissolve_place_boundary(tiles([(0, 0, 1, 1)], ISO_A3=["LAO"]), iso3="LAO")
+
+    assert dissolved["ISO_A3"].tolist() == ["LAO"]
+
+
+def test_a_fallback_code_carried_alongside_others_is_refused():
+    """Carrying the code asked for is not enough, because the rest are dissolved along with it. This
+    is the world shapefile passed whole, which yields one geometry spanning every country in it.
+    """
+    several = tiles([(0, 0, 1, 1), (5, 5, 6, 6)], ISO_A3=["THA", "LAO"])
+
+    with pytest.raises(DataValidationError, match="carries 2 codes"):
+        dissolve_place_boundary(several, iso3="LAO")
 
 
 def test_the_boundary_comes_back_in_the_geographic_crs():

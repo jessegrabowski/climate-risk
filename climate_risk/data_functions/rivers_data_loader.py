@@ -5,7 +5,7 @@ from zipfile import ZipFile
 
 import geopandas as gpd
 
-from climate_risk.data.cache import cached, geo_parquet
+from climate_risk.data.cache import builder_fingerprint, cached, geo_parquet
 from climate_risk.data.fetch import fetch
 from climate_risk.data.source import DataSource
 
@@ -104,10 +104,12 @@ def load_rivers_data(cache_dir: Path, *, include_medium: bool = False) -> gpd.Ge
     def build() -> gpd.GeoDataFrame:
         return transform_rivers(gpd.read_file(_extract_rivers(cache_dir)), cutoff)
 
+    reading = builder_fingerprint(build, transform_rivers, RIVERS_MEMBER)
+
     return cached(
         cache_dir / RIVERS_SUBDIRECTORY,
         "rivers",
         build,
         geo_parquet(),
-        params={"discharge_class_below": cutoff},
+        params={"discharge_class_below": cutoff, "reading": reading},
     )

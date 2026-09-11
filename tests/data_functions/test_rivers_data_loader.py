@@ -46,22 +46,19 @@ def test_cold_cache_reaches_for_the_archive(tmp_path):
         load_rivers_data(tmp_path)
 
 
-@pytest.mark.xfail(reason="load_rivers_data fingerprints no builder, so the entry is blind to its own rules")
 def test_editing_the_filter_turns_the_cache_over(tmp_path, monkeypatch):
-    """The entry records the cutoff asked for and nothing about how the network was read, so a
-    changed `transform_rivers` is served the rivers the old one produced.
-
-    The cache is built by running the loader rather than by writing the file, because a fingerprint
-    joining the key changes the filename, and a seeded file would then go stale for its own reason
-    rather than for the one under test.
+    """The entry keys on how the network was read as well as on the cutoff, so a changed
+    `transform_rivers` builds a second entry rather than being served the first one's rivers.
     """
     shapefile = tmp_path / "network.shp"
     toy_rivers().to_file(shapefile)
     monkeypatch.setattr(rivers_data_loader, "_extract_rivers", lambda cache_dir: shapefile)
 
-    load_rivers_data(tmp_path)
+    first = load_rivers_data(tmp_path)
 
     monkeypatch.setattr(rivers_data_loader, "transform_rivers", lambda rivers, cutoff: rivers.iloc[:0])
-    load_rivers_data(tmp_path)
+    second = load_rivers_data(tmp_path)
 
+    assert first["ORD_FLOW"].tolist() == [4]
+    assert second.empty, "the changed filter was served the first entry's rivers"
     assert len(list((tmp_path / "rivers").glob("rivers__*.parquet"))) == 2
