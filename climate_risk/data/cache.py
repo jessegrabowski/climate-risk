@@ -2,6 +2,7 @@ import hashlib
 import inspect
 import logging
 import os
+import re
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -20,6 +21,9 @@ VALUE_SEPARATOR = "="
 # one carrying a key separator would make two different parameter sets collide on a single entry. A
 # dot collides the same way: the suffix is taken from the last one, so `4.1` and `4.2` name one file.
 FORBIDDEN_IN_KEY = ("/", "\\", ".", PARAMETER_SEPARATOR, VALUE_SEPARATOR)
+
+# The tail of the repr Python gives an object that defines none: the address moves every process.
+DEFAULT_REPR_ADDRESS = re.compile(r" at 0x[0-9a-fA-F]+>")
 
 
 @dataclass(frozen=True, slots=True)
@@ -130,18 +134,30 @@ def builder_fingerprint(builder: Callable[[], object], *rules: object) -> str:
     builder : callable
         The function that produces the artifact.
     *rules : object
-        Values the builder reads that its own source does not show, such as a table it consults or
-        the columns it selects. Each must repr the same way in every process, or the digest moves
-        between runs and nothing ever reads back.
+        Values the builder reads that its own source does not show, such as a table it consults, the
+        columns it selects, or a function it calls. A function or class is read for its source and
+        everything else for its repr, which must be the same in every process.
 
     Returns
     -------
     fingerprint : str
         A short digest of the builder's source and the rules it was given.
     """
-    declared = inspect.getsource(builder) + "".join(repr(rule) for rule in rules)
+    declared = inspect.getsource(builder) + "".join(_rule_text(rule) for rule in rules)
 
     return hashlib.sha256(declared.encode()).hexdigest()[:12]
+
+
+def _rule_text(rule: object) -> str:
+    """Return what a rule contributes to the digest, taken from its source where it has one."""
+    if inspect.isroutine(rule) or inspect.isclass(rule):
+        return inspect.getsource(rule)
+
+    text = repr(rule)
+    if DEFAULT_REPR_ADDRESS.search(text):
+        raise ValueError(f"a rule whose repr carries an object address cannot key a cache entry: {text}")
+
+    return text
 
 
 def cached[T](
