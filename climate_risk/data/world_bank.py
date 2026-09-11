@@ -38,21 +38,17 @@ def _read_countries() -> tuple[dict[str, str], list[str]]:
 
 COUNTRY_CODE_BY_NAME, REQUESTED_COUNTRY_CODES = _read_countries()
 
-# KD is constant 2015 US$. The CD variant carries inflation and the exchange rate.
+# One panel, because these are one country-year grid from one API. A column name carries the price
+# base wherever the same quantity is published on more than one: KD is constant 2015 US dollars and
+# KN is constant local currency, so the ratios the model forms within a country share one unit.
 INDICATOR_NAMES = {
     "EN.POP.DNST": "population_density",
-    "NY.GDP.PCAP.KD": "gdp_per_cap",
-    "SP.POP.TOTL": "Population",
-    "NY.GDP.MKTP.KD": "real_gdp",
+    "NY.GDP.PCAP.KD": "gdp_per_cap_usd",
+    "SP.POP.TOTL": "population",
+    "NY.GDP.MKTP.KD": "real_gdp_usd",
     "AG.SRF.TOTL.K2": "surface_area_km2",
-}
-
-WB_INDICATORS = list(INDICATOR_NAMES)
-
-# The national accounts, prices, rates and fiscal aggregates the small open economy model is
-# estimated on. KN is constant local currency, so the ratios the model forms within a country share
-# one unit. The KD variant converts at a market exchange rate.
-MACRO_INDICATOR_NAMES = {
+    # The national accounts, prices, rates and fiscal aggregates the small open economy model is
+    # estimated on.
     "NY.GDP.MKTP.KN": "real_gdp_lcu",
     "NE.CON.PRVT.KN": "real_consumption_lcu",
     "NE.GDI.FTOT.KN": "real_investment_lcu",
@@ -63,8 +59,6 @@ MACRO_INDICATOR_NAMES = {
     # which is what carries import prices when no import price index is available.
     "NE.CON.PRVT.CN": "nominal_consumption",
     "NE.GDI.FTOT.CN": "nominal_investment",
-    # Model quantities are per capita.
-    "SP.POP.TOTL": "population",
     "FP.CPI.TOTL": "cpi",
     "NY.GDP.DEFL.ZS": "gdp_deflator",
     "PA.NUS.FCRF": "exchange_rate",
@@ -78,7 +72,7 @@ MACRO_INDICATOR_NAMES = {
     "GC.XPN.TOTL.GD.ZS": "government_expense_gdp",
 }
 
-WB_MACRO_INDICATORS = list(MACRO_INDICATOR_NAMES)
+WB_INDICATORS = list(INDICATOR_NAMES)
 
 # Earlier than any indicator's coverage, so the series starts wherever the data does.
 FIRST_YEAR = 1900
@@ -124,47 +118,25 @@ def transform_world_bank(raw: pl.DataFrame, indicator_names: Mapping[str, str]) 
     )
 
 
-def _load_indicators(
-    cache_dir: Path,
-    name: str,
-    indicator_names: Mapping[str, str],
-    *,
-    force_reload: bool,
-) -> pl.DataFrame:
-    """
-    Download ``indicator_names`` for every requested country and cache the panel under ``name``.
-
-    The entry is keyed on how it was built as well as on ``name``, so that editing
-    ``indicator_names`` turns it over instead of reading back what an earlier set produced.
-    """
-
-    def build() -> pl.DataFrame:
-        _log.info(f"Downloading {len(indicator_names)} World Bank indicators for {name}")
-        downloaded = wb.download(
-            indicator=list(indicator_names),
-            country=REQUESTED_COUNTRY_CODES,
-            start=FIRST_YEAR,
-            end=None,
-            output_type="polars",
-        )
-        if not isinstance(downloaded, pl.DataFrame):
-            raise TypeError(f"kuznets returned a {type(downloaded).__name__} for output_type='polars'")
-
-        return transform_world_bank(downloaded, indicator_names)
-
-    return cached(
-        cache_dir,
-        name,
-        build,
-        polars_parquet(),
-        params={"reading": builder_fingerprint(build, indicator_names)},
-        force=force_reload,
-    )
-
-
 def load_wb_data(cache_dir: Path, *, force_reload: bool = False) -> pl.DataFrame:
     """
-    Return the population, area and output panel, one row per country and year.
+    Return the World Bank panel, one row per country and year.
+
+    Every indicator lands in one frame because they are one country-year grid from one API. The
+    entry is keyed on how it was built as well as on its name, so editing ``INDICATOR_NAMES`` or the
+    country table turns it over instead of reading back what an earlier set produced.
+
+    Parameters
+    ----------
+    cache_dir : Path
+        Directory the source caches live under.
+    force_reload : bool, optional
+        Download again and rebuild the cache rather than reading it. Default False.
+
+    Returns
+    -------
+    indicators : DataFrame
+        One row per country and year, one column per indicator under its readable name.
 
     Examples
     --------
@@ -176,29 +148,21 @@ def load_wb_data(cache_dir: Path, *, force_reload: bool = False) -> pl.DataFrame
 
         indicators = load_wb_data(Path("data"))
     """
-    return _load_indicators(cache_dir, "world_bank", INDICATOR_NAMES, force_reload=force_reload)
 
+    def build() -> pl.DataFrame:
+        _log.info(f"Downloading {len(INDICATOR_NAMES)} World Bank indicators")
+        downloaded = wb.download(
+            indicator=WB_INDICATORS,
+            country=REQUESTED_COUNTRY_CODES,
+            start=FIRST_YEAR,
+            end=None,
+            output_type="polars",
+        )
+        if not isinstance(downloaded, pl.DataFrame):
+            raise TypeError(f"kuznets returned a {type(downloaded).__name__} for output_type='polars'")
 
-def load_wb_macro_data(cache_dir: Path, *, force_reload: bool = False) -> pl.DataFrame:
-    """
-    Return the macroeconomic panel the small open economy model is estimated on, one row per country
-    and year.
+        return transform_world_bank(downloaded, INDICATOR_NAMES)
 
-    The World Bank publishes these indicators annually, and they are returned at that frequency.
+    reading = builder_fingerprint(build, INDICATOR_NAMES, COUNTRY_CODE_BY_NAME, REQUESTED_COUNTRY_CODES)
 
-    Examples
-    --------
-    .. code-block:: python
-
-        from pathlib import Path
-
-        from climate_risk.data.world_bank import load_wb_macro_data
-
-        macro = load_wb_macro_data(Path("data"))
-    """
-    return _load_indicators(
-        cache_dir,
-        "world_bank_macro",
-        MACRO_INDICATOR_NAMES,
-        force_reload=force_reload,
-    )
+    return cached(cache_dir, "world_bank", build, polars_parquet(), params={"reading": reading}, force=force_reload)

@@ -205,6 +205,56 @@ def test_a_builder_closing_over_different_values_fingerprints_the_same():
     assert builder_fingerprint(builder_for("LAO")) == builder_fingerprint(builder_for("ZMB"))
 
 
+def test_two_copies_of_one_function_fingerprint_the_same():
+    """The loaders pass their transform as a rule, and a function's repr carries its address, so a
+    rule read for its repr keys an entry the next process cannot find. Building the function twice
+    is how a fresh process differs from this one: same source, different address.
+    """
+
+    def build() -> str:
+        return "unchanged"
+
+    def make_transform():
+        def transform(frame):
+            return frame
+
+        return transform
+
+    first, second = make_transform(), make_transform()
+
+    assert builder_fingerprint(build, first) == builder_fingerprint(build, second)
+
+
+def test_editing_a_function_rule_fingerprints_differently():
+    """Reading the function for its source is only worth doing if the source is what is read."""
+
+    def build() -> str:
+        return "unchanged"
+
+    def transform(frame):
+        return frame
+
+    def transform_differently(frame):
+        return frame.head()
+
+    assert builder_fingerprint(build, transform) != builder_fingerprint(build, transform_differently)
+
+
+def test_a_rule_whose_repr_carries_an_address_is_refused():
+    """Python's default repr carries the object's address, so an entry keyed on one is written and
+    never read back. Refusing is the only way that surfaces, since a miss just rebuilds.
+    """
+
+    def build() -> str:
+        return "unchanged"
+
+    class Rule:
+        pass
+
+    with pytest.raises(ValueError, match="object address"):
+        builder_fingerprint(build, Rule())
+
+
 def test_a_builder_reading_a_different_table_fingerprints_differently():
     """A builder's source does not show the module tables it consults, so changing one changes the
     artifact with nothing in the key to say so."""

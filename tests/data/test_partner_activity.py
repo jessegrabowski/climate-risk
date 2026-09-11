@@ -159,7 +159,7 @@ def test_a_warm_cache_reaches_neither_upstream(tmp_path, monkeypatch):
     """Both upstreams are read inside the builder, so a second call must reach neither."""
     reached = []
 
-    def fake_load_wb_macro_data(*args, **kwargs):
+    def fake_load_wb_data(*args, **kwargs):
         reached.append("world_bank")
         return outputs([("THA", 2015, 100.0), ("THA", 2016, 200.0)])
 
@@ -170,7 +170,7 @@ def test_a_warm_cache_reaches_neither_upstream(tmp_path, monkeypatch):
         def read(self):
             return exported([one_year("LAO", "THA", 50.0)])
 
-    monkeypatch.setattr(partner_activity, "load_wb_macro_data", fake_load_wb_macro_data)
+    monkeypatch.setattr(partner_activity, "load_wb_data", fake_load_wb_data)
     monkeypatch.setattr(partner_activity.imf, "IMTSReader", FakeReader)
     cold = load_partner_activity(tmp_path, ["LAO"], base_year=2015, first_year=2015, last_year=2016)
     reached.clear()
@@ -196,7 +196,7 @@ def test_the_countries_asked_for_key_the_cache_in_any_order(tmp_path, monkeypatc
 
     monkeypatch.setattr(
         partner_activity,
-        "load_wb_macro_data",
+        "load_wb_data",
         lambda *a, **k: outputs([("THA", 2015, 100.0), ("THA", 2016, 200.0)]),
     )
     monkeypatch.setattr(partner_activity.imf, "IMTSReader", FakeReader)

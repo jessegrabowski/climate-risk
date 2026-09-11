@@ -24,7 +24,6 @@ These fetch on a cold cache, read from disk on a warm one, and re-fetch under ``
     ~gpcc.load_gpcc_data
     ~ipcc.process_ipcc_scenarios
     ~world_bank.load_wb_data
-    ~world_bank.load_wb_macro_data
     ~fred.load_fred_data
     ~partner_activity.load_partner_activity
     ~ghsl.population_on_cells

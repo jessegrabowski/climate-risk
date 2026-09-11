@@ -10,28 +10,33 @@ from pathlib import Path
 import pytest
 
 from climate_risk.data.co2 import CO2
+from climate_risk.data.fred import FRED
 from climate_risk.data.gpcc import FULL_DATA
 from climate_risk.data.hadcrut import HADCRUT
 from climate_risk.data.ipcc import IPCC
 from climate_risk.data.ocean_heat import OCEAN_HEAT
-from climate_risk.data.source import DataSource, VendoredSource
+from climate_risk.data.source import ApiSource, DataSource, VendoredSource
+from climate_risk.data.world_bank import WORLD_BANK
 
-PAGES = Path(__file__).resolve().parents[1] / "examples" / "climate"
+GALLERY = Path(__file__).resolve().parents[1] / "examples"
 
-# Every page and the declaration it renders. A new vignette is added here, and a license-walled
-# source will widen the annotation to its own declaration type.
-DECLARED: dict[str, DataSource | VendoredSource] = {
-    "co2": CO2,
-    "ocean_heat": OCEAN_HEAT,
-    "hadcrut": HADCRUT,
-    "gpcc": FULL_DATA.sources[0],
-    "ipcc": IPCC,
+# Every page and the declaration it renders, keyed by the section folder and stem the gallery uses.
+# A new vignette is added here, and a license-walled source will widen the annotation to its own
+# declaration type.
+DECLARED: dict[str, DataSource | VendoredSource | ApiSource] = {
+    "climate/co2": CO2,
+    "climate/ocean_heat": OCEAN_HEAT,
+    "climate/hadcrut": HADCRUT,
+    "climate/gpcc": FULL_DATA.sources[0],
+    "climate/ipcc": IPCC,
+    "economic/world_bank": WORLD_BANK,
+    "economic/fred": FRED,
 }
 
 
 def provenance(name: str) -> str:
     """Return the provenance table a page last committed, as the markdown its cell emitted."""
-    notebook = json.loads((PAGES / f"{name}.ipynb").read_text())
+    notebook = json.loads((GALLERY / f"{name}.ipynb").read_text())
     tables = [
         "".join(output["data"]["text/markdown"])
         for cell in notebook["cells"]
@@ -44,9 +49,12 @@ def provenance(name: str) -> str:
     return tables[0]
 
 
-def test_every_declared_page_exists():
-    """A renamed or moved page would otherwise leave its entry here checking nothing."""
-    assert sorted(DECLARED) == sorted(path.stem for path in PAGES.glob("*.ipynb"))
+def test_every_gallery_page_is_declared():
+    """A page in a section nobody listed here is a page nothing checks, which is how a whole
+    section joins the gallery unnoticed."""
+    published = {f"{path.parent.name}/{path.stem}" for path in GALLERY.glob("*/*.ipynb")}
+
+    assert sorted(DECLARED) == sorted(published)
 
 
 @pytest.mark.parametrize("name", DECLARED, ids=DECLARED)

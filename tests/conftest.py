@@ -239,7 +239,7 @@ def seed_world_bank_cache(cache_dir, rows):
     they use are not names the World Bank publishes.
     """
     panel = pl.DataFrame(
-        rows, schema=["country_code", "year", "gdp_per_cap", "population_density", "Population"], orient="row"
+        rows, schema=["country_code", "year", "gdp_per_cap_usd", "population_density", "population"], orient="row"
     )
     with (
         mock.patch.object(world_bank.wb, "download", lambda **kwargs: pl.DataFrame()),
