@@ -664,7 +664,10 @@ def write_rivers_cache(tmp_path, monkeypatch):
     """
 
     def write(gdf, include_medium=False):
-        network = tmp_path / f"network_{len(gdf)}_{include_medium}.shp"
+        # Outside the cache directory, because a shapefile is five files and none of them are cache.
+        source = tmp_path / "networks"
+        source.mkdir(exist_ok=True)
+        network = source / f"network_{len(gdf)}_{include_medium}.shp"
         gdf.to_file(network)
 
         with monkeypatch.context() as patch:

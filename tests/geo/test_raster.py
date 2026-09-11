@@ -74,14 +74,14 @@ def test_a_fallback_code_the_boundary_agrees_with_is_allowed():
     assert dissolved["ISO_A3"].tolist() == ["LAO"]
 
 
-def test_the_world_shapefile_passed_with_a_code_is_refused():
-    """The world shapefile carries every country, so labeling it with one code and dissolving
-    yields a single geometry spanning the planet, and gridding that lays a lattice over all of it.
+def test_a_fallback_code_carried_alongside_others_is_refused():
+    """Carrying the code asked for is not enough, because the rest are dissolved along with it. This
+    is the world shapefile passed whole, which yields one geometry spanning every country in it.
     """
-    world = tiles([(0, 0, 1, 1), (5, 5, 6, 6)], ISO_A3=["THA", "LAO"])
+    several = tiles([(0, 0, 1, 1), (5, 5, 6, 6)], ISO_A3=["THA", "LAO"])
 
     with pytest.raises(DataValidationError, match="carries 2 codes"):
-        dissolve_place_boundary(world, iso3="LAO")
+        dissolve_place_boundary(several, iso3="LAO")
 
 
 def test_the_boundary_comes_back_in_the_geographic_crs():

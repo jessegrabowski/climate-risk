@@ -54,9 +54,11 @@ def test_editing_the_filter_turns_the_cache_over(tmp_path, monkeypatch):
     toy_rivers().to_file(shapefile)
     monkeypatch.setattr(rivers_data_loader, "_extract_rivers", lambda cache_dir: shapefile)
 
-    load_rivers_data(tmp_path)
+    first = load_rivers_data(tmp_path)
 
     monkeypatch.setattr(rivers_data_loader, "transform_rivers", lambda rivers, cutoff: rivers.iloc[:0])
-    load_rivers_data(tmp_path)
+    second = load_rivers_data(tmp_path)
 
+    assert first["ORD_FLOW"].tolist() == [4]
+    assert second.empty, "the changed filter was served the first entry's rivers"
     assert len(list((tmp_path / "rivers").glob("rivers__*.parquet"))) == 2
