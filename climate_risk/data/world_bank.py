@@ -21,8 +21,9 @@ WORLD_BANK = ApiSource(
     retrieved="2026-09-05",
 )
 
-# Every country name the World Bank can return, its ISO code, and whether we ask for it. The rows
-# it does not request are the Bank's regional and income aggregates, which are not countries.
+# Every country name the World Bank can return, its ISO code, and whether we ask for it. Most
+# unrequested rows are the Bank's regional and income aggregates, which are not countries. Hong
+# Kong, Israel, Macao and West Bank and Gaza are unrequested too, and the Bank does report them.
 COUNTRIES_FILE = Path(__file__).parent / "world_bank_countries.csv"
 
 
