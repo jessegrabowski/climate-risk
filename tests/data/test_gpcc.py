@@ -6,12 +6,14 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from shapely.geometry import box
+
 from climate_risk.data.gpcc import GPCC_PRODUCTS, PRECIPITATION, _as_timestamps, load_gpcc_data, transform_gpcc
 from tests.conftest import TOY_ARCHIVES, toy_gpcc_products, toy_world
 
-# Stated literally, so a wrong cache key fails rather than agreeing with itself. The span is the
-# toy manifest's, not the published one.
-UNREPAIRED_CACHE = "gpcc__coverage=1981-2021__precision=float64__repaired_iso=False.parquet"
+# Every parameter but the reading digest is spelled out, so a key that lost one fails rather than
+# agreeing with whatever the loader happened to write. The span is the toy manifest's.
+UNREPAIRED_CACHE = "gpcc__coverage=1981-2021__precision=float64__reading=*__repaired_iso=False.parquet"
 
 
 def gridded(rows) -> pd.DataFrame:
@@ -63,7 +65,7 @@ def test_the_cold_run_writes_the_cache_it_will_read(write_gpcc_archives, write_s
 
     load_gpcc_data(cache_dir, products=toy_gpcc_products(), repair_ISO_codes=False)
 
-    assert (cache_dir / UNREPAIRED_CACHE).exists()
+    assert len(list(cache_dir.glob(UNREPAIRED_CACHE))) == 1
 
 
 def test_the_monitoring_dates_are_decoded_rather_than_read_as_numbers(write_gpcc_archives, write_shapefile_cache):
@@ -127,11 +129,15 @@ def test_a_warm_cache_does_not_touch_the_archives(write_gpcc_archives, write_sha
 
 
 def test_cells_are_averaged_per_country_and_month():
+    """Half-degree cells on one row, so the two inside AAA sit at one latitude and weigh the same."""
     grid = gridded(
         [
-            ("1981-01-01", 0.5, 0.5, 4.0),
-            ("1981-01-01", 0.75, 0.75, 6.0),
-            ("1981-01-01", 0.5, 2.5, 100.0),
+            ("1981-01-01", 0.5, 0.25, 4.0),
+            ("1981-01-01", 0.5, 0.75, 6.0),
+            ("1981-01-01", 0.5, 1.25, 0.0),
+            ("1981-01-01", 0.5, 1.75, 0.0),
+            ("1981-01-01", 0.5, 2.25, 100.0),
+            ("1981-01-01", 0.5, 2.75, 100.0),
         ]
     )
 
@@ -141,8 +147,65 @@ def test_cells_are_averaged_per_country_and_month():
     assert monthly.loc[("BBB", pd.Timestamp("1981-01-01")), "precip"] == pytest.approx(100.0)
 
 
+def test_a_country_smaller_than_a_cell_still_gets_a_value():
+    """No cell center falls inside a country this small, so joining on centers leaves it with no
+    precipitation at all rather than with the reading over the ground it sits on.
+    """
+    tiny = gpd.GeoDataFrame(
+        {
+            "ISO_A3": ["AAA"],
+            "FORMAL_EN": ["Aland"],
+            "CONTINENT": ["Asia"],
+            "REGION_UN": ["Asia"],
+            "geometry": [box(0.1, 0.1, 0.3, 0.3)],
+        },
+        crs="EPSG:4326",
+    )
+    grid = gridded(
+        [
+            ("1981-01-01", 0.5, 0.5, 7.0),
+            ("1981-01-01", 0.5, 1.5, 99.0),
+            ("1981-01-01", 1.5, 0.5, 99.0),
+            ("1981-01-01", 1.5, 1.5, 99.0),
+        ]
+    )
+
+    monthly = transform_gpcc([grid], tiny)
+
+    assert monthly.loc[("AAA", pd.Timestamp("1981-01-01")), "precip"] == pytest.approx(7.0)
+
+
+def test_a_cell_counts_only_for_the_land_it_holds():
+    """The country fills one cell and half of the next, so the fuller cell carries twice the weight.
+    An unweighted mean of the two would read 1.5 instead.
+    """
+    straddling = gpd.GeoDataFrame(
+        {
+            "ISO_A3": ["AAA"],
+            "FORMAL_EN": ["Aland"],
+            "CONTINENT": ["Asia"],
+            "REGION_UN": ["Asia"],
+            "geometry": [box(0.0, 0.0, 1.5, 1.0)],
+        },
+        crs="EPSG:4326",
+    )
+    grid = gridded([("1981-01-01", 0.5, 0.5, 0.0), ("1981-01-01", 0.5, 1.5, 3.0)])
+
+    monthly = transform_gpcc([grid], straddling)
+
+    assert monthly.loc[("AAA", pd.Timestamp("1981-01-01")), "precip"] == pytest.approx(1.0)
+
+
 def test_cells_over_the_ocean_are_dropped():
-    grid = gridded([("1981-01-01", 0.5, 0.5, 4.0), ("1981-01-01", 50.0, 50.0, 999.0)])
+    """The countries of `toy_world` all lie below one degree north, so the upper row is open water."""
+    grid = gridded(
+        [
+            ("1981-01-01", 0.5, 0.5, 4.0),
+            ("1981-01-01", 0.5, 1.5, 999.0),
+            ("1981-01-01", 1.5, 0.5, 999.0),
+            ("1981-01-01", 1.5, 1.5, 999.0),
+        ]
+    )
 
     monthly = transform_gpcc([grid], toy_world())
 

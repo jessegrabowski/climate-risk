@@ -16,7 +16,7 @@ import xarray as xr
 from shapely.geometry import LineString, Point, box
 
 from climate_risk.data import world_bank
-from climate_risk.data.gpcc import GriddedProduct
+from climate_risk.data.gpcc import GriddedProduct, reading_fingerprint
 from climate_risk.data.ocean_heat import OCEAN_HEAT, OCEAN_HEAT_BASELINE_OFFSET
 from climate_risk.data.osm import LOOKUP_COLUMNS
 from climate_risk.data.source import DataSource
@@ -187,8 +187,11 @@ def toy_monitoring(year, month):
 TOY_ARCHIVES = ("full_data_monthly_v2022_1981_1990_10.nc.gz", "monitoring_v2022_10_2021_01.nc.gz")
 
 # The processed cache the published manifest writes. The key carries the span, so extending the
-# record renames the entry instead of shadowing it.
-GPCC_CACHE_FILE = "gpcc__coverage=1891-2025__precision=float64__repaired_iso=True.parquet"
+# record renames the entry instead of shadowing it. Every parameter is spelled out but the reading
+# digest, which cannot be, so a key that loses one of the others still fails here.
+GPCC_CACHE_FILE = (
+    f"gpcc__coverage=1891-2025__precision=float64__reading={reading_fingerprint()}__repaired_iso=True.parquet"
+)
 
 
 def toy_gpcc_products() -> tuple[GriddedProduct, ...]:

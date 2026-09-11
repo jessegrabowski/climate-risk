@@ -12,11 +12,11 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from climate_risk.data.cache import cached, pandas_parquet
+from climate_risk.data.cache import builder_fingerprint, cached, pandas_parquet
 from climate_risk.data.fetch import fetch
 from climate_risk.data.source import DataSource
 from climate_risk.data_functions.shapefiles_data_loader import load_shapefile
-from climate_risk.geo.crs import GEOGRAPHIC_CRS
+from climate_risk.geo.raster import cell_areas_km2, cell_coverage
 
 _log = logging.getLogger(__name__)
 
@@ -143,24 +143,113 @@ WORLD_COLUMNS = {
 }
 
 
-def _land_cells(gridded: pd.DataFrame, countries: gpd.GeoDataFrame) -> pd.DataFrame:
-    """
-    Label each grid row with the country it falls in, dropping the rows that fall in no country.
+# Used when a grid holds a single cell along both axes and so states no spacing of its own. Every
+# country then draws on one cell, whose size scales its weight alone and divides back out.
+LONE_CELL_DEGREES = 1.0
 
-    The grid repeats the same lat/lon cells for every month it covers and the boundaries do not
-    move, so the join runs once over the distinct cells rather than once per row.
-    """
-    cells = gridded[["lat", "lon"]].drop_duplicates()
-    located = gpd.GeoDataFrame(
-        cells, geometry=gpd.points_from_xy(cells["lon"], cells["lat"]), crs=GEOGRAPHIC_CRS
-    ).sjoin(countries, how="inner", predicate="intersects")[["lat", "lon", "country_code"]]
 
-    return gridded.merge(located, on=["lat", "lon"], how="inner")[["time", PRECIPITATION, "country_code"]]
+def _axis_steps(latitudes: np.ndarray, longitudes: np.ndarray) -> tuple[float, float]:
+    """
+    Return the latitude and longitude spacing of an evenly spaced grid.
+
+    Each axis takes the other's spacing where it holds a single cell, which leaves every weight on
+    that axis scaled alike and so cancels out of the mean.
+
+    Parameters
+    ----------
+    latitudes : ndarray
+        The grid's distinct latitudes, descending.
+    longitudes : ndarray
+        The grid's distinct longitudes, ascending.
+
+    Returns
+    -------
+    latitude_step : float
+        Angular cell height, in degrees.
+    longitude_step : float
+        Angular cell width, in degrees.
+    """
+
+    def spacing(axis: np.ndarray, name: str) -> float | None:
+        if len(axis) < 2:
+            return None
+
+        gaps = np.abs(np.diff(axis))
+        # The cell a weight is measured over is placed by index, so an uneven axis would put it
+        # somewhere the reading never was.
+        if not np.allclose(gaps, gaps[0]):
+            raise ValueError(f"The {name} axis is spaced {gaps.min()} to {gaps.max()} degrees, which is not a grid.")
+
+        return float(gaps[0])
+
+    latitude_step = spacing(latitudes, "latitude")
+    longitude_step = spacing(longitudes, "longitude")
+
+    return (
+        latitude_step or longitude_step or LONE_CELL_DEGREES,
+        longitude_step or latitude_step or LONE_CELL_DEGREES,
+    )
+
+
+def _cell_weights(cells: pd.DataFrame, countries: gpd.GeoDataFrame) -> pd.DataFrame:
+    """
+    Return the land area each country holds in each grid cell.
+
+    A weight is the cell's area times the share of it lying inside the country, so a country
+    smaller than one cell still gets one and a border cell is credited only with the part inside.
+
+    Parameters
+    ----------
+    cells : DataFrame
+        The grid's distinct cell centers, with ``lat`` and ``lon``.
+    countries : GeoDataFrame
+        Country boundaries carrying ``country_code``.
+
+    Returns
+    -------
+    weights : DataFrame
+        One row per country and cell it touches, with ``country_code``, ``lat``, ``lon`` and
+        ``weight`` in square kilometers.
+    """
+    latitudes = np.sort(cells["lat"].unique())[::-1]
+    longitudes = np.sort(cells["lon"].unique())
+    latitude_step, longitude_step = _axis_steps(latitudes, longitudes)
+    edges = (
+        float(longitudes[0]) - longitude_step / 2,
+        float(latitudes[-1]) - latitude_step / 2,
+        float(longitudes[-1]) + longitude_step / 2,
+        float(latitudes[0]) + latitude_step / 2,
+    )
+
+    # cell_id indexes the lattice north row first, which is the order the latitudes are sorted into.
+    overlaps = cell_coverage((len(latitudes), len(longitudes)), edges, countries, "country_code")
+    rows, columns = np.divmod(overlaps["cell_id"].to_numpy(), len(longitudes))
+    located = overlaps.assign(lat=latitudes[rows], lon=longitudes[columns])
+
+    area = cell_areas_km2(located["lat"].to_numpy(), longitude_step, latitude_step)
+
+    return located.assign(weight=located["coverage"].to_numpy() * area)[["country_code", "lat", "lon", "weight"]]
+
+
+def _weighted_by_country(gridded: pd.DataFrame, countries: gpd.GeoDataFrame) -> pd.DataFrame:
+    """
+    Reduce one grid to the weighted precipitation total and weight per country and month.
+
+    The two are returned rather than their ratio, because a country's cells are spread across
+    archives and a mean cannot be summed.
+    """
+    weights = _cell_weights(gridded[["lat", "lon"]].drop_duplicates(), countries)
+
+    # A cell the product did not measure carries no weight either, or the mean is biased toward zero.
+    reported = gridded.dropna(subset=[PRECIPITATION]).merge(weights, on=["lat", "lon"], how="inner")
+    reported["weighted"] = reported[PRECIPITATION].astype("float64") * reported["weight"]
+
+    return reported.groupby(["country_code", "time"], observed=True)[["weighted", "weight"]].sum()
 
 
 def transform_gpcc(grids: Iterable[pd.DataFrame], world: gpd.GeoDataFrame) -> pd.DataFrame:
     """
-    Average gridded precipitation to one value per country and month.
+    Average gridded precipitation onto countries, weighting each cell by the land it contributes.
 
     Every month is attributed to the boundaries ``world`` carries, which are current ones. The
     record opens in 1891, so a long series describes rainfall over a country's present-day footprint
@@ -181,16 +270,28 @@ def transform_gpcc(grids: Iterable[pd.DataFrame], world: gpd.GeoDataFrame) -> pd
     """
     countries = world.rename(columns=WORLD_COLUMNS)
 
-    # Each grid is reduced to land cells before the next is read, so the whole record is never held.
-    over_land = [_land_cells(gridded, countries) for gridded in grids]
-
-    # Averaged and stored in double. The archives are float32, and both this mean and the annual
+    # Each grid is reduced before the next is read, so the whole record is never held.
+    # Totals are accumulated in double: the archives are float32, and both this mean and the annual
     # totals downstream add partial results in an order float32 has too little precision to absorb.
-    return (
-        pd.concat(over_land, axis=0)
-        .astype({PRECIPITATION: "float64"})
-        .pivot_table(values=PRECIPITATION, index=["country_code", "time"], aggfunc="mean")
-    )
+    totals = pd.concat([_weighted_by_country(gridded, countries) for gridded in grids], axis=0)
+    summed = totals.groupby(level=["country_code", "time"], observed=True).sum()
+
+    return (summed["weighted"] / summed["weight"]).rename(PRECIPITATION).to_frame()
+
+
+def reading_fingerprint() -> str:
+    """
+    Digest the rules that turn grids into country readings.
+
+    Editing any of them changes every value in the panel, so the entry they produced has to turn
+    over rather than be read back.
+
+    Returns
+    -------
+    fingerprint : str
+        A short digest of the transform and the weighting it applies.
+    """
+    return builder_fingerprint(transform_gpcc, _cell_weights, _axis_steps)
 
 
 def _as_timestamps(time: xr.DataArray) -> np.ndarray:
@@ -303,6 +404,11 @@ def load_gpcc_data(
         "gpcc",
         build,
         pandas_parquet(),
-        params={"repaired_iso": repair_ISO_codes, "coverage": coverage_of(products), "precision": "float64"},
+        params={
+            "repaired_iso": repair_ISO_codes,
+            "coverage": coverage_of(products),
+            "precision": "float64",
+            "reading": reading_fingerprint(),
+        },
         force=force_reload,
     )
