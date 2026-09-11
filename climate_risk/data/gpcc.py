@@ -26,6 +26,10 @@ GPCC_URL = "https://opendata.dwd.de/climate_environment/GPCC"
 PRECIPITATION = "precip"
 GAUGES = "gauges"
 
+# Each is averaged onto countries over the same land weights, so each needs a running total of its
+# own. Naming them here keeps the two functions that pass them between each other in step.
+WEIGHTED = {PRECIPITATION: "weighted_precip", GAUGES: "weighted_gauges"}
+
 # DWD writes the monitoring dates as YYYYMMDD floats under this unit string. CF does not define it,
 # so xarray hands the axis back undecoded and it has to be read here.
 DWD_DATE_UNITS = "day as %Y%m%d.%f"
@@ -262,14 +266,10 @@ def _weighted_by_country(gridded: pd.DataFrame, countries: gpd.GeoDataFrame) -> 
     # A cell the product did not measure carries no weight either, or the mean is biased toward zero.
     reported = gridded.dropna(subset=[PRECIPITATION]).merge(weights, on=["lat", "lon"], how="inner")
     scaled = reported.assign(
-        **{
-            f"weighted_{name}": reported[name].astype("float64") * reported["weight"]
-            for name in (PRECIPITATION, GAUGES)
-        }
+        **{weighted: reported[name].astype("float64") * reported["weight"] for name, weighted in WEIGHTED.items()}
     )
-    totals = [f"weighted_{name}" for name in (PRECIPITATION, GAUGES)]
 
-    return scaled.groupby(["country_code", "time"], observed=True)[[*totals, "weight"]].sum()
+    return scaled.groupby(["country_code", "time"], observed=True)[[*WEIGHTED.values(), "weight"]].sum()
 
 
 def transform_gpcc(grids: Iterable[pd.DataFrame], world: gpd.GeoDataFrame) -> pd.DataFrame:
@@ -302,7 +302,7 @@ def transform_gpcc(grids: Iterable[pd.DataFrame], world: gpd.GeoDataFrame) -> pd
     summed = totals.groupby(level=["country_code", "time"], observed=True).sum()
 
     return pd.DataFrame(
-        {name: summed[f"weighted_{name}"] / summed["weight"] for name in (PRECIPITATION, GAUGES)},
+        {name: summed[weighted] / summed["weight"] for name, weighted in WEIGHTED.items()},
         index=summed.index,
     )
 
