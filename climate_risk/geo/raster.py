@@ -75,12 +75,14 @@ def dissolve_place_boundary(boundary: gpd.GeoDataFrame, *, iso3: str | None = No
             f"The geometry carries no {ISO_COLUMN} column, so pass iso3 to say which country it covers."
         )
 
-    if labeled and iso3 is not None and set(boundary[ISO_COLUMN]) != {iso3}:
-        carried = sorted(set(boundary[ISO_COLUMN]))
-        raise DataValidationError(
-            f"The boundary carries {len(carried)} code(s), {carried[:3]}, so iso3={iso3!r} would not "
-            f"label it and every country in it would be dissolved. Select the country first."
-        )
+    if labeled and iso3 is not None:
+        # Stringified because the column can hold a null, which sorts against a code by raising.
+        carried = sorted(map(str, set(boundary[ISO_COLUMN])))
+        if carried != [iso3]:
+            raise DataValidationError(
+                f"iso3={iso3!r} does not label this boundary, which carries {len(carried)} codes "
+                f"starting {carried[:3]}. Select the country before dissolving."
+            )
 
     located = boundary.to_crs(GEOGRAPHIC_CRS)
     if not labeled:

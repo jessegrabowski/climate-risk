@@ -80,7 +80,7 @@ def test_the_world_shapefile_passed_with_a_code_is_refused():
     """
     world = tiles([(0, 0, 1, 1), (5, 5, 6, 6)], ISO_A3=["THA", "LAO"])
 
-    with pytest.raises(DataValidationError, match="Select the country first"):
+    with pytest.raises(DataValidationError, match="carries 2 codes"):
         dissolve_place_boundary(world, iso3="LAO")
 
 
