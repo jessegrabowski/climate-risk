@@ -16,8 +16,11 @@ from tests.conftest import TOY_ARCHIVES, toy_gpcc_products, toy_world
 UNREPAIRED_CACHE = "gpcc__coverage=1981-2021__precision=float64__reading=*__repaired_iso=False.parquet"
 
 
-def gridded(rows) -> pd.DataFrame:
-    return pd.DataFrame(rows, columns=["time", "lat", "lon", "precip"]).assign(time=lambda x: pd.to_datetime(x["time"]))
+def gridded(rows, gauges=1.0) -> pd.DataFrame:
+    """Rows of time, lat, lon and precipitation, with a uniform station count unless one is given."""
+    return pd.DataFrame(rows, columns=["time", "lat", "lon", "precip"]).assign(
+        time=lambda frame: pd.to_datetime(frame["time"]), gauges=gauges
+    )
 
 
 def one_country(geometry) -> gpd.GeoDataFrame:
@@ -206,6 +209,18 @@ def test_an_unevenly_spaced_grid_is_refused():
 
     with pytest.raises(ValueError, match="not a grid"):
         transform_gpcc([grid], toy_world())
+
+
+def test_station_counts_are_weighted_like_the_precipitation():
+    """The count says how much gauge evidence stands behind a reading, so a cell contributing half
+    the land contributes half its stations to the country's figure.
+    """
+    straddling = one_country(box(0.0, 0.0, 1.5, 1.0))
+    grid = gridded([("1981-01-01", 0.5, 0.5, 0.0), ("1981-01-01", 0.5, 1.5, 0.0)], gauges=[6.0, 0.0])
+
+    monthly = transform_gpcc([grid], straddling)
+
+    assert monthly.loc[("AAA", pd.Timestamp("1981-01-01")), "gauges"] == pytest.approx(4.0)
 
 
 def test_cells_over_the_ocean_are_dropped():

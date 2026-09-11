@@ -154,13 +154,16 @@ UPSTREAM_SHAPEFILE_LAYOUT = {
 
 
 def toy_precipitation(year_range):
-    """A full-data grid with one point inside each country of `toy_world`.
+    """A full-data grid with one cell over each country of `toy_world`, and its station counts.
 
     Single precision, as the archives publish it, so a loader that keeps that dtype is visible here.
     """
     start = int(year_range.split("_")[0])
     return xr.Dataset(
-        {"precip": (("time", "lat", "lon"), np.arange(3.0, dtype="float32").reshape(1, 1, 3))},
+        {
+            "precip": (("time", "lat", "lon"), np.arange(3.0, dtype="float32").reshape(1, 1, 3)),
+            "numgauge": (("time", "lat", "lon"), np.array([[[2.0, 0.0, 7.0]]], dtype="float32")),
+        },
         coords={
             "time": np.array([f"{start}-01-01"], dtype="datetime64[ns]"),
             "lat": [0.5],
@@ -170,9 +173,12 @@ def toy_precipitation(year_range):
 
 
 def toy_monitoring(year, month):
-    """A monitoring grid, which names its variable ``p`` and dates it with a YYYYMMDD float."""
+    """A monitoring grid, which names its grids ``p`` and ``s`` and dates rows with a YYYYMMDD float."""
     return xr.Dataset(
-        {"p": (("time", "lat", "lon"), np.arange(3.0, dtype="float32").reshape(1, 1, 3))},
+        {
+            "p": (("time", "lat", "lon"), np.arange(3.0, dtype="float32").reshape(1, 1, 3)),
+            "s": (("time", "lat", "lon"), np.array([[[1.0, 0.0, 4.0]]], dtype="float32")),
+        },
         coords={
             "time": ("time", [float(f"{year}{month:02d}01")], {"units": "day as %Y%m%d.%f"}),
             "lat": [0.5],
@@ -209,8 +215,10 @@ def toy_gpcc_products() -> tuple[GriddedProduct, ...]:
     full_data, monitoring = TOY_ARCHIVES
 
     return (
-        GriddedProduct(variable="precip", first_year=1981, last_year=1990, sources=(source(full_data),)),
-        GriddedProduct(variable="p", first_year=2021, last_year=2021, sources=(source(monitoring),)),
+        GriddedProduct(
+            variable="precip", gauges="numgauge", first_year=1981, last_year=1990, sources=(source(full_data),)
+        ),
+        GriddedProduct(variable="p", gauges="s", first_year=2021, last_year=2021, sources=(source(monitoring),)),
     )
 
 

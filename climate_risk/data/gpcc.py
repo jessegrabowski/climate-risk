@@ -22,8 +22,9 @@ _log = logging.getLogger(__name__)
 
 GPCC_URL = "https://opendata.dwd.de/climate_environment/GPCC"
 
-# The name every grid carries once read, whatever the product it came from calls it.
+# The names every grid carries once read, whatever the product it came from calls them.
 PRECIPITATION = "precip"
+GAUGES = "gauges"
 
 # DWD writes the monitoring dates as YYYYMMDD floats under this unit string. CF does not define it,
 # so xarray hands the axis back undecoded and it has to be read here.
@@ -61,6 +62,8 @@ class GriddedProduct:
     ----------
     variable : str
         Name of the precipitation grid inside each archive.
+    gauges : str
+        Name of the station-count grid inside each archive, which the products spell differently.
     first_year, last_year : int
         The span the archives cover, both years included.
     sources : tuple of DataSource
@@ -68,6 +71,7 @@ class GriddedProduct:
     """
 
     variable: str
+    gauges: str
     first_year: int
     last_year: int
     sources: tuple[DataSource, ...]
@@ -117,6 +121,7 @@ def _monitoring_archive(year: int, month: int) -> DataSource:
 # The reanalyzed gauge record, published a decade to an archive.
 FULL_DATA = GriddedProduct(
     variable="precip",
+    gauges="numgauge",
     first_year=FULL_DATA_START,
     last_year=FULL_DATA_END,
     sources=tuple(_full_data_archive(decade) for decade in FULL_DATA_DECADES),
@@ -125,6 +130,7 @@ FULL_DATA = GriddedProduct(
 # The near-real-time continuation, published a month to an archive and built from fewer stations.
 MONITORING = GriddedProduct(
     variable="p",
+    gauges="s",
     first_year=MONITORING_YEARS[0],
     last_year=MONITORING_YEARS[-1],
     sources=tuple(_monitoring_archive(year, month) for year in MONITORING_YEARS for month in range(1, 13)),
@@ -255,9 +261,15 @@ def _weighted_by_country(gridded: pd.DataFrame, countries: gpd.GeoDataFrame) -> 
 
     # A cell the product did not measure carries no weight either, or the mean is biased toward zero.
     reported = gridded.dropna(subset=[PRECIPITATION]).merge(weights, on=["lat", "lon"], how="inner")
-    scaled = reported.assign(weighted=reported[PRECIPITATION].astype("float64") * reported["weight"])
+    scaled = reported.assign(
+        **{
+            f"weighted_{name}": reported[name].astype("float64") * reported["weight"]
+            for name in (PRECIPITATION, GAUGES)
+        }
+    )
+    totals = [f"weighted_{name}" for name in (PRECIPITATION, GAUGES)]
 
-    return scaled.groupby(["country_code", "time"], observed=True)[["weighted", "weight"]].sum()
+    return scaled.groupby(["country_code", "time"], observed=True)[[*totals, "weight"]].sum()
 
 
 def transform_gpcc(grids: Iterable[pd.DataFrame], world: gpd.GeoDataFrame) -> pd.DataFrame:
@@ -289,7 +301,10 @@ def transform_gpcc(grids: Iterable[pd.DataFrame], world: gpd.GeoDataFrame) -> pd
     totals = pd.concat([_weighted_by_country(gridded, countries) for gridded in grids], axis=0)
     summed = totals.groupby(level=["country_code", "time"], observed=True).sum()
 
-    return (summed["weighted"] / summed["weight"]).rename(PRECIPITATION).to_frame()
+    return pd.DataFrame(
+        {name: summed[f"weighted_{name}"] / summed["weight"] for name in (PRECIPITATION, GAUGES)},
+        index=summed.index,
+    )
 
 
 def _reading_fingerprint() -> str:
@@ -349,13 +364,13 @@ def _extract(archive: Path) -> Path:
     return extracted
 
 
-def _read_archive(archive: Path, variable: str) -> pd.DataFrame:
-    """Read one archive's precipitation grid, under the canonical name and with its dates decoded."""
+def _read_archive(archive: Path, variable: str, gauges: str) -> pd.DataFrame:
+    """Read one archive's precipitation and station counts, renamed and with its dates decoded."""
     with xr.open_dataset(_extract(archive)) as dataset:
-        grid = dataset[variable]
+        grid = dataset[[variable, gauges]].rename({variable: PRECIPITATION, gauges: GAUGES})
         dated = grid.assign_coords(time=_as_timestamps(grid["time"]))
 
-        return dated.rename(PRECIPITATION).to_dataframe().reset_index()
+        return dated.to_dataframe().reset_index()
 
 
 def load_gpcc_data(
@@ -404,13 +419,15 @@ def load_gpcc_data(
 
     def build() -> pd.DataFrame:
         archives = [
-            (fetch(source, cache_dir / GPCC_SUBDIRECTORY, force=force_reload), product.variable)
+            (fetch(source, cache_dir / GPCC_SUBDIRECTORY, force=force_reload), product.variable, product.gauges)
             for product in products
             for source in product.sources
         ]
         world = load_shapefile("world", cache_dir, repair_ISO_codes=repair_ISO_codes)
 
-        return transform_gpcc((_read_archive(archive, variable) for archive, variable in archives), world)
+        return transform_gpcc(
+            (_read_archive(archive, variable, gauges) for archive, variable, gauges in archives), world
+        )
 
     return cached(
         cache_dir,
