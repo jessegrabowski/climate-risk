@@ -1,6 +1,7 @@
 import pytest
 
 from climate_risk import load_rivers_data
+from climate_risk.data_functions import rivers_data_loader
 from climate_risk.data_functions.rivers_data_loader import transform_rivers
 from tests.conftest import NetworkAccessError, toy_rivers
 
@@ -43,3 +44,24 @@ def test_processed_cache_alone_does_not_download(write_rivers_cache):
 def test_cold_cache_reaches_for_the_archive(tmp_path):
     with pytest.raises(NetworkAccessError):
         load_rivers_data(tmp_path)
+
+
+@pytest.mark.xfail(reason="load_rivers_data fingerprints no builder, so the entry is blind to its own rules")
+def test_editing_the_filter_turns_the_cache_over(tmp_path, monkeypatch):
+    """The entry records the cutoff asked for and nothing about how the network was read, so a
+    changed `transform_rivers` is served the rivers the old one produced.
+
+    The cache is built by running the loader rather than by writing the file, because a fingerprint
+    joining the key changes the filename, and a seeded file would then go stale for its own reason
+    rather than for the one under test.
+    """
+    shapefile = tmp_path / "network.shp"
+    toy_rivers().to_file(shapefile)
+    monkeypatch.setattr(rivers_data_loader, "_extract_rivers", lambda cache_dir: shapefile)
+
+    load_rivers_data(tmp_path)
+
+    monkeypatch.setattr(rivers_data_loader, "transform_rivers", lambda rivers, cutoff: rivers.iloc[:0])
+    load_rivers_data(tmp_path)
+
+    assert len(list((tmp_path / "rivers").glob("rivers__*.parquet"))) == 2
