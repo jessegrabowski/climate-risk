@@ -635,11 +635,18 @@ def build_model(
             dims=["intercept"],
         )
 
-        pm.Deterministic(
-            "sigma_state",
-            pt.stack([priors[name].to_pymc(name=f"sigma_state_{name}") for name in SHOCKS]),
-            dims=["shock"],
-        )
+        # log_ky carries no likelihood at all where the Penn World Table has no capital series for
+        # this country, so its shock scale has nothing to be estimated from. Left free, it and
+        # ky_slope trade off against the frontier and the gap in a way that fits log_gdp equally
+        # well over a wide range, which is a ridge NUTS explores at the cost of very slow sampling.
+        # Fixing it at a small constant removes the ridge outright, honestly reflecting that this
+        # deviation is unobserved rather than estimated.
+        ky_has_data = bool(series.observed["log_ky"].notna().any())
+        sigma_state_terms = [
+            priors[name].to_pymc(name=f"sigma_state_{name}") if name != "ky" or ky_has_data else pt.constant(0.01)
+            for name in SHOCKS
+        ]
+        pm.Deterministic("sigma_state", pt.stack(sigma_state_terms), dims=["shock"])
         pm.Deterministic(
             "sigma_obs",
             pt.stack([priors[name].to_pymc(name=f"sigma_obs_{name}") for name in OBSERVED]),

@@ -4,10 +4,18 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from climate_risk.models.climate_economy import OBSERVED, SHOCKS
-from climate_risk.models.climate_economy_fit import ObservedSeries, build_priors, growth_accounting, solow_residual
+from pymc.exceptions import ImputationWarning
 
-YEARS = pd.to_datetime([str(year) for year in range(2000, 2006)])
+from climate_risk.models.climate_economy import OBSERVED, SHOCKS
+from climate_risk.models.climate_economy_fit import (
+    ObservedSeries,
+    build_model,
+    build_priors,
+    growth_accounting,
+    solow_residual,
+)
+
+YEARS = pd.date_range("2000-01-01", periods=6, freq="YS")
 
 
 def _pwt_row(*, code, year, gdp, capital, employment, population, labour_share=np.nan, depreciation=0.04, ctfp=np.nan):
@@ -135,3 +143,28 @@ def test_build_priors_returns_distributions_pymc_can_consume():
     priors = build_priors()
 
     assert all(hasattr(prior, "to_pymc") for prior in priors.values())
+
+
+def test_build_model_fixes_sigma_state_ky_when_log_ky_is_entirely_missing():
+    # A shock scale free RV has nothing to be estimated from when its series is never observed,
+    # which is what made an early version of this model very slow to sample for Nepal: left free,
+    # it and ky_slope traded off against the frontier and the gap along a ridge NUTS struggled with.
+    pwt = _pwt_panel(labour_share=0.5, capital_growth=1.02, ctfp=0.5)
+    series = _observed_series(pwt=pwt)
+    series.observed["log_ky"] = np.nan
+    accounting = growth_accounting(iso="ZZZ", frontier="USA", series=series, pwt=pwt, cache_dir=Path("unused"))
+
+    with pytest.warns(ImputationWarning):
+        model, _ = build_model(iso="ZZZ", frontier="USA", series=series, accounting=accounting, priors=build_priors())
+
+    assert "sigma_state_ky" not in {rv.name for rv in model.free_RVs}
+
+
+def test_build_model_keeps_sigma_state_ky_free_when_log_ky_has_data():
+    pwt = _pwt_panel(labour_share=0.5, capital_growth=1.02, ctfp=0.5)
+    series = _observed_series(pwt=pwt)
+    accounting = growth_accounting(iso="ZZZ", frontier="USA", series=series, pwt=pwt, cache_dir=Path("unused"))
+
+    model, _ = build_model(iso="ZZZ", frontier="USA", series=series, accounting=accounting, priors=build_priors())
+
+    assert "sigma_state_ky" in {rv.name for rv in model.free_RVs}
