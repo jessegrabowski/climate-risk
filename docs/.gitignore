@@ -1,0 +1,16 @@
+# Sphinx build output
+build/
+jupyter_execute/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Autosummary-generated stubs (one .rst per object, regenerated on build)
+source/api/generated/
+source/api/**/generated/
+source/api/**/classmethods/
+
+# Gallery artifacts, staged from the repo-root examples/ tree at build time
+source/examples/
+source/_thumbnails/

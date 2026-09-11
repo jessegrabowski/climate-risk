@@ -15,7 +15,7 @@ PANEL_KEY = ["ISO", "year"]
 HYDROLOGICAL_TYPES = ["Flood", "Storm"]
 CLIMATOLOGICAL_TYPES = ["Extreme temperature", "Wildfire", "Drought"]
 
-# The WMO reference period each country's precipitation is centred on, inclusive of both ends.
+# The WMO reference period each country's precipitation is centered on, inclusive of both ends.
 CLIMATOLOGY_BASELINE = (1961, 1990)
 
 # The seasonal period the ocean-heat trend is fitted with.
@@ -58,7 +58,7 @@ def _counted_or_missing(types: list[str]) -> pl.Expr:
 
 def _precipitation_deviation(precipitation: pl.DataFrame, baseline: tuple[int, int]) -> pl.DataFrame:
     """
-    Centre each country's precipitation on its own mean over the baseline climatology period.
+    Center each country's precipitation on its own mean over the baseline climatology period.
 
     Parameters
     ----------
@@ -69,7 +69,7 @@ def _precipitation_deviation(precipitation: pl.DataFrame, baseline: tuple[int, i
 
     Returns
     -------
-    DataFrame
+    deviation : DataFrame
         One row per country and year, carrying the deviation from that country's baseline mean.
     """
     first_year, last_year = baseline
@@ -104,6 +104,34 @@ def _deviation_from_trend(climate: pl.DataFrame) -> pl.DataFrame:
 
 
 def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIMATOLOGY_BASELINE) -> pl.DataFrame:
+    """
+    Assemble the country-year panel the paper's results are estimated from.
+
+    Joins the disaster panel to the climate series and adds the detrended deviations, so the frame
+    holds both the levels and the departures from trend the models use.
+
+    Parameters
+    ----------
+    cache_dir : Path
+        Directory the source caches live under.
+    baseline : tuple of int, optional
+        First and last year of the climatology the deviations are measured against.
+
+    Returns
+    -------
+    panel : DataFrame
+        One row per country and year.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.replication_data import create_replication_data
+
+        panel = create_replication_data(Path("data"))
+    """
     panel = build_country_year_panel(cache_dir).rename({"Start_Year": "year"})
 
     # The first and last years are dropped. The reason is unrecorded, and the trend below is fitted
@@ -114,9 +142,9 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
         *PANEL_KEY,
         _counted_or_missing(CLIMATOLOGICAL_TYPES).alias("climatological_disasters"),
         _counted_or_missing(HYDROLOGICAL_TYPES).alias("hydrological_disasters"),
-        (pl.col("Population") / MILLION).alias("population"),
+        (pl.col("population") / MILLION).alias("population"),
         pl.col("population_density").log().alias("ln_population_density"),
-        pl.col("gdp_per_cap").log().alias("ln_gdp_pc"),
+        pl.col("gdp_per_cap_usd").log().alias("ln_gdp_pc"),
     ).with_columns(
         (pl.col("ln_gdp_pc") ** 2).alias("square_ln_gdp_pc"),
         (pl.col("ln_population_density") ** 2).alias("ln_population_density_squared"),

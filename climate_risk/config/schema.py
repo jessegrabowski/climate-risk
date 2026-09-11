@@ -99,7 +99,7 @@ class CountryConfig:
 @dataclass(frozen=True, slots=True)
 class RegionConfig:
     """
-    A group of countries analysed together.
+    A group of countries analyzed together.
 
     Parameters
     ----------

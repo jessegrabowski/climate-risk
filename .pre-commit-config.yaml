@@ -20,7 +20,7 @@ repos:
   rev: 0.4.1
   hooks:
     - id: no-print-statements
-      exclude: '^(climate_risk/stats/timeseries\.py|tools/)'
+      exclude: '^(climate_risk/skills/cli\.py|climate_risk/stats/timeseries\.py|tools/)'
     - id: check-execution-order
 - repo: local
   hooks:

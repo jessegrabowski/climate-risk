@@ -7,7 +7,7 @@ name = "Lao PDR"
 member = "lao_admin2.shp"
 url = "https://data.humdata.org/dataset/9eb6aff1-9e3f-43d3-99a6-f415fe4b4dff/resource/907a1b50-0d14-40ec-8b8a-f2d027d895aa/download/lao_admin_boundaries.shp.zip"
 filename = "lao_admin_boundaries.shp.zip"
-licence = "CC BY 3.0 IGO"
+license = "CC BY 3.0 IGO"
 citation = "National Geographic Department (NGD): Lao People's Democratic Republic subnational administrative boundaries, via the Humanitarian Data Exchange."
 retrieved = "2026-08-08"
 

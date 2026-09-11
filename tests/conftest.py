@@ -4,6 +4,7 @@ import zipfile
 
 from datetime import date
 from functools import partial
+from unittest import mock
 
 import geopandas as gpd
 import numpy as np
@@ -14,9 +15,12 @@ import xarray as xr
 
 from shapely.geometry import LineString, Point, box
 
-from climate_risk.data.gpcc import GriddedProduct
+from climate_risk.data import world_bank
+from climate_risk.data.gpcc import GriddedProduct, _reading_fingerprint
+from climate_risk.data.ocean_heat import OCEAN_HEAT, OCEAN_HEAT_BASELINE_OFFSET
 from climate_risk.data.osm import LOOKUP_COLUMNS
 from climate_risk.data.source import DataSource
+from climate_risk.data_functions import rivers_data_loader
 
 # One event that clears every downstream filter: deaths above 100, affected above 1000, and a start
 # year inside both the 1970 and 1980 cutoffs. Tests override only the field under examination.
@@ -68,7 +72,7 @@ def toy_world():
 
 
 def toy_world_needing_repair():
-    """A world file shaped like the real one: unlabelled sovereigns and territories to drop.
+    """A world file shaped like the real one: unlabeled sovereigns and territories to drop.
 
     Carries one row per entry in DROPPED_TERRITORIES, DROPPED_ISO_CODES and ISO_CODE_REPAIRS; adding
     to any of those tables without adding a row here fails every repair test on the missing entry.
@@ -150,13 +154,16 @@ UPSTREAM_SHAPEFILE_LAYOUT = {
 
 
 def toy_precipitation(year_range):
-    """A full-data grid with one point inside each country of `toy_world`.
+    """A full-data grid with one cell over each country of `toy_world`, and its station counts.
 
     Single precision, as the archives publish it, so a loader that keeps that dtype is visible here.
     """
     start = int(year_range.split("_")[0])
     return xr.Dataset(
-        {"precip": (("time", "lat", "lon"), np.arange(3.0, dtype="float32").reshape(1, 1, 3))},
+        {
+            "precip": (("time", "lat", "lon"), np.arange(3.0, dtype="float32").reshape(1, 1, 3)),
+            "numgauge": (("time", "lat", "lon"), np.array([[[2.0, 0.0, 7.0]]], dtype="float32")),
+        },
         coords={
             "time": np.array([f"{start}-01-01"], dtype="datetime64[ns]"),
             "lat": [0.5],
@@ -166,9 +173,12 @@ def toy_precipitation(year_range):
 
 
 def toy_monitoring(year, month):
-    """A monitoring grid, which names its variable ``p`` and dates it with a YYYYMMDD float."""
+    """A monitoring grid, which names its grids ``p`` and ``s`` and dates rows with a YYYYMMDD float."""
     return xr.Dataset(
-        {"p": (("time", "lat", "lon"), np.arange(3.0, dtype="float32").reshape(1, 1, 3))},
+        {
+            "p": (("time", "lat", "lon"), np.arange(3.0, dtype="float32").reshape(1, 1, 3)),
+            "s": (("time", "lat", "lon"), np.array([[[1.0, 0.0, 4.0]]], dtype="float32")),
+        },
         coords={
             "time": ("time", [float(f"{year}{month:02d}01")], {"units": "day as %Y%m%d.%f"}),
             "lat": [0.5],
@@ -183,8 +193,11 @@ def toy_monitoring(year, month):
 TOY_ARCHIVES = ("full_data_monthly_v2022_1981_1990_10.nc.gz", "monitoring_v2022_10_2021_01.nc.gz")
 
 # The processed cache the published manifest writes. The key carries the span, so extending the
-# record renames the entry instead of shadowing it.
-GPCC_CACHE_FILE = "gpcc__coverage=1891-2025__precision=float64__repaired_iso=True.parquet"
+# record renames the entry instead of shadowing it. Every parameter is spelled out but the reading
+# digest, which cannot be, so a key that loses one of the others still fails here.
+GPCC_CACHE_FILE = (
+    f"gpcc__coverage=1891-2025__precision=float64__reading={_reading_fingerprint()}__repaired_iso=True.parquet"
+)
 
 
 def toy_gpcc_products() -> tuple[GriddedProduct, ...]:
@@ -194,7 +207,7 @@ def toy_gpcc_products() -> tuple[GriddedProduct, ...]:
         return DataSource(
             url=f"https://opendata.dwd.de/climate_environment/GPCC/{filename}",
             filename=filename,
-            licence="CC BY 4.0",
+            license="CC BY 4.0",
             citation="GPCC",
             retrieved="2026-08-07",
         )
@@ -202,8 +215,10 @@ def toy_gpcc_products() -> tuple[GriddedProduct, ...]:
     full_data, monitoring = TOY_ARCHIVES
 
     return (
-        GriddedProduct(variable="precip", first_year=1981, last_year=1990, sources=(source(full_data),)),
-        GriddedProduct(variable="p", first_year=2021, last_year=2021, sources=(source(monitoring),)),
+        GriddedProduct(
+            variable="precip", gauges="numgauge", first_year=1981, last_year=1990, sources=(source(full_data),)
+        ),
+        GriddedProduct(variable="p", gauges="s", first_year=2021, last_year=2021, sources=(source(monitoring),)),
     )
 
 
@@ -224,6 +239,43 @@ def write_gpcc_archives(tmp_path):
         return tmp_path
 
     return write
+
+
+def seed_world_bank_cache(cache_dir, rows):
+    """
+    Write ``rows`` into the World Bank cache the way the loader will look for them.
+
+    The panel is placed by running the loader over a stubbed download rather than by writing a file
+    named by hand, because the entry is keyed on a fingerprint of how it was built. The stub replaces
+    the transform as well as the download: these rows are already in the panel's shape, and the codes
+    they use are not names the World Bank publishes.
+    """
+    panel = pl.DataFrame(
+        rows, schema=["country_code", "year", "gdp_per_cap_usd", "population_density", "population"], orient="row"
+    )
+    with (
+        mock.patch.object(world_bank.wb, "download", lambda **kwargs: pl.DataFrame()),
+        mock.patch.object(world_bank, "transform_world_bank", lambda raw, indicator_names: panel),
+    ):
+        world_bank.load_wb_data(cache_dir)
+
+
+def seed_ocean_heat_cache(cache_dir, annual):
+    """
+    Write ``annual`` into the ocean heat cache, as the seasonal file NCEI publishes.
+
+    The processed entry is keyed on a fingerprint of how it was built, so it cannot be written by
+    name. Seeding the download the loader reads instead lets it build its own entry, which also
+    exercises the headerless read. Each year is four identical seasons, so their mean is the value
+    asked for once the baseline offset is added back.
+    """
+    seasons = [
+        f"{row['Date'].year}-{month},{row['Temp'] - OCEAN_HEAT_BASELINE_OFFSET}"
+        for row in annual.iter_rows(named=True)
+        for month in (3, 6, 9, 12)
+    ]
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    OCEAN_HEAT.path(cache_dir).write_text("\n".join(seasons) + "\n")
 
 
 def write_merge_cache(cache_dir):
@@ -265,7 +317,8 @@ def write_merge_cache(cache_dir):
         )
     )
     write_emdat_workbook(cache_dir, events)
-    pl.DataFrame(
+    seed_world_bank_cache(
+        cache_dir,
         [
             ("AAA", 1990, 1000.0, 10.0, 1000000),
             ("AAA", 1991, 1100.0, 11.0, 1010000),
@@ -276,16 +329,12 @@ def write_merge_cache(cache_dir):
             ("EEE", 1990, 4000.0, 40.0, 4000000),
             ("EEE", 1991, 4400.0, 44.0, 4040000),
         ],
-        schema=["country_code", "year", "gdp_per_cap", "population_density", "Population"],
-        orient="row",
-    ).write_parquet(cache_dir / "world_bank.parquet")
+    )
     # The cache key is stated literally, so a wrong one fails rather than agreeing with itself.
     pl.DataFrame({"Date": [date(1990, 1, 1), date(1991, 1, 1)], "co2": [354.0, 355.0]}).write_parquet(
         cache_dir / "co2.parquet"
     )
-    pl.DataFrame({"Date": [date(1990, 1, 1), date(1991, 1, 1)], "Temp": [1.0, 2.0]}).write_parquet(
-        cache_dir / "ocean_heat.parquet"
-    )
+    seed_ocean_heat_cache(cache_dir, pl.DataFrame({"Date": [date(1990, 1, 1), date(1991, 1, 1)], "Temp": [1.0, 2.0]}))
     # GPCC publishes monthly, and only whole years survive the annual total, so each year here
     # carries all twelve months. A total stays distinguishable from an average.
     pd.DataFrame(
@@ -616,15 +665,26 @@ def write_geo_disasters_cache(tmp_path):
 
 
 @pytest.fixture
-def write_rivers_cache(tmp_path):
-    """Return a callable writing the processed river network a warm cache would hold."""
+def write_rivers_cache(tmp_path, monkeypatch):
+    """
+    Return a callable placing the processed river network a warm cache would hold.
+
+    The entry is keyed on a fingerprint of how it was built, so it cannot be written by name. The
+    loader builds it from a stubbed extraction instead, which also exercises the read and the
+    filter on the way in.
+    """
 
     def write(gdf, include_medium=False):
-        rivers_dir = tmp_path / "rivers"
-        rivers_dir.mkdir(parents=True, exist_ok=True)
-        # The cache key is stated literally, so a wrong one fails rather than agreeing with itself.
-        cutoff = 6 if include_medium else 5
-        gdf.to_parquet(rivers_dir / f"rivers__stream_order_below={cutoff}.parquet")
+        # Outside the cache directory, because a shapefile is five files and none of them are cache.
+        source = tmp_path / "networks"
+        source.mkdir(exist_ok=True)
+        network = source / f"network_{len(gdf)}_{include_medium}.shp"
+        gdf.to_file(network)
+
+        with monkeypatch.context() as patch:
+            patch.setattr(rivers_data_loader, "_extract_rivers", lambda cache_dir: network)
+            rivers_data_loader.load_rivers_data(tmp_path, include_medium=include_medium)
+
         return tmp_path
 
     return write
@@ -680,16 +740,39 @@ def _refuse_lookup(*args, **kwargs):
     )
 
 
+# Captured before anything is patched, so a `network` test can be handed the real ones back.
+REAL_SOCKET_METHODS = {method: getattr(socket.socket, method) for method in OUTBOUND_SOCKET_METHODS}
+REAL_GETADDRINFO = socket.getaddrinfo
+
+
+@pytest.fixture(autouse=True, scope="session")
+def block_network():
+    """Refuse the socket for the whole session.
+
+    Session scope rather than function scope because a module- or session-scoped fixture is set up
+    before any function-scoped one, so a guard at function scope leaves fixture bodies free to reach
+    upstream. A seeded cache that stops matching then downloads instead of failing.
+    """
+    with pytest.MonkeyPatch.context() as patch:
+        for method in OUTBOUND_SOCKET_METHODS:
+            patch.setattr(socket.socket, method, _refuse_outbound)
+
+        # Refusing name resolution turns an offline run's DNS timeout into an immediate error.
+        patch.setattr(socket, "getaddrinfo", _refuse_lookup)
+
+        yield
+
+
 @pytest.fixture(autouse=True)
-def block_network(request, monkeypatch):
-    if "network" in request.keywords:
+def allow_network_when_marked(request, monkeypatch):
+    """Hand the real socket back to a test marked `network`, which the session guard has taken."""
+    if "network" not in request.keywords:
         return
 
-    for method in OUTBOUND_SOCKET_METHODS:
-        monkeypatch.setattr(socket.socket, method, _refuse_outbound)
+    for method, original in REAL_SOCKET_METHODS.items():
+        monkeypatch.setattr(socket.socket, method, original)
 
-    # Refusing name resolution turns an offline run's DNS timeout into an immediate error.
-    monkeypatch.setattr(socket, "getaddrinfo", _refuse_lookup)
+    monkeypatch.setattr(socket, "getaddrinfo", REAL_GETADDRINFO)
 
 
 def pytest_addoption(parser):

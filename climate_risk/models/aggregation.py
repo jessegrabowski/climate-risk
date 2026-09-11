@@ -71,7 +71,7 @@ class Aggregation:
 
         Returns
         -------
-        ndarray
+        aggregated : ndarray
             Shape ``(n_units,)`` or ``(n_units, k)``, in the row order of ``units``.
         """
         self._check_width(cell_values.shape[0])
@@ -92,7 +92,7 @@ class Aggregation:
 
         Returns
         -------
-        TensorVariable
+        aggregated : TensorVariable
             Shape ``(n_units,)`` or ``(n_units, k)``, in the row order of ``units``.
         """
         weights = pt.as_tensor_variable(self.weights)
@@ -129,15 +129,30 @@ def build_aggregation(
         every unit, which is dropped: it contributes to no total.
     weights : ndarray
         Each cell's weight in its unit, one per entry of ``unit_of_cell``. Cell area gives an
-        integral over the polygon; population gives an exposure-weighted one.
+        integral over the polygon. Population gives an exposure-weighted one.
     units : sequence of str, optional
         Row order of the operator. Every assigned label must appear, and no label twice. Default
         None, which orders the labels that appear in ``unit_of_cell``, sorted.
 
     Returns
     -------
-    Aggregation
+    aggregation : Aggregation
         The operator and its row labels.
+
+    Examples
+    --------
+    Two cells in one unit, one in another:
+
+    .. code-block:: python
+
+        import numpy as np
+
+        from climate_risk.models.aggregation import build_aggregation
+
+        aggregation = build_aggregation(
+            unit_of_cell=["LAO.1_1", "LAO.1_1", "LAO.2_1"],
+            weights=np.array([1.0, 1.0, 2.0]),
+        )
     """
     weights = _validated_weights(weights)
     if len(unit_of_cell) != weights.shape[0]:
@@ -177,7 +192,7 @@ def build_aggregation_from_overlaps(
         The cell each overlap belongs to, indexing the grid, one entry per overlap.
     weights : ndarray
         The weight each overlap contributes, one entry per overlap. Overlapping area gives an
-        integral over the polygon; overlapping population gives an exposure-weighted one.
+        integral over the polygon. Overlapping population gives an exposure-weighted one.
     n_cells : int
         Width of the operator. Cells named in no overlap contribute to no total.
     units : sequence of str, optional
@@ -186,7 +201,7 @@ def build_aggregation_from_overlaps(
 
     Returns
     -------
-    Aggregation
+    aggregation : Aggregation
         The operator and its row labels.
     """
     weights = _validated_weights(weights)

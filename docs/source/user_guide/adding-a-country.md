@@ -10,6 +10,8 @@ name = "Zambia"
 
 That is the whole minimum. The geometry comes from slicing the World Bank world shapefile by
 `iso3`, and everything else falls back to the project-wide defaults in `climate_risk/config/schema.py`.
+What those defaults are, and what the objects a file parses into hold, is in
+[places and regions](places.md).
 
 Nothing else has to change. If you find yourself editing a loader to make a country work, the
 loader is wrong, not the config.
@@ -17,8 +19,8 @@ loader is wrong, not the config.
 ## What you get without asking
 
 The directory is walked, so a new file is picked up with no registration step. Its ISO codes are
-checked against the World Bank country table, and the file has to parse and match the schema —
-a typo in a key is an error, not a silently ignored default.
+checked against the World Bank country table, and the file has to parse and match the schema. A
+typo in a key is an error rather than a silently ignored default.
 
 Downstream, `load_place("zmb")` gives you a `CountryConfig` that the loaders accept directly:
 
@@ -33,30 +35,30 @@ boundary = load_place_boundary(load_place("zmb"), cache_dir)
 
 Every block below is optional.
 
-**`[geometry]`** — the geographic and projected CRS.
+**`[geometry]`**: the geographic and projected CRS.
 
-**`[events]`** — `start_year`, `end_year`, `min_total_affected`, `min_deaths`. The defaults describe
+**`[events]`**: `start_year`, `end_year`, `min_total_affected`, `min_deaths`. The defaults describe
 the window the published panel uses. Lower them for a country with few recorded disasters, but
 check first: all three shipped countries clear the defaults comfortably, and an empty event frame
 is easy to mistake for a working pipeline.
 
-**`[boundary]`** — a country-specific admin boundary archive, when the world shapefile is too coarse.
+**`[boundary]`**: a country-specific admin boundary archive, when the world shapefile is too coarse.
 It needs `member` naming the layer to read inside the zip, alongside the usual source fields:
 
 ```toml
 [boundary]
 member = "lao_admin2.shp"
-url = "https://…/lao_admin_boundaries.shp.zip"
+url = "https://.../lao_admin_boundaries.shp.zip"
 filename = "lao_admin_boundaries.shp.zip"
-licence = "CC BY 3.0 IGO"
+license = "CC BY 3.0 IGO"
 citation = "National Geographic Department (NGD), via the Humanitarian Data Exchange."
 retrieved = "2026-08-08"
 ```
 
 A boundary declared here is fetched, cached and reachability-checked exactly like a source declared
-in code. `licence` and `citation` are not decorative — fill them in from the publisher's own page.
+in code. `license` and `citation` are not decorative. Fill them in from the publisher's own page.
 
-**`[event_location_overrides]`** — longitude and latitude forced onto EM-DAT records whose published
+**`[event_location_overrides]`**: longitude and latitude forced onto EM-DAT records whose published
 position is wrong, keyed by event id. Two countries may not both claim the same event.
 
 ## Reading a country's events
@@ -94,6 +96,9 @@ workbook is absent, which includes CI. Run it once on a machine that has the wor
 ```
 pixi run pytest -m requires_emdat
 ```
+
+EM-DAT has to be obtained by hand. [Getting the data](../get_started/data.rst) says where from and
+where to put it.
 
 It checks that your country actually has events clearing its own filters. A country that does not
 produces an empty panel, and every other test will pass on it.

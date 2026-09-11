@@ -2,7 +2,7 @@ import re
 
 from climate_risk.data import geonames, place_names
 from climate_risk.data.geonames import (
-    GEONAMES_LICENCE,
+    GEONAMES_LICENSE,
     country_dump,
     geonames_geocoder,
     load_place_points,
@@ -17,9 +17,9 @@ def test_a_country_is_looked_up_by_the_code_geonames_files_it_under(write_geonam
     assert codes["PHL"] == "PH"
 
 
-def test_a_dump_is_declared_under_the_licence_it_is_published_with():
+def test_a_dump_is_declared_under_the_license_it_is_published_with():
     """The archive is redistributable only with attribution, and the declaration is what carries it."""
-    assert country_dump("PH").licence == GEONAMES_LICENCE
+    assert country_dump("PH").license == GEONAMES_LICENSE
 
 
 def test_every_spelling_a_place_is_published_under_reaches_it(write_geonames_cache):

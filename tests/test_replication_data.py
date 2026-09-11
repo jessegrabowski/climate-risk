@@ -6,7 +6,13 @@ import polars as pl
 import pytest
 
 from climate_risk.replication_data import create_replication_data
-from tests.conftest import GPCC_CACHE_FILE, emdat_event, write_emdat_workbook
+from tests.conftest import (
+    GPCC_CACHE_FILE,
+    emdat_event,
+    seed_ocean_heat_cache,
+    seed_world_bank_cache,
+    write_emdat_workbook,
+)
 
 # Long enough that `iloc[1:-1]` still leaves an STL-able series: STL(period=3) needs 2*3+1 points.
 YEARS = tuple(range(1985, 2021))
@@ -64,18 +70,17 @@ def wide_cache(tmp_path_factory):
         for n, iso in enumerate(WORLD_BANK_COUNTRIES)
         for i, year in enumerate(YEARS)
     ]
-    pl.DataFrame(
-        world_bank,
-        schema=["country_code", "year", "gdp_per_cap", "population_density", "Population"],
-        orient="row",
-    ).write_parquet(tmp_path / "world_bank.parquet")
+    seed_world_bank_cache(tmp_path, world_bank)
     pl.DataFrame(
         {"Date": [date(year, 1, 1) for year in YEARS], "co2": [float(350 + i) for i in range(len(YEARS))]}
     ).write_parquet(tmp_path / "co2.parquet")
     # A wave rather than a ramp, so STL has a trend to separate a deviation from.
-    pl.DataFrame(
-        {"Date": [date(year, 1, 1) for year in YEARS], "Temp": [i + np.sin(i) for i in range(len(YEARS))]}
-    ).write_parquet(tmp_path / "ocean_heat.parquet")
+    seed_ocean_heat_cache(
+        tmp_path,
+        pl.DataFrame(
+            {"Date": [date(year, 1, 1) for year in YEARS], "Temp": [i + np.sin(i) for i in range(len(YEARS))]}
+        ),
+    )
     # A whole year of months, since only years the record covers in full survive the annual total.
     # They share the year's total evenly, so the annual series is the 100(n + 1) + 5i below.
     precipitation = [
@@ -223,7 +228,7 @@ def test_a_baseline_the_record_does_not_cover_is_refused(wide_cache):
 
 
 def test_the_ocean_temperature_deviation_is_residual_around_its_trend(replication):
-    """It is the STL residual, so it is centred near zero and not the level of Temp itself."""
+    """It is the STL residual, so it is centered near zero and not the level of Temp itself."""
     deviations = replication["dev_from_trend_ocean_temp"].drop_nulls()
 
     assert deviations.mean() == pytest.approx(0.0, abs=0.5)

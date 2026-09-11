@@ -4,7 +4,7 @@ import pandas as pd
 from climate_risk.exceptions import DataValidationError
 from climate_risk.geo.crs import PROJECTED_CRS
 
-# Distances come back in metres, and a point sitting on a feature measures zero, which has no log.
+# Distances come back in meters, and a point sitting on a feature measures zero, which has no log.
 MIN_DISTANCE_METRES = 1.0
 
 
@@ -29,13 +29,25 @@ def get_distance_to(
         returns the distance alone.
     crs : str, optional
         Projected CRS to measure in, which fixes the units of the result. Default
-        ``PROJECTED_CRS``, giving metres.
+        ``PROJECTED_CRS``, giving meters.
 
     Returns
     -------
-    DataFrame
+    distances : DataFrame
         ``distance_to_closest`` plus one column per entry in ``return_columns``, indexed like
         ``points``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk import load_rivers_data
+        from climate_risk.geo.distance import get_distance_to
+
+        rivers = load_rivers_data(Path("data"))
+        distances = get_distance_to(rivers, grid_points)
     """
     carried = list(return_columns or [])
 

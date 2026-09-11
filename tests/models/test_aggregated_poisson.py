@@ -74,7 +74,7 @@ def test_the_expected_intensity_matches_sampling_the_field():
 
 
 def test_the_sampled_log_intensity_converges_on_the_truth():
-    """The log term is the one with no closed form. Its estimator has to be centred on the real
+    """The log term is the one with no closed form. Its estimator has to be centered on the real
     expectation, and the Jensen gap is the thing it exists to capture: log E[Lambda] is an upper
     bound that a correct estimator must sit strictly below.
     """
@@ -275,8 +275,8 @@ def recover_known_surface(*, units_per_axis: int, fixed_lengthscale: float | Non
     """Observe a known surface through polygon totals, fit it, and score what comes back."""
     rng = np.random.default_rng(0)
     edges = np.linspace(0.0, 1.0, CELLS_PER_AXIS + 1)
-    centres = (edges[:-1] + edges[1:]) / 2.0
-    x, y = (axis.ravel() for axis in np.meshgrid(centres, centres, indexing="ij"))
+    centers = (edges[:-1] + edges[1:]) / 2.0
+    x, y = (axis.ravel() for axis in np.meshgrid(centers, centers, indexing="ij"))
     areas = np.full(x.shape, 1.0 / CELLS_PER_AXIS**2)
 
     column = np.minimum((x * units_per_axis).astype(int), units_per_axis - 1)
@@ -336,12 +336,12 @@ def recover_known_surface(*, units_per_axis: int, fixed_lengthscale: float | Non
     labels = np.array(unit_of_cell)
 
     def within_unit(field: np.ndarray) -> np.ndarray:
-        centred = np.empty_like(field)
+        centered = np.empty_like(field)
         for label in set(unit_of_cell):
             inside = labels == label
-            centred[inside] = field[inside] - field[inside].mean()
+            centered[inside] = field[inside] - field[inside].mean()
 
-        return centred
+        return centered
 
     inside_truth = within_unit(log_truth)
 

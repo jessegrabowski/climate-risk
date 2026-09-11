@@ -41,7 +41,7 @@ def test_the_quantity_series_are_national_accounts_not_purchasing_power():
 
 def test_the_cross_country_productivity_level_is_the_ppp_series():
     """`rtfpna` is an index on a national base and reads 1.0 for every country in its base year, so
-    a gap taken from it is an artefact. `ctfp` is the level with the United States at 1.
+    a gap taken from it is an artifact. `ctfp` is the level with the United States at 1.
     """
     assert "rtfpna" not in PWT_COLUMNS
     assert PWT_COLUMNS["ctfp"] == "tfp_relative_to_usa"

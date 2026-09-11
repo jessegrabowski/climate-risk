@@ -20,7 +20,7 @@ from climate_risk.data.geo_disasters import (
     load_event_footprints,
     load_event_locations,
     load_resolved_units,
-    normalise_unit_name,
+    normalize_unit_name,
     resolve_to_gadm,
     unit_names,
 )
@@ -42,13 +42,13 @@ def test_an_absent_geopackage_names_the_path_and_where_to_get_it(tmp_path):
     assert "10.5281/zenodo.15487667" in message
 
 
-def test_the_declaration_splits_the_licence_by_what_it_covers():
+def test_the_declaration_splits_the_license_by_what_it_covers():
     """The geometry is non-commercial and the attributes are not; a figure built from one is
     constrained where the other is free, so both halves have to survive in the declaration."""
-    licence = GEO_DISASTERS.licence.lower()
+    license = GEO_DISASTERS.license.lower()
 
-    assert "non-commercial" in licence
-    assert "cc-by-4.0" in licence
+    assert "non-commercial" in license
+    assert "cc-by-4.0" in license
     assert "zenodo.15487667" in GEO_DISASTERS.citation
 
 
@@ -96,7 +96,7 @@ def test_a_unit_is_named_at_the_level_it_was_geocoded_to(write_geo_disasters_cac
 
 
 def test_geometry_is_left_on_disk(write_geo_disasters_cache):
-    """The polygons are the non-commercial half of the licence, and nothing here needs them."""
+    """The polygons are the non-commercial half of the license, and nothing here needs them."""
     cache_dir = write_geo_disasters_cache()
 
     locations = load_event_locations(cache_dir)
@@ -116,24 +116,24 @@ def test_geometry_is_left_on_disk(write_geo_disasters_cache):
     ],
     ids=["casing", "whitespace", "accent", "hyphen", "d-with-stroke", "l-with-stroke"],
 )
-def test_the_same_unit_spelled_two_ways_normalises_alike(published, other):
+def test_the_same_unit_spelled_two_ways_normalizes_alike(published, other):
     """GADM and GAUL differ in casing, spacing, accents and hyphens for units that are the same one,
     and a literal comparison would report every one of these as the sources disagreeing. A stroked
     letter carries no combining mark, so stripping accents leaves `Đ` and `ł` standing and `Đà Nẵng`
     never meets `Da Nang`. GADM holds both, in different scripts, so one language's fix is not enough."""
-    assert normalise_unit_name(published) == normalise_unit_name(other)
+    assert normalize_unit_name(published) == normalize_unit_name(other)
 
 
 def test_units_that_are_genuinely_different_stay_different():
-    """Normalisation that collapses too far reports agreement everywhere and validates nothing."""
-    assert normalise_unit_name("Savannakhet") != normalise_unit_name("Khammouan")
+    """Normalization that collapses too far reports agreement everywhere and validates nothing."""
+    assert normalize_unit_name("Savannakhet") != normalize_unit_name("Khammouan")
 
 
 def test_a_different_romanisation_is_not_reconciled():
-    """Normalisation handles typography, not spelling. `Xiangkhouang` and `Xiangkhoang` are one
-    province under two romanisations, and normalising leaves them different — which is why the
+    """Normalization handles typography, not spelling. `Xiangkhouang` and `Xiangkhoang` are one
+    province under two romanisations, and normalizing leaves them different — which is why the
     agreement report matches identifiers and this function is not in its path."""
-    assert normalise_unit_name("Xiangkhouang") != normalise_unit_name("Xiangkhoang")
+    assert normalize_unit_name("Xiangkhouang") != normalize_unit_name("Xiangkhoang")
 
 
 def test_unit_ids_are_collected_per_event():
@@ -180,12 +180,12 @@ def test_an_event_neither_source_geocoded_is_left_out():
 
 
 def test_identifiers_are_compared_literally():
-    """`normalise_unit_name` strips the punctuation that separates a GADM identifier's levels, so
+    """`normalize_unit_name` strips the punctuation that separates a GADM identifier's levels, so
     the district `LAO.1.1_1` and the province `LAO.11_1` both reduce to `lao111`. Putting the
     identifiers through it would merge two different units into an exact agreement."""
     report = compare_event_units(em_dat={"E": {"LAO.11_1"}}, geo_disasters={"E": {"LAO.1.1_1"}})
 
-    assert normalise_unit_name("LAO.11_1") == normalise_unit_name("LAO.1.1_1"), "the collision is real"
+    assert normalize_unit_name("LAO.11_1") == normalize_unit_name("LAO.1.1_1"), "the collision is real"
     assert report["agreement"].tolist() == ["disjoint"]
 
 
@@ -556,8 +556,8 @@ def test_the_names_corroborate_the_geometry():
 
     resolved = resolve_to_gadm(footprints, REAL_CACHE_DIR)
 
-    published = unit_names(footprints).map(normalise_unit_name)
-    matched = resolved["name"].map(normalise_unit_name)
+    published = unit_names(footprints).map(normalize_unit_name)
+    matched = resolved["name"].map(normalize_unit_name)
     agreeing = sum(name in set(published) for name in matched)
     assert agreeing / len(matched) > 0.8, f"only {agreeing} of {len(matched)} matched units kept their name"
 

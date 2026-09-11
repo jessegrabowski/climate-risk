@@ -1,6 +1,6 @@
 # Vendored data
 
-Files here are redistributed under their own licences, which are not the licence of this package.
+Files here are redistributed under their own licenses, which are not the license of this package.
 
 ## `ipcc_ar6_syr_csb2_fig1a.xlsx`
 
@@ -13,7 +13,7 @@ mitigation. Version 1.0.
 **Citation.** IPCC, 2024. IPCC AR6 Synthesis Report LR Cross-Section Box.2, Figure 1 (a). Palisades,
 New York: NASA Socioeconomic Data and Applications Center (SEDAC). https://doi.org/10.7927/baxv-nj53
 
-**Licence.** Attribution 4.0 International (CC BY 4.0),
+**License.** Attribution 4.0 International (CC BY 4.0),
 https://creativecommons.org/licenses/by/4.0/legalcode
 
 **Changes.** None. The workbook is byte-for-byte as published, renamed from

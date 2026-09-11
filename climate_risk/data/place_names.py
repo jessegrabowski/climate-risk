@@ -275,8 +275,8 @@ class Gazetteer(NamedTuple):
         instead of every name in the country.
     corrections : dict mapping str to tuple of str
         The published names each checked entry stands for, keyed on :func:`match_key`. A misspelling
-        gives one; a name GADM never carried as a unit — a merged province since split, a
-        statistical region — gives the several it covers.
+        gives one. A name GADM never carried as a unit, such as a merged province since split or a
+        statistical region, gives the several it covers.
     adjective : re.Pattern or None
         The suffix this country's language builds a place adjective with, where written mentions use
         one. None where they do not.
@@ -333,7 +333,7 @@ def repair_mojibake(text: str) -> str:
 
     Returns
     -------
-    str
+    name : str
         The name with the mangling undone, or unchanged where there was none.
     """
     while True:
@@ -360,7 +360,7 @@ def match_key(name: str) -> str:
 
     Returns
     -------
-    str
+    key : str
         The comparison key, empty where the name was only a unit noun.
     """
     repaired = UNIT_NOUNS.sub(" ", repair_mojibake(name))
@@ -381,7 +381,7 @@ def read_gazetteer(iso: str, cache_dir: Path, *, layer: str = GADM_LAYER, force_
 
     Every level the archive publishes is indexed, because written mentions reach all of them: a
     location string names provinces, districts and villages in the same breath. A name reaches a
-    set rather than a unit because names repeat — a province and its capital district often share
+    set rather than a unit because names repeat: a province and its capital district often share
     one, and a village name recurs freely.
 
     Parentage comes from the row rather than from the shape of the identifier. Identifiers usually
@@ -401,8 +401,18 @@ def read_gazetteer(iso: str, cache_dir: Path, *, layer: str = GADM_LAYER, force_
 
     Returns
     -------
-    Gazetteer
+    gazetteer : Gazetteer
         The country's units.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.place_names import read_gazetteer
+
+        gazetteer = read_gazetteer("LAO", Path("data"))
     """
 
     def build() -> pl.DataFrame:
@@ -481,7 +491,7 @@ def read_name_corrections(iso: str, *, path: Path = NAME_CORRECTIONS) -> dict[st
 
     Returns
     -------
-    dict mapping str to tuple of str
+    corrections : dict mapping str to tuple of str
         The published names each entry stands for, keyed by :func:`match_key`. An entry naming
         several units, as a merged province since split does, separates them with a pipe.
     """
@@ -549,9 +559,9 @@ def nearest_name(name: str, gazetteer: Gazetteer, shapes: dict[tuple[str, int], 
     Find the one published name a written place is a misspelling of.
 
     A match is only offered where the written name is long enough for a single edit to be a small
-    part of it, does not name a physical feature, and is one slip — an insertion, deletion,
-    substitution or transposition — from exactly one published name. Two names equally close is not a near miss, it is a
-    choice, and this makes none.
+    part of it, does not name a physical feature, and is one slip from exactly one published name.
+    A slip is an insertion, deletion, substitution or transposition. Two names equally close is not
+    a near miss but a choice, and this makes none.
 
     Parameters
     ----------
@@ -564,7 +574,7 @@ def nearest_name(name: str, gazetteer: Gazetteer, shapes: dict[tuple[str, int], 
 
     Returns
     -------
-    str or None
+    match : str or None
         The matching key in ``gazetteer.names``, or None where the gates reject the name or no
         single published name is close enough.
     """
@@ -600,7 +610,7 @@ def container_parts(parent: str) -> list[str]:
 
     Returns
     -------
-    list of str
+    parts : list of str
         Each place it names, in the order written.
     """
     return [part for part in CONTAINER_PARTS.split(parent) if part.strip()]
@@ -667,7 +677,7 @@ def _corroborated_slip(name: str, container: set[str], pinned: set[str], gazette
     """
     Take a one-slip match only where the rest of the event agrees with it.
 
-    One edit from a published name is a guess on its own — ``Lynmouth`` sits one edit from Lynemouth,
+    One edit from a published name is a guess on its own. ``Lynmouth`` sits one edit from Lynemouth,
     four hundred miles away. Where the container the prose gave, or a place the event named
     unambiguously, holds exactly one of the candidates, the guess stops being one.
     """
@@ -760,7 +770,7 @@ def resolve_place(name: str, parent: str | None, gazetteer: Gazetteer) -> set[st
     """
     Name the GADM units a written place refers to, using its stated container to choose between them.
 
-    Where the prose gives a container, only units it holds at any depth survive — which is what
+    Where the prose gives a container, only units it holds at any depth survive, which is what
     separates one ``Pitogo`` from the other without a similarity threshold. A container that names
     nothing, or that holds none of the candidates, is ignored rather than treated as a
     contradiction: the prose routinely names a region GADM does not model.
@@ -782,8 +792,21 @@ def resolve_place(name: str, parent: str | None, gazetteer: Gazetteer) -> set[st
 
     Returns
     -------
-    set of str
+    gids : set of str
         The GADM identifiers the name reaches, empty where it reaches none.
+
+    Examples
+    --------
+    The container picks between units sharing a name:
+
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.place_names import read_gazetteer, resolve_place
+
+        gazetteer = read_gazetteer("LAO", Path("data"))
+        gids = resolve_place("Xaythany", "Vientiane", gazetteer)
     """
     gids = _units_named(name, parent, gazetteer)
     if gids:
@@ -812,9 +835,14 @@ def _place_one(
     """
     Place one written place, taking the first reading that holds.
 
-    The order is what the readings are worth: the name itself, then a point, then a correction
-    someone checked, then a slip the event vouches for, then the unit an adjective was built from or
-    a direction qualified, and last the container, which claims everything inside it.
+    The order is what the readings are worth:
+
+    1. the name itself,
+    2. a point,
+    3. a correction someone checked,
+    4. a slip the event vouches for,
+    5. the unit an adjective was built from or a direction qualified,
+    6. the container, which claims everything inside it.
     """
     if named:
         return Placement(_narrowed(named, pinned, gazetteer), NAMED)
@@ -851,19 +879,19 @@ def resolve_event_places(
     Resolve the places one event names together, letting the unambiguous ones narrow the rest.
 
     A name reaching several units is settled first by a point, which sits in at most one of them
-    because the candidates are disjoint. What is left is settled by the event: its places share a
-    footprint, so a mention that lands on exactly one unit tells the ambiguous mentions beside it
-    where to look, and a mention a point has just settled speaks with the same authority. Candidates
+    because the candidates are disjoint. What is left is settled by the event. Its places share a footprint, so a
+    mention that lands on exactly one unit tells the ambiguous mentions beside it where to look. A mention a point has
+    just settled speaks with the same authority. Candidates
     outside everything the event has pinned are dropped, and a mention narrowed to nothing keeps its
     candidates.
 
     A place naming nothing takes the unit a point put it in where one is offered. Failing that it
-    falls back to the container the prose wrote it in — ``Pesisir Selaten (West Sumatra province)``
-    becomes the province, which spans fourteen districts at the median — so the result records
-    which of the two it was reached by. A container naming several places, as ``Wayanad district,
-    Kerala state`` does, gives the finest of them that resolves. A name one edit from a published one
-    is taken only where the container or an unambiguous sibling holds exactly one candidate, and a
-    name that only qualifies a unit by direction reaches the whole of it.
+    falls back to the container the prose wrote it in, so ``Pesisir Selaten (West Sumatra province)``
+    becomes the province, which spans fourteen districts at the median. The result records which of
+    the two it was reached by. A container naming several places, as ``Wayanad district,
+    Kerala state`` does, gives the finest of them that resolves. A name one edit from a published one is taken only
+    where the container or an unambiguous sibling holds exactly one candidate. A name that only qualifies a unit by
+    direction reaches the whole of it.
 
     Parameters
     ----------
@@ -878,8 +906,19 @@ def resolve_event_places(
 
     Returns
     -------
-    list of Placement
+    placements : list of Placement
         Where each place put the event, in the order the places were given.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.place_names import read_gazetteer, resolve_event_places
+
+        gazetteer = read_gazetteer("LAO", Path("data"))
+        placements = resolve_event_places([("Xaythany", "Vientiane"), ("Pakse", None)], gazetteer)
     """
     written = list(places)
     points = located or {}
@@ -909,10 +948,9 @@ def successor_state(
     """
     Name the modern country whose gazetteer an event's places belong to.
 
-    A state that left one successor needs no evidence. Where it left several, the successor placing
-    strictly more of the written places than any other takes the event: a Soviet flood naming
-    Tashkent is Uzbek, and one naming nothing recognisable stays unplaced rather than being assigned
-    to the largest successor.
+    A state that left one successor needs no evidence. Where it left several, the successor placing strictly more of the
+    written places than any other takes the event. A Soviet flood naming Tashkent is Uzbek. One naming nothing
+    recognizable stays unplaced rather than being assigned to the largest successor.
 
     Parameters
     ----------
@@ -927,7 +965,7 @@ def successor_state(
 
     Returns
     -------
-    str or None
+    successor : str or None
         The successor's ISO code, or None where the state has no successor recorded or its
         successors cannot be told apart.
     """
@@ -968,7 +1006,7 @@ def names_no_unit(name: str) -> bool:
 
     Returns
     -------
-    bool
+    no_unit : bool
         True where no administrative unit could answer to this name.
     """
     written = name.strip()

@@ -15,7 +15,7 @@ from climate_risk.exceptions import DataValidationError
 GADM = ManualSource(
     filename="gadm_410.gpkg",
     homepage="https://gadm.org/download_world.html",
-    licence=(
+    license=(
         "Academic use and other non-commercial use only. Redistribution, and use as part of a "
         "commercial product or service, require prior written permission."
     ),
@@ -34,6 +34,7 @@ GID_CHUNK = 400
 
 
 def gadm_dir(cache_dir: Path) -> Path:
+    """Return the directory the GADM GeoPackage lives in, inside ``cache_dir``."""
     return cache_dir / "gadm"
 
 
@@ -48,7 +49,7 @@ def gadm_path(cache_dir: Path) -> Path:
 
     Returns
     -------
-    Path
+    path : Path
         Location of ``gadm_410.gpkg``.
     """
     return GADM.require(gadm_dir(cache_dir))
@@ -78,7 +79,7 @@ def administered_territories(iso: str, cache_dir: Path, *, layer: str = GADM_LAY
 
     Returns
     -------
-    tuple of str
+    territories : tuple of str
         The territory codes, empty for a country administering none.
     """
     with sqlite3.connect(gadm_path(cache_dir)) as connection:
@@ -117,9 +118,21 @@ def load_units_in_country(
 
     Returns
     -------
-    GeoDataFrame
+    units : GeoDataFrame
         Columns ``gid``, ``name``, ``admin_level`` and ``geometry``, one row per unit. Empty where
         the country is not divided at that level.
+
+    Examples
+    --------
+    Read every district in Laos:
+
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.gadm import load_units_in_country
+
+        districts = load_units_in_country("LAO", 2, Path("data"))
     """
     if level not in GID_COLUMNS:
         raise DataValidationError(f"Units are read at levels {sorted(GID_COLUMNS)}, not {level}")
@@ -207,8 +220,20 @@ def load_admin_units(
 
     Returns
     -------
-    GeoDataFrame
+    admin_units : GeoDataFrame
         Columns ``gid``, ``name``, ``admin_level`` and ``geometry``, one row per distinct id.
+
+    Examples
+    --------
+    Read named units, each identified by its country and level:
+
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.gadm import load_admin_units
+
+        units = load_admin_units([("LAO", 1), ("THA", 1)], Path("data"))
     """
     path = gadm_path(cache_dir)
     requested = set(units)

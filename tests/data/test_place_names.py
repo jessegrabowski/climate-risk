@@ -96,7 +96,7 @@ def test_a_container_chooses_between_units_sharing_a_name(write_gadm_cache):
 
 def test_a_container_naming_nothing_leaves_the_candidates_alone(write_gadm_cache):
     """The prose routinely names a region GADM does not model — `Calabarzon`, `Bicol` — and an
-    unrecognised container is missing information, not evidence against the candidates."""
+    unrecognized container is missing information, not evidence against the candidates."""
     gazetteer = read_gazetteer("LAO", write_gadm_cache())
 
     assert resolve_place("Sanamxay", "Some Region GADM Never Heard Of", gazetteer) == {"LAO.1.1_1"}
@@ -224,7 +224,7 @@ def test_a_place_named_between_two_others_is_in_neither(write_gadm_cache):
 
 def test_a_place_naming_nothing_falls_back_to_the_container_it_was_written_in(write_gadm_cache):
     """A third of the events still unplaced name a container that resolves — `Pesisir Selaten (West
-    Sumatra province)` gives the province even where the district is unrecognisable."""
+    Sumatra province)` gives the province even where the district is unrecognizable."""
     gazetteer = read_gazetteer("LAO", write_gadm_cache())
 
     assert resolve_event_places([("Nowhere At All", "Bokeo")], gazetteer) == [Placement({"LAO.2_1"}, CONTAINED_BY)]

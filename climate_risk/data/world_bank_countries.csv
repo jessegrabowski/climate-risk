@@ -31,7 +31,7 @@ Bosnia and Herzegovina,BIH,true
 Latin America & the Caribbean (IBRD-only countries),BLA,false
 Belarus,BLR,true
 Belize,BLZ,true
-Middle East & North Africa (IBRD-only countries),BMN,false
+"Middle East, North Africa, Afghanistan & Pakistan (IBRD only)",BMN,false
 Bermuda,BMU,true
 Bolivia,BOL,true
 Brazil,BRA,true
@@ -73,7 +73,7 @@ Germany,DEU,true
 Djibouti,DJI,true
 Latin America & the Caribbean (IDA-eligible countries),DLA,false
 Dominica,DMA,true
-Middle East & North Africa (IDA-eligible countries),DMN,false
+"Middle East, North Africa, Afghanistan & Pakistan (IDA total)",DMN,false
 Denmark,DNK,true
 IDA countries in Sub-Saharan Africa not classified as fragile situations ,DNS,false
 Dominican Republic,DOM,true
@@ -176,7 +176,7 @@ Moldova,MDA,true
 Middle East (developing only),MDE,false
 Madagascar,MDG,true
 Maldives,MDV,true
-Middle East & North Africa,MEA,false
+"Middle East, North Africa, Afghanistan & Pakistan",MEA,false
 Mexico,MEX,true
 Marshall Islands,MHL,true
 Middle income,MIC,false
@@ -184,7 +184,7 @@ North Macedonia,MKD,true
 Mali,MLI,true
 Malta,MLT,true
 Myanmar,MMR,true
-Middle East & North Africa (excluding high income),MNA,false
+"Middle East, North Africa, Afghanistan & Pakistan (excluding high income)",MNA,false
 Montenegro,MNE,true
 Mongolia,MNG,true
 Northern Mariana Islands,MNP,true
@@ -204,7 +204,7 @@ Netherlands,NLD,true
 Norway,NOR,true
 Nepal,NPL,true
 Non-resource rich Sub-Saharan Africa countries,NRS,false
-Nauru,NRU,true
+Naoero,NRU,true
 "IDA countries not classified as fragile situations, excluding Sub-Saharan Africa",NXS,false
 New Zealand,NZL,true
 OECD members,OED,false
@@ -218,7 +218,7 @@ Palau,PLW,true
 Papua New Guinea,PNG,true
 Poland,POL,true
 Pre-demographic dividend,PRE,false
-Puerto Rico,PRI,true
+Puerto Rico (US),PRI,true
 "Korea, Dem. People's Rep.",PRK,true
 Portugal,PRT,true
 Paraguay,PRY,true
@@ -240,7 +240,7 @@ Solomon Islands,SLB,true
 Sierra Leone,SLE,true
 El Salvador,SLV,true
 San Marino,SMR,true
-Somalia,SOM,true
+"Somalia, Fed. Rep.",SOM,true
 Serbia,SRB,true
 Sub-Saharan Africa (excluding high income),SSA,false
 South Sudan,SSD,true
@@ -266,7 +266,7 @@ Tajikistan,TJK,true
 Turkmenistan,TKM,true
 Latin America & the Caribbean (IDA & IBRD countries),TLA,false
 Timor-Leste,TLS,true
-Middle East & North Africa (IDA & IBRD countries),TMN,false
+"Middle East, North Africa, Afghanistan & Pakistan (IDA & IBRD)",TMN,false
 Tonga,TON,true
 South Asia (IDA & IBRD),TSA,false
 Sub-Saharan Africa (IDA & IBRD countries),TSS,false

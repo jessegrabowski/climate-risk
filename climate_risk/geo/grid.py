@@ -34,12 +34,28 @@ def create_grid_from_shape(
 
     Returns
     -------
-    GeoDataFrame
+    grid : GeoDataFrame
         One row per surviving point, with ``lon``, ``lat``, distances to the nearest river and
         coastline, their logs, and ``ISO``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk import load_rivers_data, load_shapefile
+        from climate_risk.geo.grid import create_grid_from_shape
+
+        cache_dir = Path("data")
+        world = load_shapefile("world", cache_dir)
+        coastline = load_shapefile("coastline", cache_dir)
+        rivers = load_rivers_data(cache_dir)
+
+        grid = create_grid_from_shape(world[world["ISO_A3"] == "LAO"], rivers, coastline)
     """
-    labelled = "ISO_A3" in shapefile.columns
-    if not labelled and iso3 is None:
+    labeled = "ISO_A3" in shapefile.columns
+    if not labeled and iso3 is None:
         raise ValueError(
             "The geometry carries no ISO_A3 column, so pass iso3 to say which country its points belong to."
         )
@@ -76,6 +92,6 @@ def create_grid_from_shape(
         )
     )
 
-    points["ISO"] = point_overlay["ISO_A3"] if labelled else iso3
+    points["ISO"] = point_overlay["ISO_A3"] if labeled else iso3
 
     return points

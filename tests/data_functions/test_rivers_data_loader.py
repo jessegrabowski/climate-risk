@@ -1,6 +1,7 @@
 import pytest
 
 from climate_risk import load_rivers_data
+from climate_risk.data_functions import rivers_data_loader
 from climate_risk.data_functions.rivers_data_loader import transform_rivers
 from tests.conftest import NetworkAccessError, toy_rivers
 
@@ -15,7 +16,7 @@ def warm_cache(write_rivers_cache):
 
 
 @pytest.mark.parametrize(("cutoff", "kept"), [(5, [4]), (6, [4, 5])])
-def test_the_stream_order_cutoff_excludes_its_own_order(cutoff, kept):
+def test_the_discharge_class_cutoff_excludes_its_own_class(cutoff, kept):
     """The warm-cache tests read back what a fixture wrote, so this is where the filter is tested."""
     kept_rivers = transform_rivers(toy_rivers(), cutoff)
 
@@ -43,3 +44,21 @@ def test_processed_cache_alone_does_not_download(write_rivers_cache):
 def test_cold_cache_reaches_for_the_archive(tmp_path):
     with pytest.raises(NetworkAccessError):
         load_rivers_data(tmp_path)
+
+
+def test_editing_the_filter_turns_the_cache_over(tmp_path, monkeypatch):
+    """The entry keys on how the network was read as well as on the cutoff, so a changed
+    `transform_rivers` builds a second entry rather than being served the first one's rivers.
+    """
+    shapefile = tmp_path / "network.shp"
+    toy_rivers().to_file(shapefile)
+    monkeypatch.setattr(rivers_data_loader, "_extract_rivers", lambda cache_dir: shapefile)
+
+    first = load_rivers_data(tmp_path)
+
+    monkeypatch.setattr(rivers_data_loader, "transform_rivers", lambda rivers, cutoff: rivers.iloc[:0])
+    second = load_rivers_data(tmp_path)
+
+    assert first["ORD_FLOW"].tolist() == [4]
+    assert second.empty, "the changed filter was served the first entry's rivers"
+    assert len(list((tmp_path / "rivers").glob("rivers__*.parquet"))) == 2

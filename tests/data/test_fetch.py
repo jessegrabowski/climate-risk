@@ -11,7 +11,7 @@ def make_source(**overrides) -> DataSource:
     fields = {
         "url": "https://example.org/co2.csv",
         "filename": "noaa_co2.csv",
-        "licence": "public domain",
+        "license": "public domain",
         "citation": "NOAA GML",
         "retrieved": "2026-08-03",
     }

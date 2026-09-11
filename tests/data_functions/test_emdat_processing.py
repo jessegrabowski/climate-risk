@@ -150,21 +150,29 @@ def test_region_metadata_survives_reindexing(write_emdat_cache):
 @pytest.mark.parametrize(
     ("disaster_type", "expected_class"),
     [
-        ("Flood", "Hydrometereological"),
-        ("Storm", "Hydrometereological"),
+        ("Flood", "Hydrometeorological"),
+        ("Storm", "Hydrometeorological"),
         ("Drought", "Climatological"),
         ("Wildfire", "Climatological"),
         ("Extreme temperature", "Climatological"),
-        ("Mass movement (wet)", "Hydrometereological"),
+        ("Mass movement (wet)", "Hydrometeorological"),
     ],
 )
 def test_disaster_types_map_to_their_class(write_emdat_cache, disaster_type, expected_class):
-    """`Hydrometereological` is misspelled on purpose: it is the wire value in every cached CSV."""
     cache_dir = write_emdat_cache([emdat_event({"Disaster Type": disaster_type})])
 
     classes = load_emdat_events(cache_dir)["disaster_class"]
 
     assert classes.to_list() == [expected_class]
+
+
+def test_an_unclassified_disaster_type_becomes_null(write_emdat_cache):
+    """Geophysical and biological types are out of scope, and are mapped to null rather than guessed at."""
+    cache_dir = write_emdat_cache([emdat_event({"Disaster Type": "Earthquake"})])
+
+    classes = load_emdat_events(cache_dir)["disaster_class"]
+
+    assert classes.to_list() == [None]
 
 
 def test_adjusted_filter_ignores_deaths_but_starts_in_1981(write_emdat_cache):

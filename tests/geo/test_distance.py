@@ -8,9 +8,9 @@ from climate_risk.exceptions import DataValidationError
 from climate_risk.geo.distance import get_distance_to
 
 
-def test_distance_is_measured_in_metres_of_the_projected_crs(grid_points):
-    """`to_km` and the log transforms downstream only hold while the result is in metres. Measuring
-    in the points' own lat/lon would return half a degree here and read as half a metre.
+def test_distance_is_measured_in_meters_of_the_projected_crs(grid_points):
+    """`to_km` and the log transforms downstream only hold while the result is in meters. Measuring
+    in the points' own lat/lon would return half a degree here and read as half a meter.
     """
     rivers = gpd.GeoDataFrame(
         {"ORD_FLOW": [4], "HYRIV_ID": [1], "geometry": [LineString([(0, -1), (0, 2)])]}, crs="EPSG:4326"
@@ -68,7 +68,7 @@ def test_a_geoseries_of_boundaries_is_measured_to():
 
     to_coast = get_distance_to(land.boundary, points=inside)["distance_to_closest"]
 
-    assert to_coast.iloc[0] > 100_000, "the centre of the box is far from its edge"
+    assert to_coast.iloc[0] > 100_000, "the center of the box is far from its edge"
     assert get_distance_to(land, points=inside)["distance_to_closest"].iloc[0] == 0.0
 
 

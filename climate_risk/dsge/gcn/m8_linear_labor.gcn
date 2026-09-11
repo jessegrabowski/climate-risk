@@ -1,0 +1,699 @@
+assumptions
+{
+    positive
+    {
+        # Quantities
+        C[], Y[], H[], H_H[], L[], K[], I[], M[], X[], G[], Y_star[],
+
+        # Prices and wages
+        p_H[], p_M[], p_X[], p_M_star[], w[], w_tilde[], r[],
+        p_H_tilde[], p_M_tilde[], p_X_tilde[],
+
+        # Inflation rates
+        pi[], pi_H[], pi_M[], pi_X[], pi_star[], pi_w[],
+
+        # Marginal costs and multipliers
+        mu_H[], lambda[], tobins_q[],
+
+        # Capital utilization
+        z[],
+
+        # Dispersion and risk premium
+        nu_H[], nu_M[], nu_X[], nu_w[], Phi_B[],
+        R_star_given[],
+
+        # Calvo auxiliary variables
+        x_1[], x_2[], z_1_M[], z_2_M[], z_1_X[], z_2_X[],
+        x_1_w[], x_2_w[],
+
+        # Time-varying shocks (level, SS = 1)
+        beta[], xi_I[], xi_H[], xi_w[],
+
+        # Structural parameters (note: chi removed)
+        alpha, beta, delta, sigma, Theta,
+        alpha_Y, psi_Y, psi_H, psi_M, psi_X, psi_w,
+        theta_H, theta_M, theta_X, theta_w,
+        psi_B, phi_B,
+        alpha_Y_star, psi_Y_star, phi_Y_star,
+        phi_pi_star, phi_y_star, kappa_star, gamma_i_star,
+        psi_G,
+        phi_H, gamma_I, psi_z,
+        phi_pi, phi_y, phi_q,
+
+        # Tax rates
+        tau_C[], tau_K[], tau_L[],
+
+        # Trade taxes
+        tau_M[], tau_X[],
+
+        # Firm total costs
+        TC_H[], TC_Q[];
+
+    };
+};
+
+tryreduce
+{
+	U[], TC_H[], TC_Q[], Pi_H[], Pi_X[], Pi_M[];
+};
+
+
+block STEADY_STATE
+{
+    identities
+    {
+        A[ss] = 1;
+        P[ss] = 1;
+
+        pi[ss] = 1;
+        pi_H[ss] = 1;
+        pi_M[ss] = 1;
+        pi_X[ss] = 1;
+        pi_star[ss] = 1;
+        pi_w[ss] = 1;
+
+        nu_H[ss] = 1;
+        nu_M[ss] = 1;
+        nu_X[ss] = 1;
+        nu_w[ss] = 1;
+
+        q[ss] = q_bar;
+
+        p_M_star[ss] = p_M_star_bar;
+        p_M[ss] = psi_M / (psi_M - 1) * (1 + tau_M[ss]) * q[ss] * p_M_star[ss];
+        p_M_tilde[ss] = 1;
+
+        p_H_tilde[ss] = 1;
+
+        i_star[ss] = i_star_bar;
+        i[ss] = i_star_bar;
+        R_star_given[ss] = 1 + i_star[ss];
+
+        Phi_B[ss] = 1;
+
+        tau_C[ss] = tau_C;
+        tau_K[ss] = tau_K;
+        tau_L[ss] = tau_L;
+        tau_M[ss] = tau_M;
+        tau_X[ss] = tau_X;
+
+        z[ss] = 1;
+        beta[ss] = beta;
+        xi_I[ss] = 1;
+        xi_H[ss] = 1;
+        xi_w[ss] = 1;
+
+        r[ss] = (1 + tau_C[ss]) / (1 - tau_K[ss]) * (1 / beta - (1 - delta));
+        p_H[ss] = ((1 - (1 - alpha_Y) * p_M[ss] ^ (1 - psi_Y)) / alpha_Y) ^ (1 / (1 - psi_Y));
+        mu_H[ss] = (psi_H - 1) / psi_H * p_H[ss];
+
+        p_X[ss] = psi_X / (psi_X - 1) * p_H[ss] / (1 - tau_X[ss]);
+        p_X_tilde[ss] = 1;
+
+        N[ss] = (alpha * mu_H[ss] / r[ss]) ^ (1 / (1 - alpha));
+
+        w[ss] = (1 - alpha) * mu_H[ss] * N[ss] ^ alpha;
+        w_tilde[ss] = w[ss];
+        omega_X[ss] = (1 - alpha_Y_star) * (p_X[ss] / q[ss]) ^ (-psi_Y_star) * phi_Y_star;
+        Omega[ss] = 1 - q[ss] * p_M_star[ss] * (1 - alpha_Y) * p_M[ss] ^ (-psi_Y)
+                    + p_X[ss] * omega_X[ss] + i_star[ss] * phi_B;
+        Gamma[ss] = (Omega[ss] - psi_G) * N[ss] ^ alpha / (alpha_Y * p_H[ss] ^ (-psi_Y) + omega_X[ss])
+                    - delta * N[ss];
+
+        # Linear disutility: exponent is 1/sigma instead of 1/(chi+sigma)
+        L[ss] = ((psi_w - 1) / psi_w * (1 - tau_L[ss]) / (1 + tau_C[ss])
+                    * (1 - phi_H * beta) / (1 - phi_H) ^ sigma
+                    * w[ss] / Theta / Gamma[ss] ^ sigma) ^ (1 / sigma);
+
+        H[ss] = N[ss] ^ alpha * L[ss];
+        Y[ss] = H[ss] / (alpha_Y * p_H[ss] ^ (-psi_Y) + omega_X[ss]);
+        Y_star[ss] = phi_Y_star * Y[ss];
+        H_H[ss] = alpha_Y * p_H[ss] ^ (-psi_Y) * Y[ss];
+        X[ss] = omega_X[ss] * Y[ss];
+        M[ss] = (1 - alpha_Y) * p_M[ss] ^ (-psi_Y) * Y[ss];
+
+        K[ss] = N[ss] * L[ss];
+        I[ss] = delta * K[ss];
+        B[ss] = b_target * Y[ss];
+        B_star[ss] = phi_B * Y[ss] / q[ss];
+        C[ss] = Gamma[ss] * L[ss];
+        lambda[ss] = (1 - phi_H * beta) / ((1 + tau_C[ss]) * ((1 - phi_H) * C[ss]) ^ sigma);
+        tobins_q[ss] = (1 + tau_C[ss]) * lambda[ss];
+
+        x_1[ss] = mu_H[ss] * H_H[ss] / (1 - beta * theta_H);
+        x_2[ss] = p_H[ss] * H_H[ss] / (1 - beta * theta_H);
+
+        z_1_M[ss] = (1 + tau_M[ss]) * q[ss] * p_M_star[ss] * M[ss] / (1 - beta * theta_M);
+        z_2_M[ss] = p_M[ss] * M[ss] / (1 - beta * theta_M);
+
+        z_1_X[ss] = p_H[ss] * X[ss] / (1 - beta * theta_X);
+        z_2_X[ss] = (1 - tau_X[ss]) * p_X[ss] * X[ss] / (1 - beta * theta_X);
+
+        # Linear disutility: L^(1+chi) → L, w^(psi_w*(1+chi)) → w^psi_w
+        x_1_w[ss] = Theta * L[ss] * w[ss] ^ psi_w / (1 - beta * theta_w);
+        x_2_w[ss] = lambda[ss] * (1 - tau_L[ss]) * w[ss] ^ psi_w * L[ss] / (1 - beta * theta_w);
+
+        TC_H[ss] = r[ss] * z[ss] * K[ss] + w[ss] * L[ss];
+        Pi_H[ss] = p_H[ss] * H[ss] - TC_H[ss];
+        TB[ss] = p_X[ss] * X[ss] - (1 + tau_M[ss]) * q[ss] * p_M_star[ss] * nu_M[ss] * M[ss];
+
+        G[ss] = psi_G * Y[ss];
+        Tax_Revenue[ss] = tau_C[ss] * (C[ss] + I[ss])
+                        + tau_K[ss] * r[ss] * z[ss] * K[ss]
+                        + tau_L[ss] * w[ss] * L[ss]
+                        + tau_M[ss] * q[ss] * p_M_star[ss] * nu_M[ss] * M[ss]
+                        + tau_X[ss] * p_X[ss] * X[ss];
+    };
+};
+
+block HOUSEHOLD
+{
+	definitions
+	{
+		u[] = ((C[] - phi_H * C[-1]) ^ (1 - sigma) / (1 - sigma) - Theta * nu_w[] * L[]);
+		Psi_z[] = psi_z_1 * (z[] - 1) + psi_z / 2 * (z[] - 1) ^ 2;
+	};
+
+    objective
+    {
+        U[] = u[] + beta[] * E[][U[1]];
+    };
+
+    controls
+    {
+        C[], I[], K[], B[], B_star[], z[];
+    };
+
+    constraints
+    {
+		(1 + tau_C[]) * (C[] + I[]) + B[] + q[] * B_star[] + Psi_z[] * K[-1]
+		    = (1 - tau_K[]) * r[] * z[] * K[-1] + (1 - tau_L[]) * w[] * L[]
+		    + (1 + i[-1]) / pi[] * B[-1]
+		    + q[] * R_star_given[-1] / pi_star[] * B_star[-1]
+		    + Pi_H[] + Pi_X[] + Pi_M[]
+		    - T_lump : lambda[];
+		K[] = (1 - delta) * K[-1] + I[] * (1 - gamma_I / 2 * (xi_I[] * I[] / I[-1] - 1) ^ 2) : tobins_q[];
+    };
+
+    identities
+    {
+        Phi_B[] = exp(-psi_B * (q[] * B_star[] / Y[] - phi_B));
+        R_star_given[] = (1 + i_star[]) * Phi_B[];
+
+        # Discount factor shock (AR(1) in logs, mean-reverting to beta)
+        log(beta[]) = rho_beta * log(beta[-1]) + (1 - rho_beta) * log(beta) + epsilon_beta[];
+
+        # Investment-specific technology shock (AR(1) in logs, SS = 1)
+        log(xi_I[]) = rho_xi_I * log(xi_I[-1]) + epsilon_xi_I[];
+    };
+
+    shocks
+    {
+        epsilon_beta[] ~ Normal(mu=0, sigma=sigma_beta);
+        epsilon_xi_I[] ~ Normal(mu=0, sigma=sigma_xi_I);
+    };
+
+    calibration
+    {
+        beta ~ maxent(Beta(), lower=0.90, upper=0.97, mass=0.99) = 0.95;
+        sigma ~ maxent(Gamma(), lower=1.0, upper=4.0, mass=0.99) = 2.0;
+        delta ~ maxent(Beta(), lower=0.06, upper=0.15, mass=0.99) = 0.10;
+        Theta = 1.0;
+
+        psi_B ~ maxent(Gamma(), lower=0.5, upper=5.0, mass=0.99) = 2.0;
+		phi_B = 0.15;
+
+        phi_H ~ maxent(Beta(), lower=0.3, upper=0.8, mass=0.99) = 0.60;
+        gamma_I ~ maxent(Gamma(), lower=4.0, upper=15.0, mass=0.99) = 8.0;
+        psi_z ~ maxent(Beta(), lower=0.05, upper=0.40) = 0.20;
+        psi_z_1 = (1 + tau_C) * (1 / beta - (1 - delta));
+
+        # Shock persistence (annual frequency)
+        rho_beta ~ maxent(Beta(), lower=0.3, upper=0.9, mass=0.99) = 0.70;
+        rho_xi_I    ~ maxent(Beta(), lower=0.3, upper=0.9, mass=0.99) = 0.70;
+
+        # Shock std devs
+        sigma_beta ~ maxent(InverseGamma(), lower=0.005, upper=0.05, mass=0.99) = 0.01;
+        sigma_xi_I    ~ maxent(InverseGamma(), lower=0.005, upper=0.05, mass=0.99) = 0.01;
+    };
+};
+
+block WAGE_SETTING
+{
+    identities
+    {
+        # Linear disutility: w_tilde^(1+psi_w*chi) → w_tilde
+        # xi_w[] enters as a multiplicative shock on the desired markup
+        w_tilde[] = xi_w[] * psi_w / (psi_w - 1) * x_1_w[] / x_2_w[];
+
+        # Linear disutility: L^(1+chi) → L, w^(psi_w*(1+chi)) → w^psi_w
+        x_1_w[] = Theta * L[] * w[] ^ psi_w +
+            theta_w * beta[] * E[][pi[1] ^ psi_w * x_1_w[1]];
+        x_2_w[] = lambda[] * (1 - tau_L[]) * w[] ^ psi_w * L[] +
+            theta_w * beta[] * E[][pi[1] ^ (psi_w - 1) * x_2_w[1]];
+
+        w[] ^ (1 - psi_w) = (1 - theta_w) * w_tilde[] ^ (1 - psi_w) +
+            theta_w * pi[] ^ (psi_w - 1) * w[-1] ^ (1 - psi_w);
+
+        nu_w[] = (1 - theta_w) * (w_tilde[] / w[]) ^ (-psi_w)
+               + theta_w * pi_w[] ^ psi_w * nu_w[-1];
+        pi_w[] = w[] / w[-1] * pi[];
+
+        # Wage markup shock (AR(1) in logs, SS = 1)
+        log(xi_w[]) = rho_xi_w * log(xi_w[-1]) + epsilon_xi_w[];
+    };
+
+    shocks
+    {
+        epsilon_xi_w[] ~ Normal(mu=0, sigma=sigma_xi_w);
+    };
+
+    calibration
+    {
+        psi_w   ~ maxent(Gamma(), lower=1.5, upper=15.0, mass=0.99) = 4.0;
+        theta_w ~ maxent(Beta(), lower=0.1, upper=0.7, mass=0.99) = 0.50;
+
+        rho_xi_w   ~ maxent(Beta(), lower=0.3, upper=0.9, mass=0.99) = 0.60;
+        sigma_xi_w ~ maxent(InverseGamma(), lower=0.005, upper=0.03, mass=0.99) = 0.01;
+    };
+};
+
+block FINAL_BUNDLER
+{
+    controls
+    {
+        M[], H_H[];
+    };
+
+    objective
+    {
+        @minimize
+        TC_Q[] = p_H[] * H_H[] + p_M[] * M[];
+    };
+
+    constraints
+    {
+        Y[] = (alpha_Y ^ (1 / psi_Y) * H_H[] ^ ((psi_Y - 1) / psi_Y) +
+              (1 - alpha_Y) ^ (1 / psi_Y) * M[] ^ ((psi_Y - 1) / psi_Y)) ^ (psi_Y / (psi_Y - 1)) : mu_Y[];
+    };
+
+    identities
+    {
+        mu_Y[] = 1;
+        pi[] = pi_H[] * p_H[-1] / p_H[];
+    };
+
+    calibration
+    {
+        alpha_Y ~ maxent(Beta(), lower=0.2, upper=0.7, mass=0.99) = 0.40;
+        psi_Y   ~ maxent(Gamma(), lower=0.3, upper=5.0, mass=0.99) = 0.80;
+    };
+};
+
+block DOMESTIC_FIRM
+{
+    controls
+    {
+        K[-1], L[];
+    };
+
+    objective
+    {
+        @minimize
+        TC_H[] = r[] * z[] * K[-1] + w[] * L[];
+    };
+
+    constraints
+    {
+        H[] = A[] * (z[] * K[-1]) ^ alpha * L[] ^ (1 - alpha) : mu_H[];
+    };
+
+    identities
+    {
+        log(A[]) = rho_A * log(A[-1]) + epsilon_A[];
+        Pi_H[] = p_H[] * (H_H[] + nu_X[] * X[]) - TC_H[];
+    };
+
+    shocks
+    {
+        epsilon_A[] ~ Normal(mu=0, sigma=sigma_A);
+    };
+
+    calibration
+    {
+		alpha ~ maxent(Beta(), lower=0.15, upper=0.45, mass=0.99) = 0.30;
+        rho_A ~ maxent(Beta(), lower=0.3, upper=0.9, mass=0.99) = 0.70;
+
+        # TFP shock std dev
+        sigma_A ~ maxent(InverseGamma(), lower=0.005, upper=0.03, mass=0.99) = 0.01;
+    };
+};
+
+block DOMESTIC_FIRM_PRICE_SETTING_PROBLEM
+{
+ 	identities
+ 	{
+        # xi_H[] enters as a multiplicative shock on the desired markup
+		p_H_tilde[] = xi_H[] * psi_H / (psi_H - 1) * x_1[] / x_2[];
+
+        x_1[] = mu_H[] * H_H[] + beta[] * theta_H * E[][
+            lambda[1] / lambda[] * pi_H[1] ^ psi_H * x_1[1]
+        ];
+        x_2[] = p_H[] * H_H[] + beta[] * theta_H * E[][
+            lambda[1] / lambda[] * pi_H[1] ^ (psi_H - 1) * x_2[1]
+        ];
+
+        1 = theta_H * pi_H[] ^ (psi_H - 1) +
+				(1 - theta_H) * p_H_tilde[] ^ (1 - psi_H);
+
+        nu_H[] = (1 - theta_H) * p_H_tilde[] ^ (-psi_H) + theta_H * pi_H[] ^ psi_H * nu_H[-1];
+
+        # Domestic price markup shock (AR(1) in logs, SS = 1)
+        log(xi_H[]) = rho_xi_H * log(xi_H[-1]) + epsilon_xi_H[];
+	};
+
+	shocks
+	{
+	    epsilon_xi_H[] ~ Normal(mu=0, sigma=sigma_xi_H);
+	};
+
+	calibration
+	{
+		psi_H ~ maxent(Gamma(), lower=1.5, upper=15.0, mass=0.99) = 4.0;
+        theta_H ~ maxent(Beta(), lower=0.1, upper=0.7, mass=0.99) = 0.50;
+
+        rho_xi_H   ~ maxent(Beta(), lower=0.3, upper=0.9, mass=0.99) = 0.60;
+        sigma_xi_H ~ maxent(InverseGamma(), lower=0.005, upper=0.03, mass=0.99) = 0.01;
+	};
+};
+
+block EXCHANGE_RATE
+{
+    identities
+    {
+        log(q[]) = (1 - rho_q) * log(q_bar) + rho_q * log(q[-1]) + epsilon_q[];
+    };
+
+    shocks
+    {
+        epsilon_q[] ~ Normal(mu=0, sigma=sigma_q);
+    };
+
+    calibration
+    {
+        q_bar = 1.0;
+        rho_q ~ maxent(Beta(), lower=0.3, upper=0.9, mass=0.99) = 0.70;
+
+        # RER shock std dev
+        sigma_q ~ maxent(InverseGamma(), lower=0.01, upper=0.15, mass=0.99) = 0.02;
+    };
+};
+
+block FOREIGN
+{
+    identities
+    {
+        log(1 + i_star[]) = (1 - rho_i_star) * log(1 + i_star_bar)
+            + rho_i_star * log(1 + i_star[-1])
+            + phi_pi_star * log(pi_star[-1])
+            + phi_y_star * (log(Y_star[-1]) - log(Y_star[ss]))
+            + epsilon_i_star[];
+
+        log(pi_star[]) = rho_pi_star * log(pi_star[-1])
+            + kappa_star * (log(Y_star[-1]) - log(Y_star[ss]))
+            + epsilon_pi_star[];
+
+        log(Y_star[]) = (1 - rho_Y_star) * log(Y_star[ss])
+            + rho_Y_star * log(Y_star[-1])
+            - gamma_i_star * (log(1 + i_star[-1]) - log(1 + i_star_bar))
+            + epsilon_Y_star[];
+
+        X[] = (1 - alpha_Y_star) * (p_X[] / q[]) ^ (-psi_Y_star) * Y_star[];
+    };
+
+    shocks
+    {
+        epsilon_i_star[] ~ Normal(mu=0, sigma=sigma_i_star);
+        epsilon_pi_star[] ~ Normal(mu=0, sigma=sigma_pi_star);
+        epsilon_Y_star[] ~ Normal(mu=0, sigma=sigma_Y_star);
+    };
+
+    calibration
+    {
+        alpha_Y_star ~ maxent(Beta(), lower=0.5, upper=0.95, mass=0.99) = 0.85;
+        psi_Y_star   ~ maxent(Gamma(), lower=0.5, upper=5.0, mass=0.99) = 1.5;
+
+        rho_i_star  ~ maxent(Beta(), lower=0.2, upper=0.8, mass=0.99) = 0.8;
+        rho_pi_star ~ maxent(Beta(), lower=0.5, upper=0.99, mass=0.99) = 0.85;
+        rho_Y_star  ~ maxent(Beta(), lower=0.2, upper=0.8, mass=0.99) = 0.5;
+
+        phi_pi_star  ~ maxent(Gamma(), lower=0.1, upper=0.8, mass=0.99) = 0.3;
+        phi_y_star   ~ maxent(Gamma(), lower=0.01, upper=0.3, mass=0.99) = 0.1;
+        kappa_star   ~ maxent(Gamma(), lower=0.001, upper=0.5, mass=0.99) = 0.05;
+        gamma_i_star ~ maxent(Gamma(), lower=0.05, upper=0.5, mass=0.99) = 0.2;
+
+        i_star_bar = 1 / beta - 1;
+        phi_Y_star = 1.0;
+
+        # Shock std devs
+        sigma_i_star  ~ maxent(InverseGamma(), lower=0.001, upper=0.02, mass=0.99) = 0.005;
+        sigma_pi_star ~ maxent(InverseGamma(), lower=0.005, upper=0.05, mass=0.99) = 0.01;
+        sigma_Y_star  ~ maxent(InverseGamma(), lower=0.005, upper=0.05, mass=0.99) = 0.01;
+    };
+};
+
+block IMPORT_FIRM
+{
+    identities
+    {
+        p_M_tilde[] = psi_M / (psi_M - 1) * z_1_M[] / z_2_M[];
+
+        z_1_M[] = (1 + tau_M[]) * q[] * p_M_star[] * M[] +
+            beta[] * theta_M * E[][
+                lambda[1] / lambda[] * pi_M[1] ^ psi_M * z_1_M[1]];
+        z_2_M[] = p_M[] * M[] +
+            beta[] * theta_M * E[][
+                lambda[1] / lambda[] * pi_M[1] ^ (psi_M - 1) * z_2_M[1]];
+
+        1 = theta_M * pi_M[] ^ (psi_M - 1) + (1 - theta_M) * p_M_tilde[] ^ (1 - psi_M);
+        nu_M[] = (1 - theta_M) * p_M_tilde[] ^ (-psi_M) + theta_M * pi_M[] ^ psi_M * nu_M[-1];
+        p_M[] = p_M[-1] * pi_M[] / pi[];
+
+        log(p_M_star[]) = (1 - rho_p_M_star) * log(p_M_star_bar) + rho_p_M_star * log(p_M_star[-1]) + epsilon_p_M_star[];
+        Pi_M[] = p_M[] * M[] - (1 + tau_M[]) * q[] * p_M_star[] * nu_M[] * M[];
+    };
+
+    shocks
+    {
+        epsilon_p_M_star[] ~ Normal(mu=0, sigma=sigma_p_M_star);
+    };
+
+    calibration
+    {
+        psi_M ~ maxent(Gamma(), lower=1.5, upper=10.0, mass=0.99) = 4.0;
+        theta_M ~ maxent(Beta(), lower=0.1, upper=0.7, mass=0.99) = 0.50;
+        rho_p_M_star ~ maxent(Beta(), lower=0.3, upper=0.99, mass=0.99) = 0.70;
+        p_M_star_bar = 1.0;
+
+        # Import price shock std dev
+        sigma_p_M_star ~ maxent(InverseGamma(), lower=0.01, upper=0.15, mass=0.99) = 0.02;
+    };
+};
+
+block EXPORT_FIRM
+{
+    identities
+    {
+        p_X_tilde[] = psi_X / (psi_X - 1) * z_1_X[] / z_2_X[];
+
+        z_1_X[] = p_H[] * X[] +
+            beta[] * theta_X * E[][
+                lambda[1] / lambda[] * pi_X[1] ^ psi_X * z_1_X[1]];
+        z_2_X[] = (1 - tau_X[]) * p_X[] * X[] +
+            beta[] * theta_X * E[][
+                lambda[1] / lambda[] * pi_X[1] ^ (psi_X - 1) * z_2_X[1]];
+
+        1 = theta_X * pi_X[] ^ (psi_X - 1) + (1 - theta_X) * p_X_tilde[] ^ (1 - psi_X);
+        nu_X[] = (1 - theta_X) * p_X_tilde[] ^ (-psi_X) + theta_X * pi_X[] ^ psi_X * nu_X[-1];
+        p_X[] = p_X[-1] * pi_X[] / pi[];
+
+        Pi_X[] = (1 - tau_X[]) * p_X[] * X[] - p_H[] * nu_X[] * X[];
+    };
+
+    calibration
+    {
+        psi_X ~ maxent(Gamma(), lower=1.5, upper=10.0, mass=0.99) = 4.0;
+        theta_X ~ maxent(Beta(), lower=0.1, upper=0.7, mass=0.99) = 0.50;
+    };
+};
+
+block MONETARY_POLICY
+{
+    identities
+    {
+        # Developing-economy Taylor rule with exchange rate response
+        # Responds to real exchange rate depreciation (q/q_bar > 1)
+        log(1 + i[]) = rho_i * log(1 + i[-1])
+            + (1 - rho_i) * (log(1 + i_bar)
+                + phi_pi * log(pi[])
+                + phi_y * log(Y[] / Y[ss])
+                + phi_q * log(q[] / q_bar))
+            + epsilon_i[];
+    };
+
+    shocks
+    {
+        epsilon_i[] ~ Normal(mu=0, sigma=sigma_i);
+    };
+
+    calibration
+    {
+        i_bar = 1 / beta - 1;
+
+        # More aggressive inflation response
+        phi_pi ~ maxent(Gamma(), lower=1.2, upper=5.0, mass=0.99) = 2.0;
+
+        # Less weight on output gap
+        phi_y  ~ maxent(Gamma(), lower=0.01, upper=1.0, mass=0.99) = 0.25;
+
+        # Exchange rate response: tighten when currency depreciates (q rises)
+        # Empirical range: 0.1-0.5 for developing economies
+        phi_q ~ maxent(Gamma(), lower=0.05, upper=1.0, mass=0.99) = 0.30;
+
+        rho_i  ~ maxent(Beta(), lower=0.2, upper=0.8, mass=0.99) = 0.70;
+
+        # Shock std dev
+        sigma_i ~ maxent(InverseGamma(), lower=0.001, upper=0.02, mass=0.99) = 0.005;
+    };
+};
+
+block FISCAL_AUTHORITY
+{
+    identities
+    {
+        tau_C[] = (1 - rho_tau_C) * (
+                tau_C
+                + phi_tau_C * (Y[] / Y[ss] - 1)
+                + phi_b_C * (B[-1] / Y[-1] - b_target)
+            )
+            + rho_tau_C * tau_C[-1]
+            + epsilon_tau_C[];
+
+        tau_K[] = (1 - rho_tau_K) * (
+                tau_K
+                + phi_tau_K * (Y[] / Y[ss] - 1)
+                + phi_b_K * (B[-1] / Y[-1] - b_target)
+            )
+            + rho_tau_K * tau_K[-1]
+            + epsilon_tau_K[];
+
+        tau_L[] = (1 - rho_tau_L) * (
+                tau_L
+                + phi_tau_L * (Y[] / Y[ss] - 1)
+                + phi_b_L * (B[-1] / Y[-1] - b_target)
+            )
+            + rho_tau_L * tau_L[-1]
+            + epsilon_tau_L[];
+
+        tau_M[] = (1 - rho_tau_M) * (
+                tau_M
+                + phi_tau_M * (Y[] / Y[ss] - 1)
+                + phi_b_M * (B[-1] / Y[-1] - b_target)
+            )
+            + rho_tau_M * tau_M[-1]
+            + epsilon_tau_M[];
+
+        tau_X[] = (1 - rho_tau_X) * (
+                tau_X
+                + phi_tau_X * (Y[] / Y[ss] - 1)
+                + phi_b_X * (B[-1] / Y[-1] - b_target)
+            )
+            + rho_tau_X * tau_X[-1]
+            + epsilon_tau_X[];
+
+        log(G[]) = (1 - rho_G) * log(G[ss]) + rho_G * log(G[-1]) + epsilon_G[];
+
+        B[] = (1 + i[-1]) / pi[] * B[-1] + G[]
+            - tau_C[] * (C[] + I[])
+            - tau_K[] * r[] * z[] * K[-1]
+            - tau_L[] * w[] * L[]
+            - tau_M[] * q[] * p_M_star[] * nu_M[] * M[]
+            - tau_X[] * p_X[] * X[]
+            - T_lump;
+    };
+
+    shocks
+    {
+        epsilon_tau_C[] ~ Normal(mu=0, sigma=sigma_tau_C);
+        epsilon_tau_K[] ~ Normal(mu=0, sigma=sigma_tau_K);
+        epsilon_tau_L[] ~ Normal(mu=0, sigma=sigma_tau_L);
+        epsilon_tau_M[] ~ Normal(mu=0, sigma=sigma_tau_M);
+        epsilon_tau_X[] ~ Normal(mu=0, sigma=sigma_tau_X);
+        epsilon_G[] ~ Normal(mu=0, sigma=sigma_G);
+    };
+
+    calibration
+    {
+        tau_C = 0.15;
+        tau_K = 0.15;
+        tau_L = 0.15;
+        tau_M = 0.10;
+        tau_X = 0.05;
+        psi_G = 0.18;
+        b_target = 0.45;
+
+        T_lump = i[ss] * b_target * Y[ss]
+               - (tau_C * (C[ss] + I[ss]) + tau_K * r[ss] * K[ss] + tau_L * w[ss] * L[ss]
+                + tau_M * q[ss] * p_M_star[ss] * M[ss] + tau_X * p_X[ss] * X[ss]
+                - psi_G * Y[ss]);
+
+        # Fiscal-rule sensitivities — both phi_tau_X and phi_b_X are SCALED
+        # so that the on-impact response equals the numerator of each formula.
+        # Rule: tau_X[] = (1 - rho_tau_X) * (tau_X + phi_tau_X*Y_gap + phi_b_X*debt_gap)
+        #               + rho_tau_X * tau_X[-1] + eps
+        # The outer (1 - rho_tau_X) cancels the / (1 - rho_tau_X) below, so the
+        # numerator of each formula IS the immediate impulse-response coefficient
+        # per unit gap. (Same pattern as phi_b_L = phi_debt / (1 - rho_tau_L).)
+
+        # Output-gap response (immediate impulse to tau_X per unit Y-gap)
+        phi_tau_C = 0.0  / (1 - rho_tau_C);
+        phi_tau_K = 0.0  / (1 - rho_tau_K);
+        phi_tau_L = 0.05 / (1 - rho_tau_L);
+        phi_tau_M = 0.0  / (1 - rho_tau_M);
+        phi_tau_X = 0.0  / (1 - rho_tau_X);
+
+        # Debt-gap response (immediate impulse to tau_X per unit debt-gap).
+        # Determinacy requires phi_debt > ~0.0464 at the audited equations.
+        phi_debt ~ maxent(Gamma(), lower=0.06, upper=0.20, mass=0.99) = 0.10;
+
+        phi_b_C = 0.0      / (1 - rho_tau_C);
+        phi_b_K = 0.0      / (1 - rho_tau_K);
+        phi_b_L = phi_debt / (1 - rho_tau_L);
+        phi_b_M = 0.0      / (1 - rho_tau_M);
+        phi_b_X = 0.0      / (1 - rho_tau_X);
+
+        rho_tau_C ~ maxent(Beta(), lower=0.5, upper=0.95, mass=0.99) = 0.85;
+        rho_tau_K ~ maxent(Beta(), lower=0.5, upper=0.95, mass=0.99) = 0.85;
+        rho_tau_L ~ maxent(Beta(), lower=0.5, upper=0.95, mass=0.99) = 0.85;
+        rho_tau_M ~ maxent(Beta(), lower=0.5, upper=0.99, mass=0.99) = 0.90;
+        rho_tau_X ~ maxent(Beta(), lower=0.5, upper=0.99, mass=0.99) = 0.90;
+        rho_G     ~ maxent(Beta(), lower=0.7, upper=0.99, mass=0.99) = 0.90;
+
+        # Shock std devs
+        sigma_tau_C ~ maxent(InverseGamma(), lower=0.001, upper=0.02, mass=0.99) = 0.005;
+        sigma_tau_K ~ maxent(InverseGamma(), lower=0.001, upper=0.02, mass=0.99) = 0.005;
+        sigma_tau_L ~ maxent(InverseGamma(), lower=0.001, upper=0.02, mass=0.99) = 0.005;
+        sigma_tau_M ~ maxent(InverseGamma(), lower=0.001, upper=0.02, mass=0.99) = 0.005;
+        sigma_tau_X ~ maxent(InverseGamma(), lower=0.001, upper=0.02, mass=0.99) = 0.005;
+        sigma_G     ~ maxent(InverseGamma(), lower=0.005, upper=0.05, mass=0.99) = 0.01;
+    };
+};
+
+block MARKET_CLEARING
+{
+    identities
+    {
+        H[] = nu_H[] * H_H[] + nu_X[] * X[];
+        # TB[] = p_X[] * X[] - (1 + tau_M[]) * q[] * p_M_star[] * nu_M[] * M[];
+    };
+};

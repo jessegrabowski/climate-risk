@@ -32,7 +32,7 @@ def test_a_hierarchical_effect_needs_the_dimension_it_varies_over():
 
 
 def test_the_effect_is_its_location_plus_the_scaled_offset():
-    """The non-centred parameterisation is the whole point of the helper."""
+    """The non-centered parameterisation is the whole point of the helper."""
     prior, _ = prior_draws(lambda: add_hierarchical_effect(name="country", group_dim="ISO"))
 
     expected = prior["country_effect_loc"] + prior["country_effect_scale"] * prior["country_effect_offset"]
@@ -119,5 +119,5 @@ def test_named_data_is_suffixed(observations):
     assert {"X_train", "Y_train"} <= set(model.named_vars)
 
 
-def test_the_centre_is_the_midpoint_of_the_extremes():
+def test_the_center_is_the_midpoint_of_the_extremes():
     assert compute_center(np.array([[0.0, -5.0], [10.0, 5.0], [4.0, 1.0]])).tolist() == [5.0, 0.0]

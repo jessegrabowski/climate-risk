@@ -101,7 +101,7 @@ def test_the_raster_totals_a_country_to_its_published_population(iso, published)
 @pytest.mark.skipif(not REAL_ARCHIVE.exists(), reason="needs the GHS-POP archive")
 @pytest.mark.skipif(not (REAL_CACHE_DIR / "gadm" / "gadm_410.gpkg").exists(), reason="needs the GADM GeoPackage")
 def test_the_epochs_form_one_series_on_one_grid():
-    """The exposure offset interpolates between epochs, so a swapped or mislabelled year would move
+    """The exposure offset interpolates between epochs, so a swapped or mislabeled year would move
     population backwards in time and no single-epoch check would see it. Every grid must also share
     a shape, since one operator is built against all of them."""
     units = load_units_in_country("LAO", 1, REAL_CACHE_DIR)

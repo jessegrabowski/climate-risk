@@ -17,11 +17,11 @@ _log = logging.getLogger(__name__)
 HADCRUT = DataSource(
     url="https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.5.0.2.0.analysis.anomalies.ensemble_mean.nc",
     filename="HadCRUT.5.0.2.0.analysis.anomalies.ensemble_mean.nc",
-    licence="Open Government Licence v3",
+    license="Open Government License v3",
     citation=(
         "HadCRUT.5.0.2.0 analysis anomalies, ensemble mean, obtained from "
         "https://www.metoffice.gov.uk/hadobs/hadcrut5 and \u00a9 British Crown Copyright, Met Office, "
-        "provided under an Open Government Licence."
+        "provided under an Open Government License."
     ),
     retrieved="2026-08-05",
 )
@@ -50,7 +50,7 @@ def transform_hadcrut(temperatures: pd.DataFrame, world: gpd.GeoDataFrame) -> pd
 
     Returns
     -------
-    DataFrame
+    anomalies : DataFrame
         One row per country and year, indexed by ``ISO`` and ``year``.
     """
     located = gpd.GeoDataFrame(
@@ -73,6 +73,37 @@ def transform_hadcrut(temperatures: pd.DataFrame, world: gpd.GeoDataFrame) -> pd
 
 
 def load_hadcrut_data(cache_dir: Path, *, force_reload: bool = False, repair_ISO_codes: bool = True) -> pd.DataFrame:
+    """
+    Load HadCRUT5 gridded temperature anomalies, averaged onto countries.
+
+    The gridded record is joined to the world boundaries, so this also pulls the world shapefile
+    into the cache on a cold run.
+
+    Parameters
+    ----------
+    cache_dir : Path
+        Directory the source caches live under.
+    force_reload : bool, optional
+        Download again and rebuild the cache rather than reading it. Default False.
+    repair_ISO_codes : bool, optional
+        Correct the ISO codes on the world boundaries before the join. Default True.
+
+    Returns
+    -------
+    anomalies : DataFrame
+        One row per country and year, indexed by ``ISO`` and ``year``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk import load_hadcrut_data
+
+        anomalies = load_hadcrut_data(Path("data"))
+    """
+
     def build() -> pd.DataFrame:
         raw = fetch(HADCRUT, cache_dir, force=force_reload)
 

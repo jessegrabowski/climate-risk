@@ -14,11 +14,11 @@ from climate_risk.exceptions import DataValidationError, ISOCodeValidationError
 _log = logging.getLogger(__name__)
 
 # The catalog's metadata API is rate-limited; its file host is not, and is where the published
-# artefact actually lives.
+# artifact actually lives.
 WORLD = DataSource(
     url=("https://datacatalogfiles.worldbank.org/ddh-published/0038272/DR0046659/wb_countries_admin0_10m.zip"),
     filename="wb_countries_admin0_10m.zip",
-    licence="CC BY 4.0",
+    license="CC BY 4.0",
     citation=(
         "World Bank Official Boundaries, dataset 0038272 in the World Bank Data Catalog. "
         "https://datacatalog.worldbank.org/search/dataset/0038272"
@@ -29,7 +29,7 @@ WORLD = DataSource(
 COASTLINE = DataSource(
     url="https://www.soest.hawaii.edu/pwessel/gshhg/gshhg-shp-2.3.7.zip",
     filename="gshhg-shp-2.3.7.zip",
-    licence="LGPL",
+    license="LGPL",
     citation=(
         "Wessel, P., and Smith, W. H. F. (1996): A global, self-consistent, hierarchical, "
         "high-resolution shoreline database. Journal of Geophysical Research, 101(B4), 8741-8743. "
@@ -55,11 +55,11 @@ DROPPED_TERRITORIES = (
     "Clipperton Island (Fr.)",
     "Cocos (Keeling) Islands (Aus.)",
     "Christmas Island (Aus.)",
-    # Caribbean municipalities labelled as the Netherlands.
+    # Caribbean municipalities labeled as the Netherlands.
     "Bonaire (Neth.)",
     "Sint Eustatius (Neth.)",
     "Saba (Neth.)",
-    # Labelled as New Zealand.
+    # Labeled as New Zealand.
     "Tokelau (NZ)",
 )
 
@@ -76,6 +76,7 @@ ISO_CODE_REPAIRS = {
 
 
 def shapefile_dir(cache_dir: Path) -> Path:
+    """Return the directory the downloaded shapefile archives live in, inside ``cache_dir``."""
     return cache_dir / "shapefiles"
 
 
@@ -96,7 +97,7 @@ def repair_iso_codes(world: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
     Returns
     -------
-    GeoDataFrame
+    repaired : GeoDataFrame
         The repaired frame, reindexed from zero.
     """
     missing_columns = {"WB_NAME", "ISO_A3"} - set(world.columns)
@@ -155,6 +156,38 @@ def load_archive(archive: ShapefileArchive, cache_dir: Path, *, force_reload: bo
 def load_shapefile(
     which: str, cache_dir: Path, *, force_reload: bool = False, repair_ISO_codes: bool = True
 ) -> gpd.GeoDataFrame:
+    """
+    Load one of the bundled boundary archives.
+
+    Parameters
+    ----------
+    which : str
+        Which archive to read: ``"world"`` for the World Bank country boundaries, ``"coastline"``
+        for the GSHHG continental shoreline.
+    cache_dir : Path
+        Directory the source caches live under.
+    force_reload : bool, optional
+        Download again and re-extract rather than reading the cache. Default False.
+    repair_ISO_codes : bool, optional
+        Drop territories that would double-count their owner and supply the missing ISO codes.
+        Applies to ``"world"`` only. Default True.
+
+    Returns
+    -------
+    boundaries : GeoDataFrame
+        The archive's geometries and attributes.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk import load_shapefile
+
+        world = load_shapefile("world", Path("data"))
+        coastline = load_shapefile("coastline", Path("data"))
+    """
     frame = load_archive(_archive_for(which), cache_dir, force_reload=force_reload)
 
     if which.lower() == "world" and repair_ISO_codes:
@@ -167,7 +200,7 @@ def load_place_boundary(place: Place, cache_dir: Path, *, force_reload: bool = F
     """
     Read the geometry a place covers.
 
-    A place carrying its own boundary archive reads that; everything else is sliced out of the world
+    A place carrying its own boundary archive reads that. Everything else is sliced out of the world
     shapefile by the ISO codes the place resolves to.
 
     Parameters
@@ -181,8 +214,19 @@ def load_place_boundary(place: Place, cache_dir: Path, *, force_reload: bool = F
 
     Returns
     -------
-    GeoDataFrame
+    boundary : GeoDataFrame
         The place's geometry, in the boundary file's own CRS.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.config.registry import load_place
+        from climate_risk.data_functions.shapefiles_data_loader import load_place_boundary
+
+        boundary = load_place_boundary(load_place("lao"), Path("data"))
     """
     if isinstance(place, CountryConfig) and place.boundary is not None:
         return load_archive(place.boundary, cache_dir, force_reload=force_reload)

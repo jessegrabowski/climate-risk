@@ -18,26 +18,36 @@ def event_windows(events: pl.DataFrame, geography: pl.DataFrame) -> pl.DataFrame
     """
     Collect each event into the one observation window its geography describes.
 
-    An event is located to whatever units the sources reached, and those units are not all at one
-    administrative level: a district for one event, a province for the next, nothing at all for a
-    third. The window is the union of the units named, so the resolution an event was reported at is
-    carried rather than normalized away, and an event naming nothing reduces to its whole country.
+    An event is located to whatever units the sources reached. Those units are not all at one administrative level: a
+    district for one event, a province for the next, nothing at all for a third. The window is the union of the units
+    named, so the resolution an event was reported at is carried rather than normalized away, and an event naming
+    nothing reduces to its whole country.
 
     Parameters
     ----------
     events : DataFrame
-        The workbook filtered to a place's window, from :func:`~climate_risk.data_functions.emdat_processing.load_emdat_events`.
+        The workbook filtered to a place's window, from
+        :func:`~climate_risk.data_functions.emdat_processing.load_emdat_events`.
     geography : DataFrame
         One row per event-unit, from
         :func:`~climate_risk.data_functions.emdat_processing.event_geography`.
 
     Returns
     -------
-    DataFrame
+    windows : DataFrame
         One row per event, ordered by identifier. ``gids`` holds the units the window covers, empty
         where the window is the whole country; ``n_units`` and ``finest_level`` describe its extent,
         the latter null on a whole-country window. ``geometry_source`` is the best source that
         reached the event, ranked by ``GEOMETRY_SOURCES``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from climate_risk.data.model_frame import event_windows
+        from climate_risk.data_functions.emdat_processing import event_geography
+
+        windows = event_windows(events, event_geography(events))
     """
     missing = set(events["DisNo."]) - set(geography["DisNo."])
     if missing:

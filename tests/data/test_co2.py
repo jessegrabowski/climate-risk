@@ -6,7 +6,7 @@ import requests
 
 from climate_risk.data.co2 import CO2, load_co2_data, transform_co2
 
-# NOAA publishes 43 lines of licence and methodology above the header. Stated literally, not
+# NOAA publishes 43 lines of license and methodology above the header. Stated literally, not
 # derived from the loader, so a wrong skiprows fails instead of agreeing with itself.
 PREAMBLE_LINES = 43
 PUBLISHED = "# comment\n" * PREAMBLE_LINES + "year,mean,unc\n1959,315.98,0.12\n1960,316.91,0.12\n"

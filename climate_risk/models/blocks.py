@@ -48,6 +48,17 @@ def add_hierarchical_effect(
         Scale of the distribution over effects.
     effect_offset : TensorVariable
         Offset of each group from the location.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        import pymc as pm
+
+        from climate_risk.models.blocks import add_hierarchical_effect
+
+        with pm.Model(coords={"country": ["LAO", "THA"]}) as model:
+            effect, loc, scale, offset = add_hierarchical_effect("country", group_dim="country")
     """
     if group_dim is None:
         raise ValueError("group_dim must be provided")
@@ -104,6 +115,17 @@ def add_data(
         The data tensor.
     Y : TensorVariable
         The target tensor, returned only when ``target`` is given.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        import pymc as pm
+
+        from climate_risk.models.blocks import add_data
+
+        with pm.Model() as model:
+            features, target = add_data(["co2", "precip"], panel, target="counts")
     """
     X_name = "X" if name is None else f"X_{name}"
     Y_name = "Y" if name is None else f"Y_{name}"
@@ -123,12 +145,51 @@ def add_data(
 
 
 def compute_center(X: TensorVariable | np.ndarray) -> np.ndarray:
+    """
+    Return the midpoint of each column's range.
+
+    Centering on the midpoint of the bounding box rather than the mean keeps the centering
+    independent of how the points are distributed inside it.
+
+    Parameters
+    ----------
+    X : TensorVariable or ndarray
+        Coordinates, one row per point.
+
+    Returns
+    -------
+    center : ndarray
+        One midpoint per column.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        import numpy as np
+
+        from climate_risk.models.blocks import compute_center
+
+        coordinates = np.array([[0.0, 10.0], [4.0, 20.0]])
+        print(compute_center(coordinates))
+    """
     center: np.ndarray = (pt.max(X, axis=0) + pt.min(X, axis=0)).eval() / 2
 
     return center
 
 
 def set_plotting_data(df: pd.DataFrame, features: list[str], ISO_list: list[str]) -> None:
+    """
+    Swap the data on the model currently on the context stack for a plotting grid.
+
+    Parameters
+    ----------
+    df : DataFrame
+        Frame holding the feature columns to set.
+    features : list of str
+        Feature columns to replace on the model.
+    ISO_list : list of str
+        Country codes the rows belong to, used to reset the country coordinate.
+    """
     iso_idx = df["ISO"].apply(lambda x: ISO_list.index(x))
 
     pm.set_data(

@@ -4,6 +4,8 @@ import pytest
 
 from shapely.geometry import LineString
 
+from climate_risk.config.schema import EventFilters
+from climate_risk.data_functions import rivers_damage
 from climate_risk.data_functions.rivers_damage import (
     create_floods_rivers_damage,
     create_hydro_rivers_damage,
@@ -15,6 +17,7 @@ PATCHED_EVENT = "2013-0338-LAO"
 HALF_LOCATED_LATITUDE = 20.5
 UNDAMAGED_LATITUDE = 17.25
 PATCHED_LATITUDE = 19.5
+PATCHED_LONGITUDE = 103.5
 UNPATCHED_LATITUDE = 1.25
 FLOOD_LATITUDE = 18.25
 STORM_LATITUDE = 18.5
@@ -119,19 +122,18 @@ def damage_cache(tmp_path, write_emdat_cache, write_shapefile_cache, write_river
 
 @pytest.mark.parametrize("variant", list(VARIANTS), ids=list(VARIANTS))
 def test_the_cached_frame_matches_the_one_that_wrote_it(damage_cache, variant):
-    """A shapefile truncates field names and coarsens dates, so the warm path has to undo both."""
     create, _, _ = VARIANTS[variant]
 
     cold = create(damage_cache)
     warm = create(damage_cache)
 
-    assert set(cold.columns) == set(warm.columns)
-    assert (cold.dtypes[warm.columns.tolist()] == warm.dtypes).all()
+    assert list(warm.columns) == list(cold.columns)
+    assert (warm.dtypes == cold.dtypes).all()
 
 
 @pytest.mark.parametrize("variant", list(VARIANTS), ids=list(VARIANTS))
 def test_the_totals_and_their_logs_are_suffixed_per_variant(damage_cache, variant):
-    """Both variants land in the same cache directory and are told apart only by these suffixes."""
+    """The suffixes are the only thing separating the two frames' columns, so a consumer can hold both."""
     create, total, log = VARIANTS[variant]
 
     damage = create(damage_cache)
@@ -140,12 +142,13 @@ def test_the_totals_and_their_logs_are_suffixed_per_variant(damage_cache, varian
     assert log in damage.columns
 
 
-def test_distance_to_the_nearest_river_is_in_kilometres(damage_cache):
-    """The column feeds a regression in kilometres; metres would inflate it a thousandfold."""
+def test_distance_to_the_nearest_river_is_in_kilometers(damage_cache):
+    """The column feeds a regression in kilometers; meters would inflate it a thousandfold."""
     damage = create_floods_rivers_damage(damage_cache)
 
-    # Both floods sit within a couple of degrees of the river, so a few hundred kilometres.
-    assert damage["closest_river"].max() < 1_000
+    # Every event sits one to three degrees off the river, so tens to hundreds of kilometers. The
+    # lower bound is what catches a scale factor applied the wrong way.
+    assert damage["closest_river"].between(10, 1_000).all()
 
 
 @pytest.mark.parametrize(
@@ -167,27 +170,19 @@ def test_laos_flood_coordinates_are_overridden(damage_cache):
     """EM-DAT records these events against the wrong place, so the loader forces the coordinates."""
     damage = create_floods_rivers_damage(damage_cache)
 
-    assert PATCHED_LATITUDE in set(damage["Latitude"])
+    patched = damage[damage["Latitude"] == PATCHED_LATITUDE]
+
+    assert len(patched) == 1
+    assert patched["Longitude"].item() == PATCHED_LONGITUDE
     assert UNPATCHED_LATITUDE not in set(damage["Latitude"])
 
 
 def test_the_year_survives_the_round_trip_as_a_timestamp(damage_cache):
     """Downstream reaches for `.dt`, which a string year cannot answer."""
-    cold = create_hydro_rivers_damage(damage_cache)
+    create_hydro_rivers_damage(damage_cache)
     warm = create_hydro_rivers_damage(damage_cache)
 
-    assert warm["year"].dtype == cold["year"].dtype
     assert set(warm["year"].dt.year) == {1990}
-
-
-def test_the_column_names_survive_the_round_trip(damage_cache):
-    """A shapefile truncates a field name to ten characters, so `Total_Damage_Hydro` came back
-    as `Total_Dama` and every reader had to un-truncate it."""
-    cold = create_hydro_rivers_damage(damage_cache)
-    warm = create_hydro_rivers_damage(damage_cache)
-
-    assert list(warm.columns) == list(cold.columns)
-    assert "Total_Damage_Hydro" in warm.columns
 
 
 def test_an_event_missing_one_coordinate_is_dropped(damage_cache):
@@ -215,3 +210,24 @@ def test_zero_damage_becomes_missing_rather_than_a_log_of_zero(damage_cache):
     assert len(undamaged) == 1
     assert undamaged["Total_Damage_Flood"].isna().all()
     assert not np.isneginf(damage["log_damage_floods"]).any()
+
+
+def test_a_changed_reach_floor_rebuilds_rather_than_reading_the_old_frame(damage_cache, monkeypatch):
+    """The floor is read by the builder and named nowhere in the cache key, so without a fingerprint
+    over it the entry from the old floor reads back as a hit."""
+    strict = create_floods_rivers_damage(damage_cache)
+
+    monkeypatch.setattr(rivers_damage, "REPLICATION_FILTERS", EventFilters(min_total_affected=10))
+    permissive = create_floods_rivers_damage(damage_cache)
+
+    assert BARELY_FELT_LATITUDE not in set(strict["Latitude"])
+    assert BARELY_FELT_LATITUDE in set(permissive["Latitude"])
+
+
+def test_only_the_floods_frame_carries_the_location_text(damage_cache):
+    """`Location` reaches the frame through extra_columns, which only the floods variant asks for."""
+    floods = create_floods_rivers_damage(damage_cache)
+    hydro = create_hydro_rivers_damage(damage_cache)
+
+    assert "Location" in floods.columns
+    assert "Location" not in hydro.columns

@@ -2,6 +2,7 @@ import hashlib
 import inspect
 import logging
 import os
+import re
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -21,6 +22,9 @@ VALUE_SEPARATOR = "="
 # dot collides the same way: the suffix is taken from the last one, so `4.1` and `4.2` name one file.
 FORBIDDEN_IN_KEY = ("/", "\\", ".", PARAMETER_SEPARATOR, VALUE_SEPARATOR)
 
+# The tail of the repr Python gives an object that defines none: the address moves every process.
+DEFAULT_REPR_ADDRESS = re.compile(r" at 0x[0-9a-fA-F]+>")
+
 
 @dataclass(frozen=True, slots=True)
 class CacheFormat[T]:
@@ -30,11 +34,11 @@ class CacheFormat[T]:
     Parameters
     ----------
     suffix : str
-        File extension the artefact is stored under.
+        File extension the artifact is stored under.
     read : callable
-        Reads the artefact back from a path.
+        Reads the artifact back from a path.
     write : callable
-        Writes the artefact to a path.
+        Writes the artifact to a path.
     atomic : bool
         Whether ``write`` can be sent to a temporary path and moved into place. False for formats
         carrying sidecar files, which a single move would leave behind.
@@ -85,14 +89,14 @@ def cache_key(name: str, params: Mapping[str, object] | None = None) -> str:
     Parameters
     ----------
     name : str
-        Logical name of the cached artefact.
+        Logical name of the cached artifact.
     params : mapping of str to object, optional
         Values distinguishing this entry from others under the same name. Each must be a string,
         integer or boolean. Default None, meaning the name alone identifies the entry.
 
     Returns
     -------
-    str
+    key : str
         A filename stem, such as ``points__grid_size=400__region=sea``.
     """
     parts = [_key_part(name, "name")]
@@ -117,9 +121,9 @@ def _key_part(value: object, described_as: str) -> str:
     return text
 
 
-def builder_fingerprint(builder: Callable[[], object], *rules: object) -> str:
+def builder_fingerprint(builder: Callable[..., object], *rules: object) -> str:
     """
-    Fingerprint how an artefact is built, so a change to the builder turns over what it cached.
+    Fingerprint how an artifact is built, so a change to the builder turns over what it cached.
 
     Parameters record what was asked for and nothing records how the answer was produced, so an
     entry built under rules that have since changed reads back as a hit. Reformatting the builder or
@@ -128,20 +132,33 @@ def builder_fingerprint(builder: Callable[[], object], *rules: object) -> str:
     Parameters
     ----------
     builder : callable
-        The function that produces the artefact.
+        The function that produces the artifact. Only its source is read, so its arity does not
+        matter and a transform taking arguments serves as well as a closure taking none.
     *rules : object
-        Values the builder reads that its own source does not show — a table it consults, the
-        columns it selects. Each must repr the same way in every process, or the digest moves
-        between runs and nothing ever reads back.
+        Values the builder reads that its own source does not show, such as a table it consults, the
+        columns it selects, or a function it calls. A function or class is read for its source and
+        everything else for its repr, which must be the same in every process.
 
     Returns
     -------
-    str
+    fingerprint : str
         A short digest of the builder's source and the rules it was given.
     """
-    declared = inspect.getsource(builder) + "".join(repr(rule) for rule in rules)
+    declared = inspect.getsource(builder) + "".join(_rule_text(rule) for rule in rules)
 
     return hashlib.sha256(declared.encode()).hexdigest()[:12]
+
+
+def _rule_text(rule: object) -> str:
+    """Return what a rule contributes to the digest, taken from its source where it has one."""
+    if inspect.isroutine(rule) or inspect.isclass(rule):
+        return inspect.getsource(rule)
+
+    text = repr(rule)
+    if DEFAULT_REPR_ADDRESS.search(text):
+        raise ValueError(f"a rule whose repr carries an object address cannot key a cache entry: {text}")
+
+    return text
 
 
 def cached[T](
@@ -154,7 +171,7 @@ def cached[T](
     force: bool = False,
 ) -> T:
     """
-    Return the cached artefact for ``name``, building and storing it if it is not already there.
+    Return the cached artifact for ``name``, building and storing it if it is not already there.
 
     One implementation of check-then-build-then-write, so a call site cannot spell the key one way
     when it writes and another when it reads.
@@ -162,22 +179,22 @@ def cached[T](
     Parameters
     ----------
     cache_dir : Path
-        Directory to store the artefact in. Created if absent.
+        Directory to store the artifact in. Created if absent.
     name : str
-        Logical name of the artefact.
+        Logical name of the artifact.
     builder : callable
-        Produces the artefact. Called only on a miss.
+        Produces the artifact. Called only on a miss.
     fmt : CacheFormat
         How to read and write it.
     params : mapping of str to object, optional
         Values distinguishing this entry from others under the same name. Default None.
     force : bool, optional
-        Rebuild even when the artefact is already cached. Default False.
+        Rebuild even when the artifact is already cached. Default False.
 
     Returns
     -------
-    T
-        The artefact, read from the cache or freshly built.
+    artifact : T
+        The artifact, read from the cache or freshly built.
     """
     path = (cache_dir / cache_key(name, params)).with_suffix(fmt.suffix)
 
@@ -188,13 +205,13 @@ def cached[T](
     cache_dir.mkdir(parents=True, exist_ok=True)
 
     _log.info(f"Building {name}")
-    artefact = builder()
+    artifact = builder()
 
     if fmt.atomic:
         partial = path.with_suffix(path.suffix + ".part")
-        fmt.write(artefact, partial)
+        fmt.write(artifact, partial)
         os.replace(partial, path)
     else:
-        fmt.write(artefact, path)
+        fmt.write(artifact, path)
 
-    return artefact
+    return artifact

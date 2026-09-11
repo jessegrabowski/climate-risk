@@ -21,8 +21,8 @@ _log = logging.getLogger(__name__)
 GEO_DISASTERS = ManualSource(
     filename="disaster_subnational_90_23.gpkg",
     homepage="https://doi.org/10.5281/zenodo.15487667",
-    licence=(
-        "Spatial geometries are © FAO 2015 under the GAUL 2015 Data Licence, non-commercial with "
+    license=(
+        "Spatial geometries are © FAO 2015 under the GAUL 2015 Data License, non-commercial with "
         "attribution required. All non-spatial attributes are CC-BY-4.0."
     ),
     citation=(
@@ -39,7 +39,7 @@ NAME_COLUMNS = {1: "ADM1_NAME", 2: "ADM2_NAME"}
 
 LOCATION_COLUMNS = ["DisNo.", "ISO", "admin_level", "geocoding_q", "ADM1_NAME", "ADM2_NAME"]
 
-# Attribution required by the GAUL 2015 Data Licence, clause 2(a), verbatim.
+# Attribution required by the GAUL 2015 Data License, clause 2(a), verbatim.
 GAUL_ATTRIBUTION = (
     "Source of Administrative boundaries: The Global Administrative Unit Layers (GAUL) dataset, "
     "implemented by FAO within the CountrySTAT and Agricultural Market Information System (AMIS) "
@@ -48,6 +48,7 @@ GAUL_ATTRIBUTION = (
 
 
 def geo_disasters_dir(cache_dir: Path) -> Path:
+    """Return the directory the Geo-Disasters GeoPackage lives in, inside ``cache_dir``."""
     return cache_dir / "geo_disasters"
 
 
@@ -62,7 +63,7 @@ def geo_disasters_path(cache_dir: Path) -> Path:
 
     Returns
     -------
-    Path
+    path : Path
         Location of ``disaster_subnational_90_23.gpkg``.
     """
     return GEO_DISASTERS.require(geo_disasters_dir(cache_dir))
@@ -72,7 +73,7 @@ def load_event_locations(cache_dir: Path, *, iso: str | None = None, layer: str 
     """
     Read the geocoded locations Geo-Disasters records, one row per affected administrative unit.
 
-    Geometry is left on disk. The polygons carry the non-commercial GAUL licence while the attribute
+    Geometry is left on disk. The polygons carry the non-commercial GAUL license while the attribute
     table is CC-BY-4.0, and the attributes are what a comparison against EM-DAT needs.
 
     Parameters
@@ -86,9 +87,19 @@ def load_event_locations(cache_dir: Path, *, iso: str | None = None, layer: str 
 
     Returns
     -------
-    DataFrame
+    locations : DataFrame
         Columns ``DisNo.``, ``ISO``, ``admin_level``, ``geocoding_q``, ``ADM1_NAME`` and
         ``ADM2_NAME``, one row per location.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.geo_disasters import load_event_locations
+
+        locations = load_event_locations(Path("data"), iso="LAO")
     """
     path = geo_disasters_path(cache_dir)
     where = f"ISO = '{iso}'" if iso is not None else None
@@ -109,7 +120,7 @@ def unit_names(locations: pd.DataFrame) -> pd.Series:
 
     Returns
     -------
-    Series
+    names : Series
         One name per row, taken from the column its ``admin_level`` points at.
     """
     named = pd.Series(pd.NA, index=locations.index, dtype="object")
@@ -124,7 +135,7 @@ def load_event_footprints(cache_dir: Path, *, iso: str, layer: str = GEO_DISASTE
     """
     Read one country's geocoded locations with the polygons attached.
 
-    These polygons are the non-commercial half of the licence, and :data:`GAUL_ATTRIBUTION` has to
+    These polygons are the non-commercial half of the license, and :data:`GAUL_ATTRIBUTION` has to
     appear on anything derived from them. :func:`load_event_locations` reads the same rows without
     geometry where the attributes alone will do.
 
@@ -139,8 +150,18 @@ def load_event_footprints(cache_dir: Path, *, iso: str, layer: str = GEO_DISASTE
 
     Returns
     -------
-    GeoDataFrame
+    footprints : GeoDataFrame
         The columns of :func:`load_event_locations` and the footprint of each location.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.geo_disasters import load_event_footprints
+
+        footprints = load_event_footprints(Path("data"), iso="LAO")
     """
     footprints = gpd.read_file(geo_disasters_path(cache_dir), layer=layer, where=f"ISO = '{iso}'")
 
@@ -200,7 +221,7 @@ def resolve_to_gadm(footprints: gpd.GeoDataFrame, cache_dir: Path) -> pd.DataFra
     The two gazetteers share no identifier and spell the same unit differently, so a footprint is
     placed by where it is rather than what it is called. Every GADM unit more than
     ``MIN_CONTAINMENT`` of the way inside the footprint is named, because one GAUL unit routinely
-    covers several GADM ones — where GAUL's admin-1 is a region and GADM's is a province, one
+    covers several GADM ones. Where GAUL's admin-1 is a region and GADM's is a province, one
     footprint holds five or six.
 
     An event's footprints are dissolved per administrative level before the overlay, so a unit
@@ -217,7 +238,7 @@ def resolve_to_gadm(footprints: gpd.GeoDataFrame, cache_dir: Path) -> pd.DataFra
 
     Returns
     -------
-    DataFrame
+    resolved : DataFrame
         ``DisNo.``, ``ISO``, ``geometry_source``, a GADM unit, the location's ``geocoding_q``, and
         ``overlap``, the share of the event's footprint that unit covers. One row per event and
         unit, so an event spanning several units contributes several.
@@ -263,7 +284,7 @@ def resolve_to_gadm(footprints: gpd.GeoDataFrame, cache_dir: Path) -> pd.DataFra
 def _placement_rule() -> str:
     """Name the procedure that placed a cached entry, so the entry cannot outlive it.
 
-    Rename this whenever the procedure changes; the threshold follows :data:`MIN_CONTAINMENT`.
+    Rename this whenever the procedure changes. The threshold follows :data:`MIN_CONTAINMENT`.
     """
     # A cache key may not carry a dot, so the threshold is written without one.
     return f"dissolved-containment{MIN_CONTAINMENT}".replace(".", "-")
@@ -283,7 +304,7 @@ def load_resolved_units(isos: Sequence[str], cache_dir: Path, *, force_reload: b
     Parameters
     ----------
     isos : sequence of str
-        ISO 3166-1 alpha-3 codes to read. Duplicates and ordering do not matter; the result is
+        ISO 3166-1 alpha-3 codes to read. Duplicates and ordering do not matter. The result is
         ordered by code.
     cache_dir : Path
         Directory the caches live under.
@@ -292,9 +313,19 @@ def load_resolved_units(isos: Sequence[str], cache_dir: Path, *, force_reload: b
 
     Returns
     -------
-    DataFrame
+    resolved : DataFrame
         The columns of :func:`resolve_to_gadm`, one row per event and unit, across every country
         asked for.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.geo_disasters import load_resolved_units
+
+        resolved = load_resolved_units(["LAO", "THA"], Path("data"))
     """
     frames = [
         cached(
@@ -313,12 +344,12 @@ def load_resolved_units(isos: Sequence[str], cache_dir: Path, *, force_reload: b
     return pd.concat(frames, ignore_index=True)
 
 
-def normalise_unit_name(name: str) -> str:
+def normalize_unit_name(name: str) -> str:
     """
     Reduce an administrative unit's name to what two gazetteers can be expected to agree on.
 
-    GADM and GAUL romanise the same unit differently — accents, hyphens and casing all drift — so a
-    literal comparison reports spelling as disagreement. The name is transliterated rather than
+    GADM and GAUL romanize the same unit differently, and accents, hyphens and casing all drift, so
+    a literal comparison reports spelling as disagreement. The name is transliterated rather than
     decomposed, because a letter like ``Đ`` or ``ł`` carries no combining mark to strip.
 
     Parameters
@@ -328,7 +359,7 @@ def normalise_unit_name(name: str) -> str:
 
     Returns
     -------
-    str
+    normalized : str
         Casefolded, transliterated to ASCII, and stripped of everything that is not a letter or digit.
     """
     return "".join(character for character in anyascii(name) if character.isalnum()).casefold()
@@ -348,7 +379,7 @@ def event_unit_ids(units: pd.DataFrame) -> dict[str, set[str]]:
 
     Returns
     -------
-    dict mapping str to set of str
+    unit_ids : dict mapping str to set of str
         One entry per event, holding every GADM identifier it was placed in.
     """
     return {str(disno): set(group.dropna()) for disno, group in units.groupby("DisNo.")["gid"]}
@@ -394,7 +425,7 @@ def compare_event_units(*, em_dat: Mapping[str, set[str]], geo_disasters: Mappin
 
     Returns
     -------
-    DataFrame
+    comparison : DataFrame
         Columns ``DisNo.``, ``agreement`` and the three counts, one row per event either source
         geocoded, ordered by event id.
     """

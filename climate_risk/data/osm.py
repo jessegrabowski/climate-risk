@@ -14,14 +14,19 @@ from climate_risk.data.cache import cache_key, cached, polars_parquet
 from climate_risk.data.fetch import TIMEOUT_SECONDS, USER_AGENT
 from climate_risk.data.geocoding import Geocoder
 from climate_risk.data.place_names import match_key
+from climate_risk.data.source import ApiSource
 from climate_risk.exceptions import UpstreamUnavailableError
 
 _log = logging.getLogger(__name__)
 
-NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 OSM_SUBDIRECTORY = "osm"
-OSM_LICENCE = "ODbL 1.0"
-OSM_CITATION = "OpenStreetMap contributors, https://www.openstreetmap.org/copyright, licensed ODbL 1.0."
+
+NOMINATIM = ApiSource(
+    url="https://nominatim.openstreetmap.org/search",
+    license="ODbL 1.0",
+    citation="OpenStreetMap contributors, https://www.openstreetmap.org/copyright, licensed ODbL 1.0.",
+    retrieved="2026-09-05",
+)
 
 # The public instance allows one request a second for a job of this length, and requires results to
 # be cached rather than re-requested. Both are conditions of use, not tuning.
@@ -68,6 +73,7 @@ class NominatimAnswer(NamedTuple):
 
 
 def osm_dir(cache_dir: Path) -> Path:
+    """Return the directory the recorded OSM lookups live in, inside ``cache_dir``."""
     return cache_dir / OSM_SUBDIRECTORY
 
 
@@ -81,7 +87,7 @@ def search_nominatim(
     instance: a loop that forgets it is one that gets the project blocked.
 
     A name Nominatim has no place for and a name it was never asked about are different answers.
-    Only the first is None; a request that failed raises, because recording it as a miss would cache
+    Only the first is None. A request that failed raises, because recording it as a miss would cache
     a permanent absence that nothing afterwards could tell apart from a real one.
 
     Parameters
@@ -96,7 +102,7 @@ def search_nominatim(
 
     Returns
     -------
-    NominatimAnswer or None
+    answer : NominatimAnswer or None
         The best answer, or None where Nominatim has no place of that name.
     """
     query = {"q": name, "format": "jsonv2", "limit": 1}
@@ -106,7 +112,7 @@ def search_nominatim(
     get = session.get if session else requests.get
     try:
         response = get(
-            f"{NOMINATIM_URL}?{urllib.parse.urlencode(query)}",
+            f"{NOMINATIM.url}?{urllib.parse.urlencode(query)}",
             headers={"User-Agent": USER_AGENT},
             timeout=TIMEOUT_SECONDS,
         )
@@ -143,7 +149,7 @@ def read_osm_places(iso: str, cache_dir: Path) -> pl.DataFrame:
 
     Returns
     -------
-    DataFrame
+    places : DataFrame
         Columns ``written``, ``lon``, ``lat``, ``category`` and ``kind``, one row per name asked
         about. Empty where nothing has been asked for this country yet.
     """
@@ -170,7 +176,7 @@ def osm_geocoder(iso: str, cache_dir: Path) -> Geocoder:
 
     Returns
     -------
-    callable
+    geocoder : callable
         Takes an ISO code and a written name, and returns longitude and latitude or None.
     """
     found = read_osm_places(iso, cache_dir).filter(
@@ -200,7 +206,7 @@ def record_lookups(iso: str, cache_dir: Path, answers: Mapping[str, NominatimAns
 
     Returns
     -------
-    DataFrame
+    places : DataFrame
         The country's whole cache, as it now stands on disk.
     """
     fresh = pl.DataFrame(

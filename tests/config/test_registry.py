@@ -58,7 +58,7 @@ def test_event_overrides_arrive_as_coordinate_pairs(config_root):
 BOUNDARY_BLOCK = (
     '[boundary]\nmember = "lao_admin2.shp"\n'
     'url = "https://example.org/lao.zip"\nfilename = "lao.zip"\n'
-    'licence = "CC BY 3.0 IGO"\ncitation = "NGD"\nretrieved = "2026-08-08"\n'
+    'license = "CC BY 3.0 IGO"\ncitation = "NGD"\nretrieved = "2026-08-08"\n'
 )
 
 

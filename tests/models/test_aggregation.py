@@ -13,8 +13,8 @@ SPLIT = 0.5
 def square_grid(cells_per_axis: int):
     """Cell centroids and areas for a regular grid over the unit square, split into two units."""
     edges = np.linspace(0.0, 1.0, cells_per_axis + 1)
-    centres = (edges[:-1] + edges[1:]) / 2.0
-    x, y = (axis.ravel() for axis in np.meshgrid(centres, centres, indexing="ij"))
+    centers = (edges[:-1] + edges[1:]) / 2.0
+    x, y = (axis.ravel() for axis in np.meshgrid(centers, centers, indexing="ij"))
 
     area = (1.0 / cells_per_axis) ** 2
     unit_of_cell = ["left" if position < SPLIT else "right" for position in x]

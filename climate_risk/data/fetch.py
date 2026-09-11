@@ -47,7 +47,7 @@ def fetch(source: DataSource, cache_dir: Path, *, force: bool = False) -> Path:
 
     Returns
     -------
-    Path
+    path : Path
         The downloaded file.
     """
     destination = source.path(cache_dir)

@@ -18,7 +18,7 @@ def test_standardized_columns_are_added_not_replaced(features):
     assert "a__standardized" in transformed.columns
 
 
-def test_standardizing_centres_and_scales(features):
+def test_standardizing_centers_and_scales(features):
     _, transformed = standardize(features, ["a"])
 
     assert transformed["a__standardized"].mean() == pytest.approx(0.0)
@@ -33,7 +33,7 @@ def test_unnamed_columns_are_left_alone(features):
 
 
 def test_a_fitted_scaler_applies_the_training_mean_and_scale(features):
-    """Held-out data must not recentre on itself, or its coefficients mean something else."""
+    """Held-out data must not recenter on itself, or its coefficients mean something else."""
     scaler, _ = standardize(features, ["a"])
 
     _, shifted = standardize(features.assign(a=features["a"] + 1.0), ["a"], transformer_fitted=scaler)

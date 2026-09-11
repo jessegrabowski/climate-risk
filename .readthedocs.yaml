@@ -1,0 +1,20 @@
+# Read the Docs build configuration.
+#
+# The build runs through pixi, so Read the Docs resolves from the committed pixi.lock rather than
+# from a second dependency list that would drift. This follows the readthedocs-override example in
+# the pixi repository: the miniforge toolchain puts mamba on $PATH, mamba installs pixi, and pixi
+# does the rest. Overriding build.commands means Read the Docs builds no environment and runs
+# no Sphinx of its own, so the sphinx, python and conda keys must stay absent.
+version: 2
+
+build:
+  os: "ubuntu-22.04"
+  tools:
+    python: "miniforge3-latest"
+  commands:
+    # hatch-vcs derives the version from git tags, and the checkout is shallow and tagless, so
+    # without this the version reads 0.0.0 and the selector labels break.
+    - git fetch --tags --unshallow || true
+    - mamba install -y -c conda-forge -c nodefaults pixi
+    - pixi install -e docs
+    - pixi run -e docs sphinx-build -T -b html docs/source "$READTHEDOCS_OUTPUT/html"

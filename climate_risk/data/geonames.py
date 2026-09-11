@@ -11,7 +11,7 @@ from climate_risk.data.source import DataSource
 
 GEONAMES_URL = "https://download.geonames.org/export/dump"
 GEONAMES_SUBDIRECTORY = "geonames"
-GEONAMES_LICENCE = "CC BY 4.0"
+GEONAMES_LICENSE = "CC BY 4.0"
 GEONAMES_CITATION = "GeoNames geographical database, https://www.geonames.org, licensed CC BY 4.0."
 GEONAMES_RETRIEVED = "2026-08-19"
 
@@ -22,13 +22,14 @@ DUMP_FIELDS = {1: "name", 2: "ascii_name", 3: "alternates", 4: "lat", 5: "lon", 
 COUNTRY_INFO = DataSource(
     url=f"{GEONAMES_URL}/countryInfo.txt",
     filename="countryInfo.txt",
-    licence=GEONAMES_LICENCE,
+    license=GEONAMES_LICENSE,
     citation=GEONAMES_CITATION,
     retrieved=GEONAMES_RETRIEVED,
 )
 
 
 def geonames_dir(cache_dir: Path) -> Path:
+    """Return the directory the GeoNames country dumps live in, inside ``cache_dir``."""
     return cache_dir / GEONAMES_SUBDIRECTORY
 
 
@@ -37,7 +38,7 @@ def country_dump(alpha2: str) -> DataSource:
     return DataSource(
         url=f"{GEONAMES_URL}/{alpha2}.zip",
         filename=f"{alpha2}.zip",
-        licence=GEONAMES_LICENCE,
+        license=GEONAMES_LICENSE,
         citation=GEONAMES_CITATION,
         retrieved=GEONAMES_RETRIEVED,
     )
@@ -56,7 +57,7 @@ def read_country_codes(cache_dir: Path, *, force_reload: bool = False) -> dict[s
 
     Returns
     -------
-    dict mapping str to str
+    codes : dict mapping str to str
         Alpha-2 code, keyed by alpha-3.
     """
     path = fetch(COUNTRY_INFO, geonames_dir(cache_dir), force=force_reload)
@@ -75,8 +76,8 @@ def load_place_points(iso: str, cache_dir: Path, *, force_reload: bool = False) 
     """
     Read one country's GeoNames places, keyed for matching against written mentions.
 
-    Every name a place is published under becomes a row — its own, its ASCII form and each
-    alternate — so a mention reaches a point whichever spelling it used. Where a name is shared, the
+    Every name a place is published under becomes a row: its own, its ASCII form and each
+    alternate. A mention therefore reaches a point whichever spelling it used. Where a name is shared, the
     most populous place keeps it, which is what makes a written ``Manila`` the city rather than one
     of the hamlets sharing the name.
 
@@ -91,7 +92,7 @@ def load_place_points(iso: str, cache_dir: Path, *, force_reload: bool = False) 
 
     Returns
     -------
-    DataFrame
+    points : DataFrame
         Columns ``key``, ``lon`` and ``lat``, one row per distinct name.
     """
     directory = geonames_dir(cache_dir)
@@ -154,7 +155,7 @@ def geonames_geocoder(iso: str, cache_dir: Path, *, force_reload: bool = False) 
 
     Returns
     -------
-    callable
+    geocoder : callable
         Takes an ISO code and a written name, and returns longitude and latitude or None.
     """
     points = load_place_points(iso, cache_dir, force_reload=force_reload)

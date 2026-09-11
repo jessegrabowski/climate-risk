@@ -7,8 +7,8 @@ import pandas as pd
 
 from climate_risk.config.registry import all_event_location_overrides
 from climate_risk.config.schema import EventFilters
-from climate_risk.data.cache import cached, geo_parquet
-from climate_risk.data_functions.emdat_processing import event_filter, load_emdat_events
+from climate_risk.data.cache import builder_fingerprint, cached, geo_parquet
+from climate_risk.data_functions.emdat_processing import HYDROMETEOROLOGICAL, event_filter, load_emdat_events
 from climate_risk.data_functions.rivers_data_loader import load_rivers_data
 from climate_risk.data_functions.shapefiles_data_loader import load_shapefile
 from climate_risk.geo.crs import to_km
@@ -52,8 +52,8 @@ def _create_rivers_damage(
 
     Returns
     -------
-    GeoDataFrame
-        One row per event, with its distance in kilometres to the nearest major river.
+    damage : GeoDataFrame
+        One row per event, with its distance in kilometers to the nearest major river.
     """
     totals = {"Total_Damage": f"Total_Damage_{total_suffix}", "Total_Affected": f"Total_Affected_{total_suffix}"}
 
@@ -99,20 +99,77 @@ def _create_rivers_damage(
 
         return damage_df
 
-    return cached(cache_dir, name, build, geo_parquet())
+    reading = builder_fingerprint(
+        build,
+        query,
+        totals,
+        log_suffix,
+        tuple(extra_columns),
+        locations,
+        DAMAGE_COLUMNS,
+        REPLICATION_FILTERS,
+    )
+
+    return cached(cache_dir, name, build, geo_parquet(), params={"reading": reading})
 
 
 def create_hydro_rivers_damage(cache_dir: Path) -> gpd.GeoDataFrame:
+    """
+    Build the damage frame for hydrometeorological events, with each event's distance to a river.
+
+    Parameters
+    ----------
+    cache_dir : Path
+        Directory the source caches live under.
+
+    Returns
+    -------
+    damage : GeoDataFrame
+        One row per event, carrying its damage totals and its distance to the nearest river.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data_functions.rivers_damage import create_hydro_rivers_damage
+
+        damage = create_hydro_rivers_damage(Path("data"))
+    """
     return _create_rivers_damage(
         cache_dir,
         name="rivers_hydro_damage",
-        query='disaster_class == "Hydrometereological"',
+        query=f'disaster_class == "{HYDROMETEOROLOGICAL}"',
         total_suffix="Hydro",
         log_suffix="hydro",
     )
 
 
 def create_floods_rivers_damage(cache_dir: Path) -> gpd.GeoDataFrame:
+    """
+    Build the damage frame for floods, with each event's distance to a river.
+
+    Parameters
+    ----------
+    cache_dir : Path
+        Directory the source caches live under.
+
+    Returns
+    -------
+    damage : GeoDataFrame
+        One row per flood event, carrying its damage totals and its distance to the nearest river.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data_functions.rivers_damage import create_floods_rivers_damage
+
+        floods = create_floods_rivers_damage(Path("data"))
+    """
     return _create_rivers_damage(
         cache_dir,
         name="rivers_floods_damage",

@@ -26,8 +26,18 @@ def read_place(path: Path) -> Place:
 
     Returns
     -------
-    CountryConfig or RegionConfig
+    place : CountryConfig or RegionConfig
         The place the file describes.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.config.registry import read_place
+
+        laos = read_place(Path("climate_risk/config/places/lao.toml"))
     """
     try:
         table = tomllib.loads(path.read_text())
@@ -55,8 +65,16 @@ def load_place(key: str, *, root: Path = CONFIG_ROOT) -> Place:
 
     Returns
     -------
-    CountryConfig or RegionConfig
+    place : CountryConfig or RegionConfig
         The place, read fresh from disk.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from climate_risk.config.registry import load_place
+
+        laos = load_place("lao")
     """
     for subdirectory in (COUNTRY_SUBDIRECTORY, REGION_SUBDIRECTORY):
         path = root / subdirectory / f"{key}.toml"
@@ -68,7 +86,19 @@ def load_place(key: str, *, root: Path = CONFIG_ROOT) -> Place:
 
 
 def resolve_isos(place: Place) -> tuple[str, ...]:
-    """Return the ISO 3166-1 alpha-3 codes a place covers, which is one for a country."""
+    """
+    Return the ISO 3166-1 alpha-3 codes a place covers, which is one for a country.
+
+    Examples
+    --------
+    A region resolves to its members, a country to itself:
+
+    .. code-block:: python
+
+        from climate_risk.config.registry import load_place, resolve_isos
+
+        print(resolve_isos(load_place("sea")))
+    """
     return (place.iso3,) if isinstance(place, CountryConfig) else place.members
 
 
@@ -125,7 +155,7 @@ def all_event_location_overrides(*, root: Path = CONFIG_ROOT) -> dict[str, tuple
 
     Returns
     -------
-    dict mapping str to tuple of float
+    overrides : dict mapping str to tuple of float
         Longitude and latitude, keyed by EM-DAT event id.
     """
     overrides: dict[str, tuple[float, float]] = {}

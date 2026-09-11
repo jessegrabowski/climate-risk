@@ -93,7 +93,7 @@ def test_repair_supplies_the_missing_sovereign_codes():
 
 
 def test_repair_drops_territories_that_would_double_count_their_owner():
-    """Bonaire is labelled NLD; keeping it would give the Netherlands two geometries."""
+    """Bonaire is labeled NLD; keeping it would give the Netherlands two geometries."""
     repaired = repair_iso_codes(toy_world_needing_repair())
 
     assert "Bonaire (Neth.)" not in set(repaired["WB_NAME"])
@@ -150,7 +150,7 @@ def test_a_place_reads_the_boundary_layer_its_config_names(write_shapefile_cache
 
 
 def test_a_country_without_a_boundary_is_sliced_out_of_the_repaired_world(write_shapefile_cache):
-    """France is unlabelled upstream, so a place named FRA is only findable once the repair has run."""
+    """France is unlabeled upstream, so a place named FRA is only findable once the repair has run."""
     cache_dir = write_shapefile_cache("world", toy_world_needing_repair())
     place = CountryConfig(iso3="FRA", name="France")
 

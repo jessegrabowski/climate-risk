@@ -57,7 +57,7 @@ def unambiguous_units(places: Iterable[tuple[str, str | None]], gazetteer: Gazet
 
     Returns
     -------
-    dict mapping str to str
+    units : dict mapping str to str
         The GADM identifier each usable name reaches.
     """
     settled = {}
@@ -104,8 +104,20 @@ def score_geocoder(
 
     Returns
     -------
-    list of ScoredName
+    scores : list of ScoredName
         One entry per name that had an answer to check against.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.geocoding import score_geocoder
+        from climate_risk.data.geonames import geonames_geocoder
+
+        cache_dir = Path("data")
+        scores = score_geocoder(geonames_geocoder(cache_dir), "LAO", cache_dir)
     """
     settled = unambiguous_units(places, gazetteer)
     if not settled:
@@ -148,8 +160,8 @@ def units_containing_points(
     """
     Name the finest GADM unit holding each point.
 
-    Falling back to the container a place was written in claims every unit inside it — a province
-    spans fourteen districts at the median — so a point is worth reaching for first wherever one
+    Falling back to the container a place was written in claims every unit inside it, and a province
+    spans fourteen districts at the median. A point is worth reaching for first wherever one
     exists.
 
     Parameters
@@ -167,7 +179,7 @@ def units_containing_points(
 
     Returns
     -------
-    dict mapping str to str
+    units : dict mapping str to str
         The GADM identifier each name's point falls in, absent where no level holds it.
     """
     if not points:
@@ -211,10 +223,10 @@ def units_from_geocoders(
     """
     Name the GADM unit each written place falls in, asking each source in turn.
 
-    Sources are tried in the order given and the first answer for a name is kept, so the order is a
-    statement about which source is trusted: an earlier one is preferred wherever it answers at all.
-    A point that falls outside every unit is discarded rather than passed on, which is what stops a
-    place sitting offshore, or in the country next door, from reaching a unit it does not belong to.
+    Sources are tried in the order given, and the first answer for a name is kept. The order is therefore a statement
+    about which source is trusted: an earlier one is preferred wherever it answers at all. A point that falls outside
+    every unit is discarded rather than passed on. That is what stops a place sitting offshore, or in the country next
+    door, from reaching a unit it does not belong to.
 
     Parameters
     ----------
@@ -233,8 +245,20 @@ def units_from_geocoders(
 
     Returns
     -------
-    dict mapping str to str
+    units : dict mapping str to str
         The GADM identifier each name reaches, absent where no source placed it inside a unit.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.geocoding import units_from_geocoders
+        from climate_risk.data.placement import available_geocoders
+
+        cache_dir = Path("data")
+        units = units_from_geocoders(["Pakse", "Savannakhet"], "LAO", cache_dir, available_geocoders("LAO", cache_dir))
     """
     placed: dict[str, str] = {}
     outstanding = list(names)

@@ -38,7 +38,7 @@ def test_zero_distances_are_floored(rivers_through_the_grid, coastline_through_t
 
 
 def test_genuine_distances_are_not_floored(coastline_through_the_grid):
-    """A river a hundred metres off the grid: close enough that an overlarge floor would swallow it."""
+    """A river a hundred meters off the grid: close enough that an overlarge floor would swallow it."""
     rivers = gpd.GeoDataFrame(
         {
             "ORD_FLOW": [4, 4],
@@ -57,18 +57,18 @@ def test_genuine_distances_are_not_floored(coastline_through_the_grid):
     assert clear_of_a_river["log_distance_to_river"].eq(np.log(clear_of_a_river["distance_to_river"])).all()
 
 
-def test_an_unlabelled_shapefile_takes_the_code_it_is_given(rivers_clear_of_the_grid, coastline):
+def test_an_unlabeled_shapefile_takes_the_code_it_is_given(rivers_clear_of_the_grid, coastline):
     """A country boundary file carries no ISO column, so the caller is the only source of the code."""
-    unlabelled = gpd.GeoDataFrame({"geometry": [box(0, 0, 1, 1)]}, crs="EPSG:4326")
+    unlabeled = gpd.GeoDataFrame({"geometry": [box(0, 0, 1, 1)]}, crs="EPSG:4326")
 
-    grid = create_grid_from_shape(unlabelled, rivers_clear_of_the_grid, coastline, grid_size=3, iso3="ZMB")
+    grid = create_grid_from_shape(unlabeled, rivers_clear_of_the_grid, coastline, grid_size=3, iso3="ZMB")
 
     assert set(grid["ISO"]) == {"ZMB"}
 
 
-def test_an_unlabelled_shapefile_with_no_code_is_an_error(rivers_clear_of_the_grid, coastline):
+def test_an_unlabeled_shapefile_with_no_code_is_an_error(rivers_clear_of_the_grid, coastline):
     """A region spans several countries, so no single code is right and stamping one mislabels them."""
-    unlabelled = gpd.GeoDataFrame({"geometry": [box(0, 0, 1, 1)]}, crs="EPSG:4326")
+    unlabeled = gpd.GeoDataFrame({"geometry": [box(0, 0, 1, 1)]}, crs="EPSG:4326")
 
     with pytest.raises(ValueError, match="pass iso3"):
-        create_grid_from_shape(unlabelled, rivers_clear_of_the_grid, coastline, grid_size=3)
+        create_grid_from_shape(unlabeled, rivers_clear_of_the_grid, coastline, grid_size=3)

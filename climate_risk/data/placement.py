@@ -26,6 +26,17 @@ def available_geocoders(iso: str, cache_dir: Path) -> Iterator[Geocoder]:
     ------
     callable
         Takes an ISO code and a written name, and returns longitude and latitude or None.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.placement import available_geocoders
+
+        for geocoder in available_geocoders("LAO", Path("data")):
+            print(geocoder("LAO", "Pakse"))
     """
     try:
         yield geonames_geocoder(iso, cache_dir)

@@ -15,18 +15,49 @@ from scipy import stats
 REGIONS = ("Asia", "Europe", "Africa", "Oceania", "Americas")
 
 
+# Matplotlib's cycle assigns a color per call site, so one series drawn in two figures comes out in
+# two colors. Figures name a role here instead.
+PALETTE = {
+    "primary": "tab:blue",
+    "secondary": "tab:red",
+    "observed": "0.15",
+    "divider": "0.35",
+}
+
+
 def configure_plot_style(add_grid: bool = False) -> None:
+    """
+    Apply the project's matplotlib and pandas display settings to the current session.
+
+    Sets figure size, constrained layout, spine visibility, and a two-decimal float format for
+    pandas. Call it once, before plotting.
+
+    Parameters
+    ----------
+    add_grid : bool, optional
+        Draw a dashed horizontal grid on every axes. Default False.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        import matplotlib.pyplot as plt
+
+        from climate_risk.plotting import configure_plot_style
+
+        configure_plot_style(add_grid=True)
+        figure, axis = plt.subplots()
+    """
     pd.set_option("display.float_format", "{:.2f}".format)
 
     plt.rcParams["figure.figsize"] = (14, 4)
     plt.rcParams["figure.constrained_layout.use"] = True
     plt.rcParams["figure.facecolor"] = "w"
     plt.rcParams["axes.grid"] = add_grid
+    plt.rcParams["axes.grid.axis"] = "y"
     plt.rcParams["grid.linewidth"] = 0.5
     plt.rcParams["grid.linestyle"] = "--"
     plt.rcParams["axes.spines.top"] = False
-    plt.rcParams["axes.spines.bottom"] = False
-    plt.rcParams["axes.spines.left"] = False
     plt.rcParams["axes.spines.right"] = False
 
 
@@ -49,6 +80,19 @@ def prepare_gridspec_figure(n_cols: int, n_plots: int, figure: plt.Figure | None
         The layout the subplots are cut from.
     locations : list of tuple of slice
         Row and column slice for each subplot, in order.
+
+    Examples
+    --------
+    Lay out seven panels across three columns:
+
+    .. code-block:: python
+
+        import matplotlib.pyplot as plt
+
+        from climate_risk.plotting import prepare_gridspec_figure
+
+        figure = plt.figure()
+        gridspec, positions = prepare_gridspec_figure(3, 7, figure)
     """
     remainder = n_plots % n_cols
     has_remainder = remainder > 0
@@ -104,6 +148,14 @@ def panel_grid(
         The figure the axes belong to.
     axes : list of Axes
         One axis per name, in the order given.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from climate_risk.plotting import panel_grid
+
+        figure, axes = panel_grid(names=["co2", "precip"], units={"co2": "ppm"})
     """
     labels = labels or {}
     units = units or {}
@@ -127,7 +179,7 @@ def plot_fan(
     axis: plt.Axes,
     observed: pd.Series | None = None,
     probs: Sequence[float] = (0.50, 0.89),
-    color: str = "tab:blue",
+    color: str = PALETTE["primary"],
     divider: Any = None,
     shades: tuple[float, float] = (0.16, 0.34),
 ) -> None:
@@ -148,11 +200,22 @@ def plot_fan(
     probs : sequence of float, optional
         Credible masses, one band each. Default (0.50, 0.89).
     color : str, optional
-        Colour of the bands and the median line. Default 'tab:blue'.
+        Color of the bands and the median line. Default ``PALETTE["primary"]``.
     divider : optional
         X position for a vertical rule, typically the last observation. Default None, drawing none.
     shades : tuple of float, optional
         Alpha for the widest and narrowest band, interpolated across the rest. Default (0.16, 0.34).
+
+    Examples
+    --------
+    .. code-block:: python
+
+        import matplotlib.pyplot as plt
+
+        from climate_risk.plotting import plot_fan
+
+        figure, axis = plt.subplots()
+        plot_fan(draws=posterior["co2"], axis=axis, observed=observed)
     """
     time = pd.to_datetime(draws.coords["time"].values)
 
@@ -163,10 +226,10 @@ def plot_fan(
     axis.plot(time, draws.median(dim=["chain", "draw"]), color=color, lw=1.6)
 
     if observed is not None:
-        axis.plot(observed.index, observed.to_numpy(), color="0.15", lw=1.0, ls="--")
+        axis.plot(observed.index, observed.to_numpy(), color=PALETTE["observed"], lw=1.0, ls="--")
 
     if divider is not None:
-        axis.axvline(divider, color="0.35", ls=":", lw=0.9)
+        axis.axvline(divider, color=PALETTE["divider"], ls=":", lw=0.9)
 
     axis.margins(x=0)
 
@@ -175,7 +238,7 @@ def _plot_single_kde(
     data: pd.Series,
     axis: plt.Axes | None = None,
     bins: int = 30,
-    color: str = "tab:blue",
+    color: str = PALETTE["primary"],
     leg_loc: str = "upper left",
     set_title: bool = True,
     add_sum_box: bool = True,
@@ -192,7 +255,7 @@ def _plot_single_kde(
     bins : int, optional
         Histogram bins. Default 30.
     color : str, optional
-        Fill colour of the histogram. Default ``"tab:blue"``.
+        Fill color of the histogram. Default ``PALETTE["primary"]``.
     leg_loc : str, optional
         Where to anchor the summary box. Default ``"upper left"``.
     set_title : bool, optional
@@ -202,7 +265,7 @@ def _plot_single_kde(
 
     Returns
     -------
-    Axes
+    axis : Axes
         The axis drawn on.
     """
     data = data.dropna()
@@ -247,7 +310,7 @@ def plot_descriptive(
     df: pd.DataFrame | pd.Series,
     n_cols: int = 3,
     bins: int = 30,
-    color: str = "tab:blue",
+    color: str = PALETTE["primary"],
     leg_loc: str = "upper left",
     labels_size: int = 14,
     add_sum_box: bool = True,
@@ -265,7 +328,7 @@ def plot_descriptive(
     bins : int, optional
         Histogram bins. Default 30.
     color : str, optional
-        Fill colour of the histograms. Default ``"tab:blue"``.
+        Fill color of the histograms. Default ``PALETTE["primary"]``.
     leg_loc : str, optional
         Where to anchor each summary box. Default ``"upper left"``.
     labels_size : int, optional
@@ -277,8 +340,16 @@ def plot_descriptive(
 
     Returns
     -------
-    Figure or Axes
+    figure : Figure or Axes
         The figure the panels were drawn on, or the single axis when there is only one column.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from climate_risk.plotting import plot_descriptive
+
+        plot_descriptive(panel[["co2", "precip", "damage"]])
     """
     figsize = figure_kwargs.pop("figsize", (14, 4))
     dpi = figure_kwargs.pop("dpi", 144)
@@ -345,12 +416,20 @@ def plot_aggregated_series(
     figure_size : tuple of float, optional
         Figure width and height in inches. Default (20, 18).
     subplot_title_fontsize : int, optional
-        Point size for each panel's title; the figure heading is ten points larger. Default 14.
+        Point size for each panel's title. The figure heading is ten points larger. Default 14.
 
     Returns
     -------
-    Figure
+    figure : Figure
         The figure the panels were drawn on.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from climate_risk.plotting import plot_aggregated_series
+
+        figure = plot_aggregated_series(panel, ["damage"], "year", "sum")
     """
     fig, axes = plt.subplots(graph_rows, AGGREGATE_COLUMNS, figsize=figure_size)
 
@@ -398,12 +477,20 @@ def plot_aggregated_series_by_region(
     figure_size : tuple of float, optional
         Figure width and height in inches. Default (20, 18).
     subplot_title_fontsize : int, optional
-        Point size for each panel's title; the figure heading is ten points larger. Default 14.
+        Point size for each panel's title. The figure heading is ten points larger. Default 14.
 
     Returns
     -------
-    Figure
+    figure : Figure
         The figure the panels were drawn on.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from climate_risk.plotting import plot_aggregated_series_by_region
+
+        figure = plot_aggregated_series_by_region(panel, ["damage"], "year", "sum")
     """
     fig, axes = plt.subplots(graph_rows, AGGREGATE_COLUMNS, figsize=figure_size)
 
@@ -443,8 +530,16 @@ def plot_ppc_loopit(
 
     Returns
     -------
-    list of Axes
+    axes : list of Axes
         The posterior predictive panel and the two LOO-PIT panels.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from climate_risk.plotting import plot_ppc_loopit
+
+        axes = plot_ppc_loopit(idata, "counts")
     """
     fig = plt.figure(figsize=(12, 9))
     gs = plt.GridSpec(2, 2, figure=fig)
@@ -489,8 +584,16 @@ def attach_count_predictions(idata: xr.DataTree, df: pd.DataFrame) -> pd.DataFra
 
     Returns
     -------
-    DataFrame
+    annotated : DataFrame
         ``df`` with ``predictions`` and the 95% and 50% HDI bounds appended.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from climate_risk.plotting import attach_count_predictions
+
+        annotated = attach_count_predictions(idata, panel)
     """
     y_hat = idata.posterior_predictive["y_hat"]
     predictions = _aligned_prediction_mean(y_hat, df)
@@ -522,8 +625,16 @@ def plot_predicted_counts(idata: xr.DataTree, df: pd.DataFrame, country: str) ->
 
     Returns
     -------
-    Figure
+    figure : Figure
         Predicted mean, observed counts, and the 50% and 95% HDI bands.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from climate_risk.plotting import plot_predicted_counts
+
+        figure = plot_predicted_counts(idata, panel, "LAO")
     """
     df_predictions = attach_count_predictions(idata=idata, df=df)
 
@@ -534,7 +645,7 @@ def plot_predicted_counts(idata: xr.DataTree, df: pd.DataFrame, country: str) ->
         data["Start_Year"],
         data["predictions"],
         zorder=1000,
-        color="tab:red",
+        color=PALETTE["secondary"],
         label="Mean Predicted Disaster Count",
     )
     ax.scatter(data["Start_Year"], data["is_disaster"], color="k", label="Actual prob")
@@ -574,8 +685,16 @@ def attach_damage_predictions(idata: xr.DataTree, df: pd.DataFrame) -> pd.DataFr
 
     Returns
     -------
-    DataFrame
+    annotated : DataFrame
         ``df`` with ``predictions`` and the 75% and 50% HDI bounds appended.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from climate_risk.plotting import attach_damage_predictions
+
+        annotated = attach_damage_predictions(idata, panel)
     """
     damages = idata.posterior_predictive["damage_millions"]
     predictions = _aligned_prediction_mean(damages, df)
@@ -609,8 +728,16 @@ def plot_predicted_damages(idata: xr.DataTree, df: pd.DataFrame, country: str, t
 
     Returns
     -------
-    Figure
+    figure : Figure
         Predicted mean, observed damages, and the 50% and 75% HDI bands.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from climate_risk.plotting import plot_predicted_damages
+
+        figure = plot_predicted_damages(idata, panel, "LAO", "total_damage")
     """
     df_predictions = attach_damage_predictions(idata=idata, df=df)
 

@@ -12,7 +12,7 @@ _log = logging.getLogger(__name__)
 PWT = ManualSource(
     filename="pwt100.xlsx",
     homepage="https://www.rug.nl/ggdc/productivity/pwt/",
-    licence="Creative Commons Attribution 4.0",
+    license="Creative Commons Attribution 4.0",
     citation=(
         "Feenstra, Robert C., Robert Inklaar and Marcel P. Timmer (2015), "
         "'The Next Generation of the Penn World Table', American Economic Review 105(10), 3150-3182"
@@ -49,7 +49,7 @@ def transform_pwt(raw: pl.DataFrame) -> pl.DataFrame:
 
     Returns
     -------
-    DataFrame
+    pwt : DataFrame
         One row per country and year, sorted, with an integer ``year``.
     """
     missing = sorted(set(PWT_COLUMNS) - set(raw.columns))
@@ -80,8 +80,18 @@ def load_pwt_data(cache_dir: Path, *, force_reload: bool = False) -> pl.DataFram
 
     Returns
     -------
-    DataFrame
+    pwt : DataFrame
         One row per country and year.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.pwt import load_pwt_data
+
+        pwt = load_pwt_data(Path("data"))
     """
 
     def build() -> pl.DataFrame:

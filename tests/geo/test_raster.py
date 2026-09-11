@@ -30,7 +30,7 @@ def tiles(bounds, *, crs="EPSG:4326", **columns):
 
 def test_both_boundary_sources_dissolve_to_the_same_geometry():
     """The whole point of dissolving. A country's archive arrives as many districts with no ISO
-    column while the world slice arrives as one labelled feature, and the two paths must grid
+    column while the world slice arrives as one labeled feature, and the two paths must grid
     identically or `lao` and `sea` silently disagree about where Laos is.
     """
     archive = tiles([(0, 0, 1, 1), (1, 0, 2, 1), (0, 1, 1, 2), (1, 1, 2, 2)], adm2_name=list("abcd"))
@@ -56,31 +56,50 @@ def test_a_region_keeps_one_row_per_country():
     assert dissolved.loc[dissolved["ISO_A3"] == "LAO"].geometry.iloc[0].equals(box(0, 0, 2, 1))
 
 
-def test_a_labelled_boundary_ignores_the_fallback_code():
-    """A geometry that labels itself wins, matching `create_grid_from_shape`. Stamping the caller's
-    code over a multi-country slice would relabel every country as one.
+def test_a_fallback_code_the_boundary_disagrees_with_is_refused():
+    """A geometry that labels itself keeps its own codes, so stamping the caller's over it would
+    relabel every country as one. Returning the boundary unchanged instead hands back a result that
+    is not the country asked for, and gridding it lays a lattice over all of them.
     """
-    dissolved = dissolve_place_boundary(tiles([(0, 0, 1, 1)], ISO_A3=["THA"]), iso3="LAO")
+    with pytest.raises(DataValidationError, match="iso3='LAO'"):
+        dissolve_place_boundary(tiles([(0, 0, 1, 1)], ISO_A3=["THA"]), iso3="LAO")
 
-    assert dissolved["ISO_A3"].tolist() == ["THA"]
+
+def test_a_fallback_code_the_boundary_agrees_with_is_allowed():
+    """A place resolves either to its own archive, which carries no code, or to a world slice, which
+    does. A caller handling both passes iso3 either way, and it is right both times.
+    """
+    dissolved = dissolve_place_boundary(tiles([(0, 0, 1, 1)], ISO_A3=["LAO"]), iso3="LAO")
+
+    assert dissolved["ISO_A3"].tolist() == ["LAO"]
+
+
+def test_a_fallback_code_carried_alongside_others_is_refused():
+    """Carrying the code asked for is not enough, because the rest are dissolved along with it. This
+    is the world shapefile passed whole, which yields one geometry spanning every country in it.
+    """
+    several = tiles([(0, 0, 1, 1), (5, 5, 6, 6)], ISO_A3=["THA", "LAO"])
+
+    with pytest.raises(DataValidationError, match="carries 2 codes"):
+        dissolve_place_boundary(several, iso3="LAO")
 
 
 def test_the_boundary_comes_back_in_the_geographic_crs():
     """Archives arrive in whatever CRS they were published in, and the grid is laid in degrees.
-    Gridding a projected boundary would put the cells in metres and space them wrongly.
+    Gridding a projected boundary would put the cells in meters and space them wrongly.
     """
     projected = tiles([(0, 0, 1, 1)], crs="EPSG:3395", ISO_A3=["LAO"])
 
     dissolved = dissolve_place_boundary(projected)
 
-    # A one-metre square on the equator spans about 9e-6 degrees, so untouched coordinates would
+    # A one-meter square on the equator spans about 9e-6 degrees, so untouched coordinates would
     # come back a hundred thousand times wider than this.
     assert dissolved.crs == GEOGRAPHIC_CRS
     assert dissolved.total_bounds[2] < 1e-4
 
 
 def test_a_boundary_with_no_crs_is_rejected():
-    """Assuming lat/lon for an unlabelled CRS would place a projected archive off the coast of
+    """Assuming lat/lon for an unlabeled CRS would place a projected archive off the coast of
     Africa without complaint.
     """
     unlocated = gpd.GeoDataFrame({"ISO_A3": ["LAO"], "geometry": [box(0, 0, 1, 1)]})
@@ -89,7 +108,7 @@ def test_a_boundary_with_no_crs_is_rejected():
         dissolve_place_boundary(unlocated)
 
 
-def test_an_unlabelled_boundary_with_no_code_is_rejected():
+def test_an_unlabeled_boundary_with_no_code_is_rejected():
     with pytest.raises(DataValidationError, match="pass iso3"):
         dissolve_place_boundary(tiles([(0, 0, 1, 1)]))
 
@@ -105,7 +124,7 @@ def test_a_square_degree_on_the_equator_grids_squarely():
     np.testing.assert_allclose(longitudes, [0.125, 0.375, 0.625, 0.875])
 
 
-def test_the_axes_are_cell_centres_that_tile_the_extent():
+def test_the_axes_are_cell_centers_that_tile_the_extent():
     """The operator sums one sample per cell, which is a midpoint rule. Returning the extent's
     edges instead would put half of the first and last cells outside the place, and the weights
     would claim ground the grid does not cover.
@@ -130,7 +149,7 @@ def test_longitude_needs_fewer_cells_away_from_the_equator():
 
 def test_cells_are_square_in_the_middle_of_a_tall_extent():
     """Longitude is converted at the extent's mean latitude, so a place spanning many degrees gets
-    square cells at its centre. Converting at an edge instead skews every cell across the whole
+    square cells at its center. Converting at an edge instead skews every cell across the whole
     grid, and the error grows with how tall the place is.
     """
     resolution = 50.0
@@ -207,8 +226,8 @@ def test_a_cell_on_the_frontier_is_kept_with_the_part_inside():
 
 
 def test_the_covered_area_adds_up_to_the_place():
-    """The reason for coverage over centre-in-polygon. Summed over cells, the covered area is the
-    place's own area; clipping by centre loses whatever the border cells were carrying, which for
+    """The reason for coverage over center-in-polygon. Summed over cells, the covered area is the
+    place's own area; clipping by center loses whatever the border cells were carrying, which for
     a ragged outline is percent-scale rather than rounding.
     """
     outline = box(0, 0, 2, 1).union(box(0, 1, 1, 2))
@@ -222,7 +241,7 @@ def test_the_covered_area_adds_up_to_the_place():
 
 
 def test_each_cell_takes_the_country_it_lands_in():
-    """Cells are labelled by the polygon they fall in, not by the place as a whole, because a
+    """Cells are labeled by the polygon they fall in, not by the place as a whole, because a
     region spans several countries and the model reports by country.
     """
     boundary = dissolve_place_boundary(tiles([(0, 0, 1, 1), (3, 0, 4, 1)], ISO_A3=["LAO", "THA"]))
@@ -309,7 +328,7 @@ def test_the_lattice_rows_run_north_to_south():
 
 def test_a_cell_on_a_border_is_shared_between_units():
     """The reason for area weighting. A column of cells straddling the border belongs half to each
-    unit, and the operator carries both rows. Assigning by centre would give one unit the lot.
+    unit, and the operator carries both rows. Assigning by center would give one unit the lot.
     """
     boundary = dissolve_place_boundary(tiles([(0, 0, 4, 4)], ISO_A3=["LAO"]))
     grid = build_cell_grid(boundary, resolution_km=KM_PER_DEGREE_LATITUDE)
@@ -360,7 +379,7 @@ def test_units_are_reprojected_before_they_meet_the_grid():
     """Units arrive from GADM in whatever CRS it publishes. Overlaying a projected unit on a
     lat/lon grid would find no overlap at all and return an empty operator.
     """
-    # Away from the origin, so a polygon left in metres lands nowhere near the lattice rather than
+    # Away from the origin, so a polygon left in meters lands nowhere near the lattice rather than
     # swallowing it. At the origin the projected coordinates still cover the degree-scale grid and
     # the test would pass whether or not anything was reprojected.
     boundary = dissolve_place_boundary(tiles([(100, 13, 104, 17)], ISO_A3=["LAO"]))
@@ -386,7 +405,7 @@ def test_units_without_the_key_column_are_rejected():
 def test_a_footprint_covers_the_ground_its_area_claims():
     """The footprint and `cell_area_km2` describe the same rectangle, so measuring one must give
     the other. A half-step error in the corners would show up as a factor of four here and is
-    otherwise invisible, since the centres would still look right.
+    otherwise invisible, since the centers would still look right.
     """
     boundary = dissolve_place_boundary(tiles([(0, 0, 2, 40)], ISO_A3=["LAO"]))
     grid = build_cell_grid(boundary, resolution_km=50.0)
@@ -397,8 +416,8 @@ def test_a_footprint_covers_the_ground_its_area_claims():
     np.testing.assert_allclose(measured, grid.cells["cell_area_km2"].to_numpy(), rtol=1e-9)
 
 
-def test_footprints_are_centred_on_the_cells_they_belong_to():
-    """Off-by-one in the index would pair each footprint with a neighbour's centre, which tiles
+def test_footprints_are_centerd_on_the_cells_they_belong_to():
+    """Off-by-one in the index would pair each footprint with a neighbour's center, which tiles
     just as neatly and puts every covariate one cell out.
     """
     boundary = dissolve_place_boundary(tiles([(0, 0, 2, 2)], ISO_A3=["LAO"]))
@@ -409,7 +428,7 @@ def test_footprints_are_centred_on_the_cells_they_belong_to():
 
 def test_a_one_cell_place_still_reports_its_geometry():
     """A place smaller than the resolution grids to a single cell, and the derived geometry has to
-    survive that. Inferring the step from the gap between the first two centres has no gap to read
+    survive that. Inferring the step from the gap between the first two centers has no gap to read
     and takes every downstream caller down with it, including the unit assignment.
     """
     tiny = gpd.GeoDataFrame({"ISO_A3": ["SGP"], "geometry": [box(103.6, 1.2, 104.0, 1.5)]}, crs=GEOGRAPHIC_CRS)
@@ -425,7 +444,7 @@ def test_a_one_cell_place_still_reports_its_geometry():
 
 def test_a_cell_on_an_internal_frontier_takes_the_larger_country():
     """A region's cells straddle its members' shared borders. The cell is one piece of ground:
-    labelled by whichever country holds most of it, and credited with everything the place covers
+    labeled by whichever country holds most of it, and credited with everything the place covers
     rather than only the dominant country's share.
     """
     # The majority country sorts last, so labelling by the largest share and labelling by the first
@@ -437,7 +456,7 @@ def test_a_cell_on_an_internal_frontier_takes_the_larger_country():
     straddling = grid.cells[(grid.cells["lon"] - half_width < 0.95) & (grid.cells["lon"] + half_width > 0.95)]
 
     assert not straddling.empty, "a column of cells should span the frontier"
-    assert straddling["ISO_A3"].eq("ZZZ").all(), "the frontier sits left of centre, so ZZZ holds more"
+    assert straddling["ISO_A3"].eq("ZZZ").all(), "the frontier sits left of center, so ZZZ holds more"
     # Coverage comes back from exactextract as float32, so two shares of one cell sum to 1 within
     # single precision rather than exactly.
     np.testing.assert_allclose(
