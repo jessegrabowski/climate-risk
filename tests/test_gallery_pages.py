@@ -11,6 +11,7 @@ import pytest
 
 from climate_risk.data.co2 import CO2
 from climate_risk.data.fred import FRED
+from climate_risk.data.ghsl import population_source
 from climate_risk.data.gpcc import FULL_DATA
 from climate_risk.data.hadcrut import HADCRUT
 from climate_risk.data.ipcc import IPCC
@@ -29,6 +30,7 @@ DECLARED: dict[str, DataSource | VendoredSource | ApiSource] = {
     "climate/hadcrut": HADCRUT,
     "climate/gpcc": FULL_DATA.sources[0],
     "climate/ipcc": IPCC,
+    "exposure/ghsl": population_source(2020),
     "economic/world_bank": WORLD_BANK,
     "economic/fred": FRED,
 }
