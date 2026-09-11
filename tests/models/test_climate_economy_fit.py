@@ -127,3 +127,11 @@ def test_build_priors_covers_every_shock_observed_series_and_elicited_parameter(
 
     expected_keys = set(SHOCKS) | set(OBSERVED) | {"climate_response", "theta", "phi_pop", "phi_emp"}
     assert set(priors) == expected_keys
+
+
+def test_build_priors_returns_distributions_pymc_can_consume():
+    # pz.maxent hands back a (distribution, axes) pair unless plotting is switched off first, and a
+    # tuple has no to_pymc: this is what catches that regression.
+    priors = build_priors()
+
+    assert all(hasattr(prior, "to_pymc") for prior in priors.values())

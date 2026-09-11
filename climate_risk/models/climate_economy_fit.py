@@ -16,6 +16,10 @@ from climate_risk.data_functions.combine_data import build_country_year_panel, b
 from climate_risk.models.climate_economy import OBSERVED, PREINDUSTRIAL_CO2_PPM, SHOCKS, ClimateEconomy
 from climate_risk.sample import sample_or_load
 
+# Elicitation runs inside model-building code, where a figure per call is noise, and this also
+# changes what pz.maxent returns: with plotting on it hands back a (distribution, axes) pair.
+pz.rcParams["plots.show_plot"] = False
+
 # Maximum entropy subject to the stated interval: the least committal member of the family that
 # respects it. Gamma keeps the scales off zero, where a variance decomposition has no gradient.
 STATE_SCALES = {
@@ -310,6 +314,7 @@ def growth_accounting(
             iso="NPL", frontier="USA", series=series, pwt=pwt, cache_dir=Path("data"), labour_share_override=0.487
         )
     """
+    pwt = pwt.assign(year=pd.to_datetime(pwt["year"], format="%Y"))
     home = pwt.loc[pwt["country_code"] == iso].set_index("year")
     window = home.loc[series.first : series.pwt_last]
 
@@ -397,14 +402,21 @@ def growth_accounting(
 
 
 def _ppp_gap_proxy(*, iso: str, frontier: str, year: int, cache_dir: Path) -> float:
-    """GDP-per-worker at PPP relative to the frontier, as a productivity gap when ctfp is absent."""
+    """GDP-per-worker at PPP relative to the frontier, as a productivity gap when ctfp is absent.
+
+    Reads the nearest year both PPP GDP per capita and the employment rate are covered, since the
+    two series do not always start in the same year the anchor otherwise would.
+    """
     wb = load_wb_data(cache_dir).to_pandas()
 
     def gdp_per_worker(code: str) -> float:
-        row = wb.loc[(wb["country_code"] == code) & (wb["year"] == year)]
-        if row.empty or row["gdp_per_cap_ppp_usd"].isna().all() or row["employment_rate"].isna().all():
-            raise ValueError(f"No PPP GDP per capita and employment rate for {code} in {year}.")
-        return float(row["gdp_per_cap_ppp_usd"].iloc[0] / (row["employment_rate"].iloc[0] / 100))
+        covered = wb.loc[
+            (wb["country_code"] == code) & wb["gdp_per_cap_ppp_usd"].notna() & wb["employment_rate"].notna()
+        ]
+        if covered.empty:
+            raise ValueError(f"No PPP GDP per capita and employment rate ever both cover {code}.")
+        row = covered.iloc[(covered["year"] - year).abs().argmin()]
+        return float(row["gdp_per_cap_ppp_usd"] / (row["employment_rate"] / 100))
 
     return -float(np.log(gdp_per_worker(iso) / gdp_per_worker(frontier)))
 
