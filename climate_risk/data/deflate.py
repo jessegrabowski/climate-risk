@@ -134,11 +134,11 @@ def deflate(
     if uncovered:
         raise ValueError(f"The price index does not cover {uncovered}, which {len(uncovered)} amounts are dated to.")
 
-    return (
-        values.join(factors, left_on=year_column, right_on="year", how="left")
-        .with_columns(*(pl.col(column) * pl.col("deflator") for column in columns))
-        .drop("deflator")
-    )
+    # Mapped rather than joined, so that a caller already carrying a column of this name keeps it and
+    # the rows come back in the order they went in.
+    factor = pl.col(year_column).replace_strict(dict(factors.iter_rows()), return_dtype=pl.Float64)
+
+    return values.with_columns(*(pl.col(column) * factor for column in columns))
 
 
 def rebase(

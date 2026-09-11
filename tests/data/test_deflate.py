@@ -105,9 +105,20 @@ def test_a_money_column_the_caller_did_not_name_passes_through():
     assert frame.rows() == [(2010, pytest.approx(125.0), 3)]
 
 
+def test_a_caller_column_named_for_the_deflator_is_not_read_as_one():
+    """Joining the factors in would suffix the incoming column and leave this expression pointing at
+    the caller's, which multiplies the money by whatever that column happened to hold.
+    """
+    values = damages([(2010, 100.0)]).with_columns(pl.lit(9.0).alias("deflator"))
+
+    frame = deflate(values, priced({2010: 80.0, 2015: 100.0}), ["damage"], base_year=2015)
+
+    assert frame.rows() == [(2010, pytest.approx(125.0), 9.0)]
+
+
 def test_a_year_the_index_does_not_cover_is_rejected():
-    """A left join would hand those rows a null deflator and null the money out, which reads downstream
-    as an event that did no damage.
+    """The alternative is an amount coming back null or unchanged, either of which reads downstream as
+    an event that did no damage.
     """
     with pytest.raises(ValueError, match=r"does not cover \[1970\]"):
         deflate(damages([(1970, 100.0), (2015, 100.0)]), priced({2015: 100.0}), ["damage"], base_year=2015)
