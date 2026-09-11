@@ -123,7 +123,8 @@ def load_wb_data(cache_dir: Path, *, force_reload: bool = False) -> pl.DataFrame
     Return the World Bank panel, one row per country and year.
 
     Every indicator lands in one frame because they are one country-year grid from one API. The
-    entry is keyed on how it was built as well as on its name, so editing ``INDICATOR_NAMES`` turns it over instead of reading back what an earlier set produced.
+    entry is keyed on how it was built as well as on its name, so editing ``INDICATOR_NAMES`` or the
+    country table turns it over instead of reading back what an earlier set produced.
 
     Parameters
     ----------
@@ -162,6 +163,6 @@ def load_wb_data(cache_dir: Path, *, force_reload: bool = False) -> pl.DataFrame
 
         return transform_world_bank(downloaded, INDICATOR_NAMES)
 
-    reading = builder_fingerprint(build, INDICATOR_NAMES)
+    reading = builder_fingerprint(build, INDICATOR_NAMES, COUNTRY_CODE_BY_NAME, REQUESTED_COUNTRY_CODES)
 
     return cached(cache_dir, "world_bank", build, polars_parquet(), params={"reading": reading}, force=force_reload)

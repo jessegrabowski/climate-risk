@@ -2,6 +2,7 @@ import logging
 
 import polars as pl
 import pytest
+import requests
 
 from polars.testing import assert_frame_equal
 
@@ -12,6 +13,7 @@ from climate_risk.data.world_bank import (
     INDICATOR_NAMES,
     REQUESTED_COUNTRY_CODES,
     WB_INDICATORS,
+    WORLD_BANK,
     load_wb_data,
     transform_world_bank,
 )
@@ -248,3 +250,37 @@ def test_an_indicator_the_bank_no_longer_serves_is_named():
 
     with pytest.raises(ValueError, match=r"AG\.SRF\.TOTL\.K2"):
         transform_world_bank(retired, INDICATOR_NAMES)
+
+
+@pytest.mark.network
+def test_every_requested_country_is_listed_under_the_name_the_bank_serves():
+    """The download is keyed by ISO code and the panel is keyed by the name the answer carries, so a
+    country the Bank renames is asked for, returned, and then dropped for having no code. Nothing
+    offline can see this: the mapping and the panel both come from `COUNTRY_CODE_BY_NAME`, and they
+    agree with each other whatever the Bank calls the country.
+    """
+    response = requests.get(WORLD_BANK.url, timeout=30, params={"format": "json", "per_page": 400})
+    response.raise_for_status()
+    published = {country["id"]: country["name"] for country in response.json()[1]}
+
+    requested = set(REQUESTED_COUNTRY_CODES)
+    renamed = {
+        code: (name, published.get(code))
+        for name, code in COUNTRY_CODE_BY_NAME.items()
+        if code in requested and published.get(code) != name
+    }
+
+    assert renamed == {}
+
+
+def test_editing_the_country_table_turns_the_cache_over(tmp_path, serves, monkeypatch):
+    """The panel's rows are the country table's rows, so a table edit that did not reach the key
+    would read back the panel the old table produced, which is a country quietly still missing.
+    """
+    serves(downloaded([row()]))
+    load_wb_data(tmp_path)
+
+    monkeypatch.setattr(world_bank, "REQUESTED_COUNTRY_CODES", [*REQUESTED_COUNTRY_CODES, "ZZZ"])
+    load_wb_data(tmp_path)
+
+    assert len(list(tmp_path.glob("world_bank__*.parquet"))) == 2
