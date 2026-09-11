@@ -1,0 +1,29 @@
+iso3 = "NPL"
+name = "Nepal"
+
+# Geometry is sliced out of the World Bank world shapefile by iso3; Nepal needs no [boundary]
+# block. If sub-national work later needs finer units than the world file carries, add one
+# pointing at an admin archive, as lao.toml does.
+
+# Notes on this country, recorded so they are not rediscovered:
+#
+# 1. Nepal is landlocked. create_grid_from_shape measures distance_to_coastline unconditionally,
+#    to the GSHHG shoreline, with no special case. Every grid point will return a large distance
+#    with little variation, so the covariate is poorly identified and should probably be dropped
+#    with an explanation rather than reported as a near-zero effect. Lao PDR and Zambia are
+#    landlocked too, so this is the repository's ordinary situation.
+#
+# 2. The hazard profile — monsoon floods and wet mass movements — sits inside the
+#    HYDROMETEOROLOGICAL class the paper models, so no scope decision is forced here.
+#
+# 3. The 2015 Gorkha earthquake is geophysical and falls outside both disaster classes. Its
+#    absence from the panel is correct behaviour, not a gap, but readers will ask.
+#
+# 4. Untested: whether the HydroRIVERS ORD_FLOW < 5 filter leaves enough river inside the country
+#    for distance_to_river to be identifiable. Check with
+#        len(load_rivers_data(cache).clip(load_place_boundary(load_place("npl"), cache)))
+#    and use load_rivers_data(cache, include_medium=True) as the sensitivity check.
+
+# [events] is omitted, so the project-wide defaults in config/schema.py apply: start_year 1981,
+# no end year, no severity thresholds. Confirm Nepal clears them before building on this —
+# an empty event frame is easy to mistake for a working pipeline.
