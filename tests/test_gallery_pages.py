@@ -11,6 +11,7 @@ import pytest
 
 from climate_risk.data.co2 import CO2
 from climate_risk.data.fred import FRED
+from climate_risk.data.gadm import GADM
 from climate_risk.data.geo_disasters import GEO_DISASTERS
 from climate_risk.data.geonames import country_dump
 from climate_risk.data.ghsl import population_source
@@ -40,6 +41,7 @@ DECLARED: dict[str, DataSource | VendoredSource | ApiSource | ManualSource] = {
     "economic/world_bank": WORLD_BANK,
     "economic/fred": FRED,
     "economic/pwt": PWT,
+    "geospatial/gadm": GADM,
     "geospatial/ghsl": population_source(2020),
     "geospatial/geonames": country_dump("KH"),
     "geospatial/rivers": RIVERS,
