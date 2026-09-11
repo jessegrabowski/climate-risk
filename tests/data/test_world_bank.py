@@ -259,7 +259,7 @@ def test_every_requested_country_is_listed_under_the_name_the_bank_serves():
     offline can see this: the mapping and the panel both come from `COUNTRY_CODE_BY_NAME`, and they
     agree with each other whatever the Bank calls the country.
     """
-    response = requests.get(WORLD_BANK.url, timeout=30, params={"format": "json", "per_page": 400})
+    response = requests.get(WORLD_BANK.url, timeout=30, params={"format": "json", "per_page": "400"})
     response.raise_for_status()
     published = {country["id"]: country["name"] for country in response.json()[1]}
 
