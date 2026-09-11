@@ -20,6 +20,7 @@ from climate_risk.data.gpcc import GriddedProduct
 from climate_risk.data.ocean_heat import OCEAN_HEAT, OCEAN_HEAT_BASELINE_OFFSET
 from climate_risk.data.osm import LOOKUP_COLUMNS
 from climate_risk.data.source import DataSource
+from climate_risk.data_functions import rivers_data_loader
 
 # One event that clears every downstream filter: deaths above 100, affected above 1000, and a start
 # year inside both the 1970 and 1980 cutoffs. Tests override only the field under examination.
@@ -653,15 +654,23 @@ def write_geo_disasters_cache(tmp_path):
 
 
 @pytest.fixture
-def write_rivers_cache(tmp_path):
-    """Return a callable writing the processed river network a warm cache would hold."""
+def write_rivers_cache(tmp_path, monkeypatch):
+    """
+    Return a callable placing the processed river network a warm cache would hold.
+
+    The entry is keyed on a fingerprint of how it was built, so it cannot be written by name. The
+    loader builds it from a stubbed extraction instead, which also exercises the read and the
+    filter on the way in.
+    """
 
     def write(gdf, include_medium=False):
-        rivers_dir = tmp_path / "rivers"
-        rivers_dir.mkdir(parents=True, exist_ok=True)
-        # The cache key is stated literally, so a wrong one fails rather than agreeing with itself.
-        cutoff = 6 if include_medium else 5
-        gdf.to_parquet(rivers_dir / f"rivers__discharge_class_below={cutoff}.parquet")
+        network = tmp_path / f"network_{len(gdf)}_{include_medium}.shp"
+        gdf.to_file(network)
+
+        with monkeypatch.context() as patch:
+            patch.setattr(rivers_data_loader, "_extract_rivers", lambda cache_dir: network)
+            rivers_data_loader.load_rivers_data(tmp_path, include_medium=include_medium)
+
         return tmp_path
 
     return write
