@@ -58,7 +58,7 @@ def test_a_country_year_with_no_indicators_still_reaches_the_panel(panel):
     early = panel.filter(pl.col("Start_Year") == date(1970, 1, 1))
 
     assert len(early) > 0
-    assert early["gdp_per_cap"].is_null().all()
+    assert early["gdp_per_cap_usd"].is_null().all()
 
 
 def test_precipitation_is_totalled_over_the_year_not_averaged(cache_dir):

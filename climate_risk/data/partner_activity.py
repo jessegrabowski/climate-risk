@@ -9,7 +9,7 @@ from kuznets import imf
 
 from climate_risk.data.cache import builder_fingerprint, cached, polars_parquet
 from climate_risk.data.source import ApiSource
-from climate_risk.data.world_bank import load_wb_macro_data
+from climate_risk.data.world_bank import load_wb_data
 
 _log = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ def transform_partner_activity(
         Bilateral exports as ``kuznets`` returns them, with ``country``, ``counterpart``, ``period``
         and ``value`` columns.
     gdp : DataFrame
-        The macroeconomic panel, keyed by ``country_code`` and ``year``, carrying ``real_gdp_lcu``.
+        The World Bank panel, keyed by ``country_code`` and ``year``, carrying ``real_gdp_lcu``.
     base_year : int
         Year each partner's output is indexed to.
     first_year : int
@@ -234,7 +234,7 @@ def load_partner_activity(
 
     def build() -> pl.DataFrame:
         # Both upstreams are reached inside the builder, so a warm cache touches neither.
-        gdp = load_wb_macro_data(cache_dir, force_reload=force_reload)
+        gdp = load_wb_data(cache_dir, force_reload=force_reload)
         _log.info(f"Downloading IMTS bilateral exports for {', '.join(codes)}")
         exports = imf.IMTSReader(codes, indicator=EXPORT_INDICATOR, freq="A", output_type="polars").read()
         if not isinstance(exports, pl.DataFrame):

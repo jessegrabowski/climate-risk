@@ -142,9 +142,9 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
         *PANEL_KEY,
         _counted_or_missing(CLIMATOLOGICAL_TYPES).alias("climatological_disasters"),
         _counted_or_missing(HYDROLOGICAL_TYPES).alias("hydrological_disasters"),
-        (pl.col("Population") / MILLION).alias("population"),
+        (pl.col("population") / MILLION).alias("population"),
         pl.col("population_density").log().alias("ln_population_density"),
-        pl.col("gdp_per_cap").log().alias("ln_gdp_pc"),
+        pl.col("gdp_per_cap_usd").log().alias("ln_gdp_pc"),
     ).with_columns(
         (pl.col("ln_gdp_pc") ** 2).alias("square_ln_gdp_pc"),
         (pl.col("ln_population_density") ** 2).alias("ln_population_density_squared"),
