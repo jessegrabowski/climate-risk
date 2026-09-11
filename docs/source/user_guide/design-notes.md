@@ -42,6 +42,23 @@ The corollary: a constant genuinely shared by two modules goes in the one that o
 the other imports it. `GEOGRAPHIC_CRS` lives in `climate_risk.geo.crs` because projection is that
 module's subject, not because it is a constant.
 
+## Money is stated in constant 2015 US dollars
+
+A money column is comparable across years only once the price level is divided out of it.
+`climate_risk.data.deflate` does that against the US consumer price index, and `BASE_YEAR` there is
+2015.
+
+The year is 2015 because the covariates already are. `NY.GDP.PCAP.KD` and the other World Bank
+constant-price indicators are 2015 US dollars, and the partner-activity index is based there too.
+Restating damages in another year puts the two sides of a regression in different units, and nothing
+downstream can detect that.
+
+Two functions apply the factors, and choosing between them is where this goes wrong. `deflate` moves
+each row by the factor for the year beside it, which is right for an amount measured in the dollars
+of that year. `rebase` moves every row by one factor, which is right for an amount already held
+constant in a single year's dollars. EM-DAT's adjusted damage columns are the second kind, because
+the year in the row is the event's date rather than the date of the money.
+
 ## Configuration is data, not code
 
 A country is a TOML file. Nothing in `climate_risk/` names a country outside
