@@ -42,42 +42,25 @@ EM_DAT_COL_DICT = {
     "Total Damage, Adjusted ('000 US$)": "Total_Damage_Adjusted",
 }
 
-PROB_COLS = [
-    "Country",
-    "ISO",
-    "Start_Year",
-    "Drought",
-    "Extreme temperature",
-    "Flood",
-    "Storm",
-    "Wildfire",
-    "Mass movement (dry)",
-    "Mass movement (wet)",
-    "Region",
-    "Subregion",
-]
-
-INTENSITY_COLS = [
-    "Country",
-    "ISO",
-    "Start_Year",
-    "Region",
-    "Deaths",
-    "Injured",
-    "Numb_Affected",
-    "Homeless",
-    "Total_Affected",
-    "Total_Damage",
-    "Total_Damage_Adjusted",
-    "Disaster Type",
-]
-
 # The study window opens in 1969 and closes on the newest event in the workbook.
 EMDAT_WINDOW_START = dt.date(1969, 1, 1)
 
-# The types the panel counts. A country with no wildfires still needs a Wildfire column, so these
-# are the columns the count frames carry whether or not the data contains them.
-DISASTER_TYPES = tuple(c for c in PROB_COLS if c not in {"Country", "ISO", "Start_Year", "Region", "Subregion"})
+HYDROMETEOROLOGICAL = "Hydrometeorological"
+CLIMATOLOGICAL = "Climatological"
+
+DISASTER_CLASSES = {
+    "Storm": HYDROMETEOROLOGICAL,
+    "Flood": HYDROMETEOROLOGICAL,
+    "Mass movement (wet)": HYDROMETEOROLOGICAL,
+    "Wildfire": CLIMATOLOGICAL,
+    "Extreme temperature": CLIMATOLOGICAL,
+    "Drought": CLIMATOLOGICAL,
+}
+
+# The types the panel counts, which are exactly the ones this project files under a class. A country
+# with no wildfires still needs a Wildfire column, so these are the columns the count frames carry
+# whether or not the data contains them.
+DISASTER_TYPES = tuple(DISASTER_CLASSES)
 
 # Columns read before any rename. Nothing detects upstream schema drift, so this check is the
 # earliest point a changed export becomes a named error rather than a missing attribute.
@@ -103,17 +86,6 @@ EMDAT_DTYPES = {
     "GADM Admin Units": "string",
 }
 
-HYDROMETEOROLOGICAL = "Hydrometeorological"
-CLIMATOLOGICAL = "Climatological"
-
-DISASTER_CLASSES = {
-    "Storm": HYDROMETEOROLOGICAL,
-    "Flood": HYDROMETEOROLOGICAL,
-    "Mass movement (wet)": HYDROMETEOROLOGICAL,
-    "Wildfire": CLIMATOLOGICAL,
-    "Extreme temperature": CLIMATOLOGICAL,
-    "Drought": CLIMATOLOGICAL,
-}
 
 DAMAGE_VARS = [
     "Deaths",
@@ -128,6 +100,23 @@ DAMAGE_VARS = [
 # A country-year with no events reads as missing rather than zero, which is what the replication
 # panel relies on. Floats keep that true whether the frame is read as polars or as pandas.
 COUNT_DTYPE = pl.Float64
+
+
+def types_in_class(disaster_class: str) -> tuple[str, ...]:
+    """
+    Return the EM-DAT types this project files under one of its own disaster classes.
+
+    Parameters
+    ----------
+    disaster_class : str
+        ``HYDROMETEOROLOGICAL`` or ``CLIMATOLOGICAL``.
+
+    Returns
+    -------
+    types : tuple of str
+        The ``Disaster Type`` values mapped onto that class, in declaration order.
+    """
+    return tuple(name for name, filed_under in DISASTER_CLASSES.items() if filed_under == disaster_class)
 
 
 def _read_workbook(emdat_path: Path) -> pl.DataFrame:
@@ -271,7 +260,6 @@ def total_damage(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFrame:
     """
     totals = (
         events.filter(pl.col("Disaster Type").is_in(DISASTER_TYPES))
-        .select(INTENSITY_COLS)
         .group_by("ISO", "Start_Year")
         # polars totals a group of nothing but nulls to zero, which would price these events at nothing
         # rather than report that nobody priced them.

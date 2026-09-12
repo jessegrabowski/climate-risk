@@ -14,10 +14,14 @@ project does not use.
 grouping is a modeling decision: the two classes are the split the damage regressions are specified
 over, and it does not correspond to any partition EM-DAT ships.
 
-A type EM-DAT adds is not silently absorbed, because `replace_strict` maps an unlisted type to
-null rather than guessing. And code should refer to a class through the constant,
-`HYDROMETEOROLOGICAL` or `CLIMATOLOGICAL`, rather than repeating the string, so the vocabulary has
-one definition.
+`DISASTER_CLASSES` is the only place the vocabulary is written down. `DISASTER_TYPES` is its keys, so
+the types the panel counts are exactly the types that have a class, and `types_in_class` reads it the
+other way round for the count columns. A type listed in one of those and not the others is not
+possible, which is what keeps the count columns and the damage columns meaning the same thing.
+
+A type EM-DAT adds is not silently absorbed, because `replace_strict` maps an unlisted type to null
+rather than guessing. Code should refer to a class through the constant, `HYDROMETEOROLOGICAL` or
+`CLIMATOLOGICAL`, rather than repeating the string.
 
 ## The cache directory is an argument, always
 

@@ -15,6 +15,7 @@ from climate_risk.data_functions.combine_data import (
     build_country_year_panel,
     build_time_series,
 )
+from climate_risk.data_functions.emdat_processing import CLIMATOLOGICAL, HYDROMETEOROLOGICAL, types_in_class
 from climate_risk.data_functions.shapefiles_data_loader import load_shapefile
 from climate_risk.geo.raster import ISO_COLUMN
 
@@ -22,17 +23,14 @@ _log = logging.getLogger(__name__)
 
 PANEL_KEY = ["ISO", "year"]
 
-HYDROLOGICAL_TYPES = ["Flood", "Storm"]
-CLIMATOLOGICAL_TYPES = ["Extreme temperature", "Wildfire", "Drought"]
+HYDROLOGICAL_TYPES = types_in_class(HYDROMETEOROLOGICAL)
+CLIMATOLOGICAL_TYPES = types_in_class(CLIMATOLOGICAL)
 
 # The WMO reference period each country's precipitation is centered on, inclusive of both ends.
 CLIMATOLOGY_BASELINE = (1961, 1990)
 
 # The seasonal period the ocean-heat trend is fitted with.
 OCEAN_TREND_PERIOD = 3
-
-# The trend regressor counts years over a century, so it stays comparable with the other columns.
-TREND_BASE_YEAR = 1980
 
 MILLION = 1e6
 
@@ -61,11 +59,10 @@ PUBLISHED_COLUMNS = [
     "precip_deviation",
     "Total_Damage_Adjusted_hydro",
     "Total_Damage_Adjusted_clim",
-    "Total_Affected_hydro",
 ]
 
 
-def _counted_or_missing(types: list[str]) -> pl.Expr:
+def _counted_or_missing(types: Sequence[str]) -> pl.Expr:
     """Total the given disaster types, keeping a country-year with no record of any of them missing."""
     return (
         pl.when(pl.all_horizontal(pl.col(name).is_null() for name in types))
@@ -166,14 +163,9 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
         (pl.col("population") / MILLION).alias("population"),
         pl.col("population_density").log().alias("ln_population_density"),
         pl.col("gdp_per_cap_usd").log().alias("ln_gdp_pc"),
-    ).with_columns(
-        (pl.col("ln_gdp_pc") ** 2).alias("square_ln_gdp_pc"),
-        (pl.col("ln_population_density") ** 2).alias("ln_population_density_squared"),
-    )
+    ).with_columns((pl.col("ln_gdp_pc") ** 2).alias("square_ln_gdp_pc"))
 
-    damages = panel.select(
-        *PANEL_KEY, "Total_Damage_Adjusted_hydro", "Total_Damage_Adjusted_clim", "Total_Affected_hydro"
-    )
+    damages = panel.select(*PANEL_KEY, "Total_Damage_Adjusted_hydro", "Total_Damage_Adjusted_clim")
 
     # Drawn from the whole precipitation record, which reaches back before the panel's first year
     # and so can cover the baseline climatology.
@@ -186,11 +178,7 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
         .join(_deviation_from_trend(climate), on="year", how="left")
     )
 
-    return frame.select(
-        *PUBLISHED_COLUMNS,
-        "ln_population_density_squared",
-        ((pl.col("year").dt.year() - TREND_BASE_YEAR) / 100).alias("time_period"),
-    )
+    return frame.select(*PUBLISHED_COLUMNS)
 
 
 def model_frame(
