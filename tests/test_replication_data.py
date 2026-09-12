@@ -34,7 +34,10 @@ PRECIPITATION_COUNTRIES = ("AAA", "BBB", "FFF")
 
 # Stated literally rather than imported, so a changed constant fails instead of moving with it.
 TREND_BASE_YEAR = 1980
-LOG_EPSILON = 1e-6
+
+# What tests/conftest.py writes into every event's "Total Damage, Adjusted ('000 US$)" cell. AAA has
+# one flood and one drought a year, so each class totals one event's figure rather than two.
+DAMAGE_THOUSANDS = 120
 
 # The second year of the span, so the expected values below are the fixture's formulas at i = 1.
 SAMPLE_YEAR = YEARS[1]
@@ -142,11 +145,6 @@ def test_the_published_columns_are_all_present(replication):
         "Total_Affected_hydro",
         "ln_population_density_squared",
         "time_period",
-        "Total_Damage_Adjusted_all",
-        "Total_Damage_Adjusted_hydro_millions",
-        "damage_millions",
-        "ln_damage_millions",
-        "ln_Total_Damage_Adjusted_hydro_millions",
     }
 
     assert set(replication.columns) == expected
@@ -178,20 +176,14 @@ def test_the_time_trend_counts_years_over_a_century(replication):
     assert row(replication, "AAA", SAMPLE_YEAR)["time_period"] == pytest.approx((SAMPLE_YEAR - TREND_BASE_YEAR) / 100)
 
 
-def test_total_damage_adds_the_two_classes(replication):
-    both = replication.drop_nulls(["Total_Damage_Adjusted_hydro", "Total_Damage_Adjusted_clim"])
-
-    assert len(both) > 0
-    expected = both["Total_Damage_Adjusted_hydro"] + both["Total_Damage_Adjusted_clim"]
-    assert (both["Total_Damage_Adjusted_all"] - expected).abs().max() < 1e-9
-
-
-def test_a_country_with_no_climatological_damage_totals_to_missing(replication):
-    """pandas propagates the null through the sum; polars would sum it as zero and invent damage."""
+def test_a_country_with_no_climatological_damage_reports_none(replication):
+    """A class with nothing recorded stays missing. Whether that should count as zero damage depends on
+    the model reading it, so the panel does not decide.
+    """
     entry = row(replication, "BBB", SAMPLE_YEAR)
 
     assert entry["Total_Damage_Adjusted_clim"] is None
-    assert entry["Total_Damage_Adjusted_all"] is None
+    assert entry["Total_Damage_Adjusted_hydro"] is not None
 
 
 def test_a_country_year_with_no_disasters_stays_missing(replication):
@@ -202,18 +194,14 @@ def test_a_country_year_with_no_disasters_stays_missing(replication):
     assert quiet["hydrological_disasters"].is_null().all()
 
 
-def test_damages_are_converted_to_millions(replication):
+def test_damage_is_published_in_the_unit_em_dat_reports(replication):
+    """EM-DAT reports thousands of US dollars. Rescaling it here would put every reader of the panel on
+    a scale one model happened to want.
+    """
     entry = row(replication, "AAA", SAMPLE_YEAR)
 
-    assert entry["damage_millions"] == pytest.approx(entry["Total_Damage_Adjusted_all"] * 1e-6)
-    assert entry["Total_Damage_Adjusted_hydro_millions"] == pytest.approx(entry["Total_Damage_Adjusted_hydro"] * 1e-6)
-
-
-def test_the_damage_logs_are_offset_so_a_zero_survives(replication):
-    """Damage of zero is ordinary here, and log(0) is what this epsilon exists to avoid."""
-    entry = row(replication, "AAA", SAMPLE_YEAR)
-
-    assert entry["ln_damage_millions"] == pytest.approx(np.log(entry["damage_millions"] + LOG_EPSILON))
+    assert entry["Total_Damage_Adjusted_hydro"] == pytest.approx(DAMAGE_THOUSANDS)
+    assert entry["Total_Damage_Adjusted_clim"] == pytest.approx(DAMAGE_THOUSANDS)
 
 
 def test_precipitation_deviation_is_measured_against_the_named_baseline_period(replication):
