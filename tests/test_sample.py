@@ -37,8 +37,8 @@ def test_save_results_false_leaves_no_file(tmp_path, observed_model):
 
 @pytest.mark.slow
 def test_nutpie_draws_survive_the_round_trip(tmp_path, observed_model):
-    """Post-processing used to raise for this sampler after sampling had already finished, which threw
-    away every draw it had just paid for.
+    """nutpie is a declared dependency and a supported choice, and a round trip through the cache has to
+    return the draws it paid for whichever sampler produced them.
     """
     idata = sample_or_load(
         tmp_path / "idata.nc",
