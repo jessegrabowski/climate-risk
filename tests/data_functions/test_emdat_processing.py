@@ -337,6 +337,28 @@ UNRECORDED = dict.fromkeys(
 )
 
 
+def test_a_country_year_whose_events_record_no_figures_stays_null(write_emdat_cache):
+    """Events happened and no one recorded what they cost, which is not the same as costing nothing.
+
+    polars sums an all-null group to zero, and downstream that zero is indistinguishable from a
+    country-year that really did take no damage. Every measure is checked because one aggregation
+    builds them all, and EM-DAT leaves some of them emptier than damage.
+    """
+    cache_dir = write_emdat_cache(
+        [
+            emdat_event({"DisNo.": "unrecorded-one", "Start Year": 1995} | UNRECORDED),
+            emdat_event({"DisNo.": "unrecorded-two", "Start Year": 1995} | UNRECORDED),
+        ]
+    )
+    raw = load_emdat_events(cache_dir)
+
+    damage = total_damage(raw.filter(event_filter(EventFilters())), country_year_grid(raw))
+    year = damage.filter(pl.col("Start_Year") == date(1995, 1, 1))
+
+    assert len(year) == 1
+    assert [name for name in DAMAGE_VARS if not year[name].is_null().all()] == []
+
+
 def test_a_measure_no_event_fills_is_still_read_as_a_number(write_emdat_cache):
     """fastexcel infers a column nothing fills as text, and totalling text raises rather than returning
     a wrong number. A country whose events are all unpriced is an ordinary single-country export.

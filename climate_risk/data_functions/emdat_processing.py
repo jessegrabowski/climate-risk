@@ -273,7 +273,12 @@ def total_damage(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFrame:
         events.filter(pl.col("Disaster Type").is_in(DISASTER_TYPES))
         .select(INTENSITY_COLS)
         .group_by("ISO", "Start_Year")
-        .agg(pl.col(name).sum().cast(COUNT_DTYPE) for name in DAMAGE_VARS)
+        # polars totals a group of nothing but nulls to zero, which would price these events at nothing
+        # rather than report that nobody priced them.
+        .agg(
+            pl.when(pl.col(name).is_not_null().any()).then(pl.col(name).sum()).cast(COUNT_DTYPE).alias(name)
+            for name in DAMAGE_VARS
+        )
     )
 
     return (
