@@ -14,4 +14,6 @@ model format, and each variant is a separate file.
     ~sample.sample_or_load
     ~sample.drop_transformed
     ~replication_data.create_replication_data
+    ~replication_data.model_frame
+    ~replication_data.load_model_frame
     ~dsge.model_files.resolve_gcn_path
