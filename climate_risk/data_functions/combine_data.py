@@ -23,6 +23,10 @@ from climate_risk.data_functions.emdat_processing import (
 PANEL_KEY = ["ISO", "Start_Year"]
 SERIES_KEY = "year"
 
+# The measures the panel carries split by disaster class. The rest of DAMAGE_VARS reaches it totalled
+# across classes only.
+CLASS_MEASURES = ("Total_Damage_Adjusted",)
+
 # Annual precipitation is a sum, so a year the record only partly covers totals low. Dropping those
 # keeps a part-year at the end of the record from entering the panel as a drought.
 MONTHS_IN_YEAR = 12
@@ -44,10 +48,8 @@ def _left_join(left: pl.DataFrame, right: pl.DataFrame, on: list[str] | str) -> 
 
 
 def _suffixed_damage(damage: pl.DataFrame, suffix: str) -> pl.DataFrame:
-    """Tag one disaster class's damage columns so both classes can sit in one frame."""
-    measures = [column for column in damage.columns if column not in {*PANEL_KEY, "Region", "Subregion"}]
-
-    return damage.select(*PANEL_KEY, *(pl.col(name).alias(f"{name}_{suffix}") for name in measures))
+    """Tag one disaster class's measures so both classes can sit in one frame."""
+    return damage.select(*PANEL_KEY, *(pl.col(name).alias(f"{name}_{suffix}") for name in CLASS_MEASURES))
 
 
 def _combine_emdat(events: pl.DataFrame, grid: pl.DataFrame, counts: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:

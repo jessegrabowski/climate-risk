@@ -31,9 +31,6 @@ CLIMATOLOGY_BASELINE = (1961, 1990)
 # The seasonal period the ocean-heat trend is fitted with.
 OCEAN_TREND_PERIOD = 3
 
-# The trend regressor counts years over a century, so it stays comparable with the other columns.
-TREND_BASE_YEAR = 1980
-
 MILLION = 1e6
 
 # The covariates every model in the paper conditions on. A country-year missing any one of them
@@ -61,7 +58,6 @@ PUBLISHED_COLUMNS = [
     "precip_deviation",
     "Total_Damage_Adjusted_hydro",
     "Total_Damage_Adjusted_clim",
-    "Total_Affected_hydro",
 ]
 
 
@@ -166,14 +162,9 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
         (pl.col("population") / MILLION).alias("population"),
         pl.col("population_density").log().alias("ln_population_density"),
         pl.col("gdp_per_cap_usd").log().alias("ln_gdp_pc"),
-    ).with_columns(
-        (pl.col("ln_gdp_pc") ** 2).alias("square_ln_gdp_pc"),
-        (pl.col("ln_population_density") ** 2).alias("ln_population_density_squared"),
-    )
+    ).with_columns((pl.col("ln_gdp_pc") ** 2).alias("square_ln_gdp_pc"))
 
-    damages = panel.select(
-        *PANEL_KEY, "Total_Damage_Adjusted_hydro", "Total_Damage_Adjusted_clim", "Total_Affected_hydro"
-    )
+    damages = panel.select(*PANEL_KEY, "Total_Damage_Adjusted_hydro", "Total_Damage_Adjusted_clim")
 
     # Drawn from the whole precipitation record, which reaches back before the panel's first year
     # and so can cover the baseline climatology.
@@ -186,11 +177,7 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
         .join(_deviation_from_trend(climate), on="year", how="left")
     )
 
-    return frame.select(
-        *PUBLISHED_COLUMNS,
-        "ln_population_density_squared",
-        ((pl.col("year").dt.year() - TREND_BASE_YEAR) / 100).alias("time_period"),
-    )
+    return frame.select(*PUBLISHED_COLUMNS)
 
 
 def model_frame(

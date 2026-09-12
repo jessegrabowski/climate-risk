@@ -33,8 +33,6 @@ WORLD_BANK_COUNTRIES = ("AAA", "BBB", "DDD", "EEE")
 PRECIPITATION_COUNTRIES = ("AAA", "BBB", "FFF")
 
 # Stated literally rather than imported, so a changed constant fails instead of moving with it.
-TREND_BASE_YEAR = 1980
-
 # What tests/conftest.py writes into every event's "Total Damage, Adjusted ('000 US$)" cell. AAA has
 # one flood and one drought a year, so each class totals one event's figure rather than two.
 DAMAGE_THOUSANDS = 120
@@ -142,9 +140,6 @@ def test_the_published_columns_are_all_present(replication):
         "precip_deviation",
         "Total_Damage_Adjusted_hydro",
         "Total_Damage_Adjusted_clim",
-        "Total_Affected_hydro",
-        "ln_population_density_squared",
-        "time_period",
     }
 
     assert set(replication.columns) == expected
@@ -162,18 +157,11 @@ def test_the_gdp_and_density_logs_are_natural(replication):
     assert entry["ln_population_density"] == pytest.approx(np.log(11))
 
 
-def test_both_squared_terms_square_their_own_log(replication):
-    """One is written as a product and the other as a power; both must hold for every row."""
-    known = replication.drop_nulls(["ln_gdp_pc", "ln_population_density"])
+def test_the_squared_log_gdp_term_squares_its_own_log(replication):
+    known = replication.drop_nulls("ln_gdp_pc")
 
     assert len(known) > 0
     assert (known["square_ln_gdp_pc"] - known["ln_gdp_pc"] ** 2).abs().max() < 1e-12
-    assert (known["ln_population_density_squared"] - known["ln_population_density"] ** 2).abs().max() < 1e-12
-
-
-def test_the_time_trend_counts_years_over_a_century(replication):
-    """A raw year would dwarf every other regressor; the trend is rescaled."""
-    assert row(replication, "AAA", SAMPLE_YEAR)["time_period"] == pytest.approx((SAMPLE_YEAR - TREND_BASE_YEAR) / 100)
 
 
 def test_a_country_with_no_climatological_damage_reports_none(replication):
