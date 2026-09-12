@@ -9,6 +9,7 @@ import pytest
 from climate_risk.config.registry import CONFIG_ROOT, load_place, resolve_isos
 from climate_risk.config.schema import EventFilters
 from climate_risk.data_functions.emdat_processing import (
+    DAMAGE_VARS,
     DISASTER_TYPES,
     EMDAT_WINDOW_START,
     GEOMETRY_SOURCES,
@@ -321,6 +322,45 @@ def test_damage_totals_sum_within_a_country_year_and_leave_empty_ones_null(write
     quiet_year = damage.filter(pl.col("Start_Year") == date(1994, 1, 1))
     assert len(quiet_year) == 1
     assert quiet_year["Deaths"].is_null().all()
+
+
+UNRECORDED = dict.fromkeys(
+    [
+        "Total Deaths",
+        "No. Injured",
+        "No. Affected",
+        "No. Homeless",
+        "Total Affected",
+        "Total Damage ('000 US$)",
+        "Total Damage, Adjusted ('000 US$)",
+    ]
+)
+
+
+def test_a_measure_no_event_fills_is_still_read_as_a_number(write_emdat_cache):
+    """fastexcel infers a column nothing fills as text, and totalling text raises rather than returning
+    a wrong number. A country whose events are all unpriced is an ordinary single-country export.
+    """
+    cache_dir = write_emdat_cache([emdat_event({"Start Year": 1995} | UNRECORDED)])
+
+    raw = load_emdat_events(cache_dir)
+
+    assert [name for name in DAMAGE_VARS if not raw[name].dtype.is_numeric()] == []
+
+
+def test_a_priced_event_still_totals_beside_unpriced_ones(write_emdat_cache):
+    """Only a group with nothing at all to add goes null. One figure among several is still a total."""
+    cache_dir = write_emdat_cache(
+        [
+            emdat_event({"DisNo.": "priced", "Start Year": 1995, "Total Damage, Adjusted ('000 US$)": 40.0}),
+            emdat_event({"DisNo.": "unpriced", "Start Year": 1995, "Total Damage, Adjusted ('000 US$)": None}),
+        ]
+    )
+    raw = load_emdat_events(cache_dir)
+
+    damage = total_damage(raw.filter(event_filter(EventFilters())), country_year_grid(raw))
+
+    assert damage.filter(pl.col("Start_Year") == date(1995, 1, 1))["Total_Damage_Adjusted"].to_list() == [40.0]
 
 
 def test_the_window_extends_to_the_newest_event(write_emdat_cache):

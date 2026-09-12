@@ -83,12 +83,22 @@ DISASTER_TYPES = tuple(c for c in PROB_COLS if c not in {"Country", "ISO", "Star
 # earliest point a changed export becomes a named error rather than a missing attribute.
 REQUIRED_EMDAT_COLUMNS = {"ISO", "Region", "Subregion", "Disaster Type", "GADM Admin Units"} | set(EM_DAT_COL_DICT)
 
-# EM-DAT writes empty strings, not blank cells: undeclared, a cost column reads as text and an
-# all-empty text column warns.
+# EM-DAT writes empty strings, not blank cells: undeclared, a numeric column that nothing fills reads
+# as text, and totalling it then raises. An export narrow enough to price no event at all is ordinary
+# for a single country.
 EMDAT_DTYPES = {
     "AID Contribution ('000 US$)": "float",
     "Reconstruction Costs ('000 US$)": "float",
     "Reconstruction Costs, Adjusted ('000 US$)": "float",
+    "Insured Damage ('000 US$)": "float",
+    "Insured Damage, Adjusted ('000 US$)": "float",
+    "Total Damage ('000 US$)": "float",
+    "Total Damage, Adjusted ('000 US$)": "float",
+    "Total Deaths": "float",
+    "No. Injured": "float",
+    "No. Affected": "float",
+    "No. Homeless": "float",
+    "Total Affected": "float",
     "Admin Units": "string",
     "GADM Admin Units": "string",
 }
