@@ -42,6 +42,22 @@ The corollary: a constant genuinely shared by two modules goes in the one that o
 the other imports it. `GEOGRAPHIC_CRS` lives in `climate_risk.geo.crs` because projection is that
 module's subject, not because it is a constant.
 
+## A damage total is null when nobody priced the events
+
+A country-year can hold three different things, and the panel keeps them apart. No qualifying event
+gives null. Events that happened but that nobody attached a figure to also gives null. Only a figure
+somebody actually recorded gives a number.
+
+Collapsing the middle case to zero is the tempting mistake, and it is what a plain sum does, because
+polars totals an all-null group to zero. Damage is the worst column for it: EM-DAT prices well under
+half of the country-years that have events, so the zeros would outnumber the real figures and every
+one of them would read as a disaster that cost nothing.
+
+The panel publishes `Total_Damage_Adjusted_hydro` and `Total_Damage_Adjusted_clim` separately, in
+the thousands of US dollars EM-DAT reports, and combines neither. Adding the two classes means
+deciding what a class with no events contributes, and rescaling the money means picking the units one
+model's priors were calibrated against. Both are choices for the model, so the panel leaves them to it.
+
 ## Money is stated in constant 2015 US dollars
 
 A money column is comparable across years only once the price level is divided out of it.
