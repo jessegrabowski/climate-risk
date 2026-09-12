@@ -46,6 +46,27 @@ The corollary: a constant genuinely shared by two modules goes in the one that o
 the other imports it. `GEOGRAPHIC_CRS` lives in `climate_risk.geo.crs` because projection is that
 module's subject, not because it is a constant.
 
+## Two labour shares, under two names
+
+Penn World Table publishes `labour_share` and the ILO publishes `labour_income_share`. Both are
+labour compensation as a share of GDP, and the panel carries them as separate columns rather than
+one filled column.
+
+They are built from different data. Penn World Table works from national accounts with an imputation
+for the self-employed, and covers 1950 onward. The ILO estimates labour income from harmonized
+survey microdata, and covers 2004 onward. Where both exist they disagree by up to eight points of
+GDP, and the sign of the gap is not consistent across countries, so neither is a correction of the
+other.
+
+Eight points is not a rounding difference. A Cobb-Douglas decomposition reads the labour share as
+:math:`\theta` and the capital share as :math:`1 - \theta`, so for Laos the two sources put capital
+at 0.60 and 0.52. Filling one column from whichever source has a value would put two countries in
+one regression on two definitions, with nothing downstream able to tell which.
+
+Choosing between them is a modeling decision and belongs to the model. Penn World Table has no
+`labsh` at all for Nepal, Bangladesh, Pakistan, Bhutan or Myanmar, so a model covering those
+countries has to read the ILO series and say so.
+
 ## A damage total is null when nobody priced the events
 
 A country-year can hold three different things, and the panel keeps them apart. No qualifying event
