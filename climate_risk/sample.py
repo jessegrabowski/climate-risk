@@ -7,50 +7,6 @@ import pymc as pm
 import xarray as xr
 
 
-def drop_transformed(idata: xr.DataTree, model: pm.Model | None = None) -> xr.DataTree:
-    """
-    Drop a model's transformed value variables from a posterior in place.
-
-    Constrained parameters are sampled on an unconstrained scale, and PyMC keeps both. The
-    transformed copies carry ``__``-suffixed names and their own dimensions, and are noise in
-    anything that iterates the posterior.
-
-    Parameters
-    ----------
-    idata : DataTree
-        Inference data whose ``posterior`` group is edited.
-    model : Model, optional
-        Model the variables belong to. Defaults to the model on the context stack.
-
-    Returns
-    -------
-    idata : DataTree
-        The same object, with the transformed variables and their dimensions removed.
-
-    Examples
-    --------
-    .. code-block:: python
-
-        import pymc as pm
-
-        from climate_risk.sample import drop_transformed
-
-        with pm.Model() as model:
-            sigma = pm.HalfNormal("sigma")
-            idata = pm.sample()
-
-        idata = drop_transformed(idata, model)
-    """
-    model = pm.modelcontext(model)
-
-    value_var_names = [x.name for x in model.value_vars if x.name.endswith("__")]
-    value_var_dims = [x for x in idata.posterior.indexes.keys() if "__dim" in x]
-
-    idata.posterior = idata.posterior.drop_vars(value_var_names).drop_dims(value_var_dims)
-
-    return idata
-
-
 def sample_or_load(
     fp: str,
     *,
@@ -119,9 +75,6 @@ def sample_or_load(
 
     with pm.modelcontext(model):
         idata = pm.sample(**sample_kwargs)
-        if sample_kwargs.get("nuts_sampler", "pymc") == "nutpie":
-            idata = drop_transformed(idata)
-
         idata = pm.sample_posterior_predictive(
             idata, extend_inferencedata=True, compile_kwargs=deepcopy(compile_kwargs)
         )

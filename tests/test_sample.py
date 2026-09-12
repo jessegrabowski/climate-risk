@@ -33,3 +33,17 @@ def test_save_results_false_leaves_no_file(tmp_path, observed_model):
     sample_or_load(fp, model=observed_model, sample_kwargs=SAMPLE_KWARGS, save_results=False)
 
     assert not fp.exists()
+
+
+@pytest.mark.slow
+def test_nutpie_draws_survive_the_round_trip(tmp_path, observed_model):
+    """nutpie is a declared dependency and a supported choice, and a round trip through the cache has to
+    return the draws it paid for whichever sampler produced them.
+    """
+    idata = sample_or_load(
+        tmp_path / "idata.nc",
+        model=observed_model,
+        sample_kwargs=SAMPLE_KWARGS | {"nuts_sampler": "nutpie"},
+    )
+
+    assert idata["posterior"].to_dataset().sizes["draw"] == SAMPLE_KWARGS["draws"]
