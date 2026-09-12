@@ -40,11 +40,14 @@ def _read_countries() -> tuple[dict[str, str], list[str]]:
 COUNTRY_CODE_BY_NAME, REQUESTED_COUNTRY_CODES = _read_countries()
 
 # One panel, because these are one country-year grid from one API. A column name carries the price
-# base wherever the same quantity is published on more than one: KD is constant 2015 US dollars and
-# KN is constant local currency, so the ratios the model forms within a country share one unit.
+# base wherever the same quantity is published on more than one: KD is constant 2015 US dollars, KN
+# is constant local currency, and PP.KD is constant international dollars at purchasing power parity,
+# so the ratios the model forms within a country share one unit.
 INDICATOR_NAMES = {
     "EN.POP.DNST": "population_density",
     "NY.GDP.PCAP.KD": "gdp_per_cap_usd",
+    # Comparable across countries rather than within one, which is what a gap to the frontier needs.
+    "NY.GDP.PCAP.PP.KD": "gdp_per_cap_ppp",
     "SP.POP.TOTL": "population",
     "NY.GDP.MKTP.KD": "real_gdp_usd",
     "AG.SRF.TOTL.K2": "surface_area_km2",
