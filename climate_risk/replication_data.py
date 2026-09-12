@@ -34,9 +34,6 @@ OCEAN_TREND_PERIOD = 3
 # The trend regressor counts years over a century, so it stays comparable with the other columns.
 TREND_BASE_YEAR = 1980
 
-# Damage of zero is ordinary, and this is what keeps its logarithm finite.
-LOG_EPSILON = 1e-6
-
 MILLION = 1e6
 
 # The covariates every model in the paper conditions on. A country-year missing any one of them
@@ -131,6 +128,9 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
     Joins the disaster panel to the climate series and adds the detrended deviations, so the frame
     holds both the levels and the departures from trend the models use.
 
+    Damage arrives in the unit EM-DAT publishes, thousands of US dollars, with each disaster class
+    totalled on its own column and no combined total.
+
     Parameters
     ----------
     cache_dir : Path
@@ -186,25 +186,10 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
         .join(_deviation_from_trend(climate), on="year", how="left")
     )
 
-    return (
-        frame.select(
-            *PUBLISHED_COLUMNS,
-            "ln_population_density_squared",
-            ((pl.col("year").dt.year() - TREND_BASE_YEAR) / 100).alias("time_period"),
-            (pl.col("Total_Damage_Adjusted_clim") + pl.col("Total_Damage_Adjusted_hydro")).alias(
-                "Total_Damage_Adjusted_all"
-            ),
-        )
-        .with_columns(
-            (pl.col("Total_Damage_Adjusted_hydro") / MILLION).alias("Total_Damage_Adjusted_hydro_millions"),
-            (pl.col("Total_Damage_Adjusted_all") / MILLION).alias("damage_millions"),
-        )
-        .with_columns(
-            (pl.col("damage_millions") + LOG_EPSILON).log().alias("ln_damage_millions"),
-            (pl.col("Total_Damage_Adjusted_hydro_millions") + LOG_EPSILON)
-            .log()
-            .alias("ln_Total_Damage_Adjusted_hydro_millions"),
-        )
+    return frame.select(
+        *PUBLISHED_COLUMNS,
+        "ln_population_density_squared",
+        ((pl.col("year").dt.year() - TREND_BASE_YEAR) / 100).alias("time_period"),
     )
 
 
