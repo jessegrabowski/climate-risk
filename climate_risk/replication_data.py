@@ -1,14 +1,24 @@
+import logging
+
+from collections.abc import Sequence
 from pathlib import Path
 
+import geopandas as gpd
 import polars as pl
 
 from statsmodels.tsa.seasonal import STL
 
+from climate_risk.config.registry import resolve_isos
+from climate_risk.config.schema import Place
 from climate_risk.data_functions.combine_data import (
     annual_precipitation,
     build_country_year_panel,
     build_time_series,
 )
+from climate_risk.data_functions.shapefiles_data_loader import load_shapefile
+from climate_risk.geo.raster import ISO_COLUMN
+
+_log = logging.getLogger(__name__)
 
 PANEL_KEY = ["ISO", "year"]
 
@@ -28,6 +38,17 @@ TREND_BASE_YEAR = 1980
 LOG_EPSILON = 1e-6
 
 MILLION = 1e6
+
+# The covariates every model in the paper conditions on. A country-year missing any one of them
+# cannot enter, because a regressor matrix has no room for a hole.
+MODEL_FEATURES = (
+    "ln_population_density",
+    "ln_gdp_pc",
+    "square_ln_gdp_pc",
+    "precip_deviation",
+    "co2",
+    "population",
+)
 
 PUBLISHED_COLUMNS = [
     "ISO",
@@ -184,4 +205,110 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
             .log()
             .alias("ln_Total_Damage_Adjusted_hydro_millions"),
         )
+    )
+
+
+def model_frame(
+    panel: pl.DataFrame,
+    boundaries: gpd.GeoDataFrame,
+    *,
+    isos: Sequence[str] | None = None,
+    features: Sequence[str] = MODEL_FEATURES,
+) -> tuple[pl.DataFrame, gpd.GeoDataFrame]:
+    """
+    Reduce the panel and the boundaries to the rows a model reads and the countries both describe.
+
+    A model draws its covariates from the panel and its spatial structure from the boundaries, so a
+    country in one and not the other enters the fit as a hole. Both are returned, filtered together.
+
+    Parameters
+    ----------
+    panel : DataFrame
+        One row per country and year, keyed on ``ISO`` and ``year``, from
+        :func:`create_replication_data`.
+    boundaries : GeoDataFrame
+        Country geometries carrying an ``ISO_A3`` column, from
+        :func:`~climate_risk.data_functions.shapefiles_data_loader.load_shapefile`.
+    isos : sequence of str, optional
+        Restrict to these countries. Default None, meaning every country the two have in common.
+    features : sequence of str, optional
+        The columns a row must carry a value in to be kept. Default ``MODEL_FEATURES``.
+
+    Returns
+    -------
+    rows : DataFrame
+        The panel's complete rows for the retained countries, sorted by country and year.
+    geometry : GeoDataFrame
+        The boundaries of those same countries, in the same country order.
+    """
+    complete = panel.drop_nulls(list(features))
+    paneled = set(complete["ISO"].unique())
+    mapped = set(boundaries[ISO_COLUMN])
+
+    # Logged before any place narrows the result, so this names what reconciliation cost rather than
+    # every country the caller did not ask for.
+    unreconciled = sorted(paneled ^ mapped)
+    if unreconciled:
+        _log.warning(f"Dropping {len(unreconciled)} countries only one side describes: {', '.join(unreconciled)}")
+
+    described = paneled & mapped
+    if isos is not None:
+        absent = sorted(set(isos) - described)
+        if absent:
+            raise ValueError(f"{absent} carry no complete panel row, or no geometry, or neither of the two.")
+        described = set(isos)
+
+    if not described:
+        raise ValueError("No country carries both a complete panel row and a geometry.")
+
+    rows = complete.filter(pl.col("ISO").is_in(described)).sort(PANEL_KEY)
+    geometry = boundaries[boundaries[ISO_COLUMN].isin(described)].sort_values(ISO_COLUMN)
+
+    return rows, geometry
+
+
+def load_model_frame(
+    cache_dir: Path,
+    *,
+    place: Place | None = None,
+    baseline: tuple[int, int] = CLIMATOLOGY_BASELINE,
+    features: Sequence[str] = MODEL_FEATURES,
+) -> tuple[pl.DataFrame, gpd.GeoDataFrame]:
+    """
+    Build the panel and the boundaries a model is estimated on, agreeing on their countries.
+
+    Parameters
+    ----------
+    cache_dir : Path
+        Directory the source caches live under.
+    place : CountryConfig or RegionConfig, optional
+        Restrict to the countries this place covers. Default None, meaning every country available.
+    baseline : tuple of int, optional
+        First and last year of the climatology the deviations are measured against.
+    features : sequence of str, optional
+        The columns a row must carry a value in to be kept. Default ``MODEL_FEATURES``.
+
+    Returns
+    -------
+    rows : DataFrame
+        The panel's complete rows for the retained countries, sorted by country and year.
+    geometry : GeoDataFrame
+        The boundaries of those same countries, in the same country order.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.config.registry import load_place
+        from climate_risk.replication_data import load_model_frame
+
+        rows, geometry = load_model_frame(Path("data"), place=load_place("sea"))
+    """
+    return model_frame(
+        create_replication_data(cache_dir, baseline=baseline),
+        load_shapefile("world", cache_dir),
+        isos=resolve_isos(place) if place is not None else None,
+        features=features,
     )
