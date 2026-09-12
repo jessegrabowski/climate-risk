@@ -12,6 +12,8 @@ import geopandas as gpd
 import pandas as pd
 import polars as pl
 
+from climate_risk.utils import _log_maybe
+
 _log = logging.getLogger(__name__)
 
 PARAMETER_SEPARATOR = "__"
@@ -169,6 +171,7 @@ def cached[T](
     *,
     params: Mapping[str, object] | None = None,
     force: bool = False,
+    verbose: bool = False,
 ) -> T:
     """
     Return the cached artifact for ``name``, building and storing it if it is not already there.
@@ -188,6 +191,9 @@ def cached[T](
         How to read and write it.
     params : mapping of str to object, optional
         Values distinguishing this entry from others under the same name. Default None.
+    verbose : bool, optional
+        Log whether the artifact was read or built. Default False: one call can touch a dozen
+        artifacts, and a dozen lines buries whatever the caller meant to show.
     force : bool, optional
         Rebuild even when the artifact is already cached. Default False.
 
@@ -199,12 +205,12 @@ def cached[T](
     path = (cache_dir / cache_key(name, params)).with_suffix(fmt.suffix)
 
     if path.exists() and not force:
-        _log.info(f"Loading cached {name} from {path}")
+        _log_maybe(f"Loading cached {name} from {path}", logger=_log, verbose=verbose)
         return fmt.read(path)
 
     cache_dir.mkdir(parents=True, exist_ok=True)
 
-    _log.info(f"Building {name}")
+    _log_maybe(f"Building {name}", logger=_log, verbose=verbose)
     artifact = builder()
 
     if fmt.atomic:

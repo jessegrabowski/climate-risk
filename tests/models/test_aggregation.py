@@ -3,6 +3,8 @@ import pytensor
 import pytensor.tensor as pt
 import pytest
 
+from pytensor.graph.traversal import ancestors
+
 from climate_risk.exceptions import DataValidationError
 from climate_risk.models.aggregation import build_aggregation, build_aggregation_from_overlaps
 
@@ -369,3 +371,25 @@ def test_units_that_miss_the_grid_entirely_give_an_empty_operator():
     assert aggregation.units == ()
     assert aggregation.n_cells == 4
     assert aggregation.aggregate(np.arange(4.0)).shape == (0,)
+
+
+def test_no_double_precision_constant_leaks_into_the_graph():
+    """The GPU linkers reject float64 at run time, so an operator folding its weights in as a
+    double constant compiles fine and then dies on the device. The output dtype cannot see this:
+    `inc_subtensor` casts the increment down to its base."""
+    aggregation = build_aggregation(unit_of_cell=["a", "a", "b"], weights=np.ones(3))
+
+    with pytensor.config.change_flags(floatX="float32"):
+        totals = aggregation.aggregate_symbolic(pt.vector("cells", dtype="float32"))
+        doubles = [node for node in ancestors([totals]) if getattr(node.type, "dtype", None) == "float64"]
+
+    assert not doubles, f"float64 survives in the graph: {doubles}"
+
+
+def test_the_stored_weights_stay_in_double():
+    """`aggregate` runs in numpy over drawn arrays, where the backend's precision does not apply
+    and there is no reason to give any up."""
+    with pytensor.config.change_flags(floatX="float32"):
+        aggregation = build_aggregation(unit_of_cell=["a", "a", "b"], weights=np.ones(3, dtype="float32"))
+
+    assert aggregation.weights.dtype == np.float64
