@@ -57,29 +57,10 @@ DISASTER_CLASSES = {
     "Drought": CLIMATOLOGICAL,
 }
 
-
 # The types the panel counts, which are exactly the ones this project files under a class. A country
 # with no wildfires still needs a Wildfire column, so these are the columns the count frames carry
 # whether or not the data contains them.
 DISASTER_TYPES = tuple(DISASTER_CLASSES)
-
-
-def types_in_class(disaster_class: str) -> tuple[str, ...]:
-    """
-    Return the EM-DAT types this project files under one of its own disaster classes.
-
-    Parameters
-    ----------
-    disaster_class : str
-        ``HYDROMETEOROLOGICAL`` or ``CLIMATOLOGICAL``.
-
-    Returns
-    -------
-    types : tuple of str
-        The ``Disaster Type`` values mapped onto that class, in declaration order.
-    """
-    return tuple(name for name, filed_under in DISASTER_CLASSES.items() if filed_under == disaster_class)
-
 
 # Columns read before any rename. Nothing detects upstream schema drift, so this check is the
 # earliest point a changed export becomes a named error rather than a missing attribute.
@@ -119,6 +100,23 @@ DAMAGE_VARS = [
 # A country-year with no events reads as missing rather than zero, which is what the replication
 # panel relies on. Floats keep that true whether the frame is read as polars or as pandas.
 COUNT_DTYPE = pl.Float64
+
+
+def types_in_class(disaster_class: str) -> tuple[str, ...]:
+    """
+    Return the EM-DAT types this project files under one of its own disaster classes.
+
+    Parameters
+    ----------
+    disaster_class : str
+        ``HYDROMETEOROLOGICAL`` or ``CLIMATOLOGICAL``.
+
+    Returns
+    -------
+    types : tuple of str
+        The ``Disaster Type`` values mapped onto that class, in declaration order.
+    """
+    return tuple(name for name, filed_under in DISASTER_CLASSES.items() if filed_under == disaster_class)
 
 
 def _read_workbook(emdat_path: Path) -> pl.DataFrame:
