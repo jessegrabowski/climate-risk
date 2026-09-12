@@ -45,17 +45,41 @@ EM_DAT_COL_DICT = {
 # The study window opens in 1969 and closes on the newest event in the workbook.
 EMDAT_WINDOW_START = dt.date(1969, 1, 1)
 
-# The types the panel counts. A country with no wildfires still needs a Wildfire column, so these
-# are the columns the count frames carry whether or not the data contains them.
-DISASTER_TYPES = (
-    "Drought",
-    "Extreme temperature",
-    "Flood",
-    "Storm",
-    "Wildfire",
-    "Mass movement (dry)",
-    "Mass movement (wet)",
-)
+HYDROMETEOROLOGICAL = "Hydrometeorological"
+CLIMATOLOGICAL = "Climatological"
+
+DISASTER_CLASSES = {
+    "Storm": HYDROMETEOROLOGICAL,
+    "Flood": HYDROMETEOROLOGICAL,
+    "Mass movement (wet)": HYDROMETEOROLOGICAL,
+    "Wildfire": CLIMATOLOGICAL,
+    "Extreme temperature": CLIMATOLOGICAL,
+    "Drought": CLIMATOLOGICAL,
+}
+
+
+# The types the panel counts, which are exactly the ones this project files under a class. A country
+# with no wildfires still needs a Wildfire column, so these are the columns the count frames carry
+# whether or not the data contains them.
+DISASTER_TYPES = tuple(DISASTER_CLASSES)
+
+
+def types_in_class(disaster_class: str) -> tuple[str, ...]:
+    """
+    Return the EM-DAT types this project files under one of its own disaster classes.
+
+    Parameters
+    ----------
+    disaster_class : str
+        ``HYDROMETEOROLOGICAL`` or ``CLIMATOLOGICAL``.
+
+    Returns
+    -------
+    types : tuple of str
+        The ``Disaster Type`` values mapped onto that class, in declaration order.
+    """
+    return tuple(name for name, filed_under in DISASTER_CLASSES.items() if filed_under == disaster_class)
+
 
 # Columns read before any rename. Nothing detects upstream schema drift, so this check is the
 # earliest point a changed export becomes a named error rather than a missing attribute.
@@ -81,17 +105,6 @@ EMDAT_DTYPES = {
     "GADM Admin Units": "string",
 }
 
-HYDROMETEOROLOGICAL = "Hydrometeorological"
-CLIMATOLOGICAL = "Climatological"
-
-DISASTER_CLASSES = {
-    "Storm": HYDROMETEOROLOGICAL,
-    "Flood": HYDROMETEOROLOGICAL,
-    "Mass movement (wet)": HYDROMETEOROLOGICAL,
-    "Wildfire": CLIMATOLOGICAL,
-    "Extreme temperature": CLIMATOLOGICAL,
-    "Drought": CLIMATOLOGICAL,
-}
 
 DAMAGE_VARS = [
     "Deaths",

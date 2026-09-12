@@ -15,6 +15,7 @@ from climate_risk.data_functions.combine_data import (
     build_country_year_panel,
     build_time_series,
 )
+from climate_risk.data_functions.emdat_processing import CLIMATOLOGICAL, HYDROMETEOROLOGICAL, types_in_class
 from climate_risk.data_functions.shapefiles_data_loader import load_shapefile
 from climate_risk.geo.raster import ISO_COLUMN
 
@@ -22,8 +23,8 @@ _log = logging.getLogger(__name__)
 
 PANEL_KEY = ["ISO", "year"]
 
-HYDROLOGICAL_TYPES = ["Flood", "Storm"]
-CLIMATOLOGICAL_TYPES = ["Extreme temperature", "Wildfire", "Drought"]
+HYDROLOGICAL_TYPES = types_in_class(HYDROMETEOROLOGICAL)
+CLIMATOLOGICAL_TYPES = types_in_class(CLIMATOLOGICAL)
 
 # The WMO reference period each country's precipitation is centered on, inclusive of both ends.
 CLIMATOLOGY_BASELINE = (1961, 1990)
@@ -61,7 +62,7 @@ PUBLISHED_COLUMNS = [
 ]
 
 
-def _counted_or_missing(types: list[str]) -> pl.Expr:
+def _counted_or_missing(types: Sequence[str]) -> pl.Expr:
     """Total the given disaster types, keeping a country-year with no record of any of them missing."""
     return (
         pl.when(pl.all_horizontal(pl.col(name).is_null() for name in types))

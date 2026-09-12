@@ -49,7 +49,8 @@ def wide_cache(tmp_path_factory):
     """A cache spanning enough years for the trend fit and the climatology to do anything.
 
     AAA gets a drought on top of its flood, so climatological and hydrological damage are both
-    present for one country and only hydrological for the others.
+    present for one country and only hydrological for the others. BBB gets a wet mass movement, which
+    is the type whose class the count columns and the damage columns used to disagree about.
     """
     tmp_path = tmp_path_factory.mktemp("replication")
     events = [
@@ -65,6 +66,18 @@ def wide_cache(tmp_path_factory):
                 "Start Year": year,
                 "End Year": year,
                 "Disaster Type": "Drought",
+            }
+        )
+        for year in YEARS
+    ]
+    events += [
+        emdat_event(
+            {
+                "ISO": "BBB",
+                "DisNo.": f"BBB-landslide-{year}",
+                "Start Year": year,
+                "End Year": year,
+                "Disaster Type": "Mass movement (wet)",
             }
         )
         for year in YEARS
@@ -323,3 +336,14 @@ def test_a_place_narrowing_the_result_is_not_reported_as_a_loss(caplog):
         model_frame(panel, bounded(["AAA", "BBB"]), isos=["AAA"], features=TWO_FEATURES)
 
     assert caplog.text == ""
+
+
+def test_a_wet_mass_movement_counts_as_a_hydrological_disaster(replication):
+    """Its damage has always reached Total_Damage_Adjusted_hydro. The count column read a shorter list
+    of types, so a model regressing damage on counts read two definitions of one word.
+    """
+    flood_only = row(replication, "AAA", SAMPLE_YEAR)
+    flood_and_landslide = row(replication, "BBB", SAMPLE_YEAR)
+
+    assert flood_only["hydrological_disasters"] == 1
+    assert flood_and_landslide["hydrological_disasters"] == 2
