@@ -86,18 +86,20 @@ def test_every_indicator_reaches_the_panel():
 
 def test_a_constant_price_series_says_which_currency_in_its_name():
     """`downloaded` builds its columns from WB_INDICATORS, so a renaming test agrees with whatever
-    code is listed and cannot see a wrong one. The codes carry the units: KD is constant 2015 US$
-    and KN is constant local currency. Ratios formed within a country need one of them and levels
-    compared across countries need the other, so a name that does not say which produces a mix
-    nothing downstream can see. The check runs both ways, since a KN code named `_usd` is as wrong
-    as a KD code named `_lcu`.
+    code is listed and cannot see a wrong one. The codes carry the units: KD is constant 2015 US$,
+    KN is constant local currency, and PP.KD is constant international dollars at purchasing power
+    parity. Ratios formed within a country need one base and levels compared across countries need
+    another, so a name that does not say which produces a mix nothing downstream can see. The check
+    runs every way round, since a KN code named `_usd` is as wrong as a KD code named `_lcu`.
     """
-    dollars = {code for code in INDICATOR_NAMES if code.endswith(".KD")}
+    purchasing_power = {code for code in INDICATOR_NAMES if code.endswith(".PP.KD")}
+    dollars = {code for code in INDICATOR_NAMES if code.endswith(".KD")} - purchasing_power
     local_currency = {code for code in INDICATOR_NAMES if code.endswith(".KN")}
 
-    assert dollars and local_currency
+    assert dollars and local_currency and purchasing_power
     assert dollars == {code for code, name in INDICATOR_NAMES.items() if name.endswith("_usd")}
     assert local_currency == {code for code, name in INDICATOR_NAMES.items() if name.endswith("_lcu")}
+    assert purchasing_power == {code for code, name in INDICATOR_NAMES.items() if name.endswith("_ppp")}
 
 
 def test_no_two_indicators_share_a_name():

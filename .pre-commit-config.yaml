@@ -22,6 +22,9 @@ repos:
     - id: no-print-statements
       exclude: '^(climate_risk/skills/cli\.py|climate_risk/stats/timeseries\.py|tools/)'
     - id: check-execution-order
+      # The geo damage notebooks are fitting experiments, worked cell by cell against a live
+      # kernel, so their execution counts are never monotone.
+      exclude: ^notebooks/geo_damage_model/
 - repo: local
   hooks:
     - id: no-relative-imports

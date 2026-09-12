@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
+import pytensor
 import pytensor.tensor as pt
 
 from pytensor.tensor import TensorVariable
@@ -95,7 +96,9 @@ class Aggregation:
         aggregated : TensorVariable
             Shape ``(n_units,)`` or ``(n_units, k)``, in the row order of ``units``.
         """
-        weights = pt.as_tensor_variable(self.weights)
+        # Stored in double so the numpy path keeps its precision; the graph takes whatever the
+        # configured backend can carry, which for the GPU linkers is single.
+        weights = pt.as_tensor_variable(self.weights.astype(pytensor.config.floatX))
         if cell_values.ndim == 2:
             weights = weights[:, None]
             base = pt.zeros((self.n_units, cell_values.shape[1]))

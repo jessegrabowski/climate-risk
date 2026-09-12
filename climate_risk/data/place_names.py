@@ -375,7 +375,9 @@ def keying_fingerprint() -> str:
     return hashlib.sha256(rules.encode()).hexdigest()[:12]
 
 
-def read_gazetteer(iso: str, cache_dir: Path, *, layer: str = GADM_LAYER, force_reload: bool = False) -> Gazetteer:
+def read_gazetteer(
+    iso: str, cache_dir: Path, *, layer: str = GADM_LAYER, force_reload: bool = False, verbose: bool = False
+) -> Gazetteer:
     """
     Read one country's GADM units into a gazetteer.
 
@@ -464,6 +466,7 @@ def read_gazetteer(iso: str, cache_dir: Path, *, layer: str = GADM_LAYER, force_
             "reading": builder_fingerprint(build, _NAME_FIELDS, FORMERLY_INCLUDED.get(iso, ())),
         },
         force=force_reload,
+        verbose=verbose,
     )
 
     names: dict[str, set[Unit]] = defaultdict(set)

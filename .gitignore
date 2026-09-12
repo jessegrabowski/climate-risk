@@ -187,3 +187,6 @@ notebooks/final_paper/data/
 notebooks/geo_damage_model/archive
 notebooks/final_paper/archive
 scratch_*.py
+
+# Fitted parameters, written so a kernel restart does not take an hour of compute with it.
+fits/

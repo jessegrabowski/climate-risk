@@ -1,3 +1,5 @@
+import logging
+
 from dataclasses import replace
 from datetime import date
 
@@ -10,7 +12,14 @@ from geopandas.testing import assert_geodataframe_equal
 from polars.testing import assert_frame_equal
 from shapely.geometry import Point
 
-from climate_risk.data.cache import builder_fingerprint, cache_key, cached, geo_parquet, pandas_parquet, polars_parquet
+from climate_risk.data.cache import (
+    builder_fingerprint,
+    cache_key,
+    cached,
+    geo_parquet,
+    pandas_parquet,
+    polars_parquet,
+)
 
 
 @pytest.fixture
@@ -263,3 +272,28 @@ def test_a_builder_reading_a_different_table_fingerprints_differently():
         return "unchanged"
 
     assert builder_fingerprint(build, {"ETH": ("ERI",)}) != builder_fingerprint(build, {})
+
+
+def test_a_cached_read_says_nothing_unless_the_caller_asked(caplog, tmp_path, frame):
+    """One call can touch a dozen artefacts, and a dozen lines of cache chatter buries whatever the
+    caller meant to show."""
+    with caplog.at_level(logging.INFO, logger="climate_risk"):
+        cached(tmp_path, "co2", lambda: frame, pandas_parquet())
+        cached(tmp_path, "co2", lambda: frame, pandas_parquet())
+
+    assert caplog.records == []
+
+
+@pytest.mark.parametrize(("warm", "expected"), [(False, "Building co2"), (True, "Loading cached co2")], ids=str)
+def test_a_verbose_read_says_whether_it_built_or_loaded(caplog, tmp_path, frame, warm, expected):
+    """Which branch a loader took is the one thing the log is for; a message that cannot tell a
+    build from a cache hit would not be worth emitting."""
+    if warm:
+        cached(tmp_path, "co2", lambda: frame, pandas_parquet())
+
+    with caplog.at_level(logging.INFO, logger="climate_risk"):
+        cached(tmp_path, "co2", lambda: frame, pandas_parquet(), verbose=True)
+
+    (record,) = caplog.records
+    assert record.message.startswith(expected)
+    assert record.filename == "cache.py", "the record points at the loader, not the logging helper"

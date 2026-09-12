@@ -130,12 +130,16 @@ def test_damage_columns_survive_a_class_with_no_events(write_emdat_cache, write_
     assert damage["Total_Damage_Adjusted_clim"].is_null().all()
 
 
-def test_hydro_and_clim_damage_columns_are_suffixed(panel):
-    """Both splits carry the same variable names, so they collide unless suffixed apart."""
-    damage = panel
+def test_only_the_measures_with_a_reader_are_split_by_class(panel):
+    """Both splits carry the same variable names, so they collide unless suffixed apart. Suffixing every
+    measure costs one line and lands eleven columns nobody selects.
 
-    assert "Total_Damage_Adjusted_hydro" in damage.columns
-    assert "Total_Damage_Adjusted_clim" in damage.columns
+    Stated literally rather than derived from CLASS_MEASURES, so widening that constant has to be a
+    decision someone writes down here too.
+    """
+    split = {column for column in panel.columns if column.endswith(("_hydro", "_clim"))}
+
+    assert split == {"Total_Damage_Adjusted_hydro", "Total_Damage_Adjusted_clim"}
 
 
 def test_world_bank_years_become_timestamps(panel):

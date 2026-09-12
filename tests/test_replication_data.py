@@ -1,11 +1,16 @@
+import logging
+
 from datetime import date
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
 
-from climate_risk.replication_data import create_replication_data
+from shapely.geometry import Point
+
+from climate_risk.replication_data import create_replication_data, model_frame
 from tests.conftest import (
     GPCC_CACHE_FILE,
     emdat_event,
@@ -28,8 +33,9 @@ WORLD_BANK_COUNTRIES = ("AAA", "BBB", "DDD", "EEE")
 PRECIPITATION_COUNTRIES = ("AAA", "BBB", "FFF")
 
 # Stated literally rather than imported, so a changed constant fails instead of moving with it.
-TREND_BASE_YEAR = 1980
-LOG_EPSILON = 1e-6
+# What tests/conftest.py writes into every event's "Total Damage, Adjusted ('000 US$)" cell. AAA has
+# one flood and one drought a year, so each class totals one event's figure rather than two.
+DAMAGE_THOUSANDS = 120
 
 # The second year of the span, so the expected values below are the fixture's formulas at i = 1.
 SAMPLE_YEAR = YEARS[1]
@@ -43,7 +49,8 @@ def wide_cache(tmp_path_factory):
     """A cache spanning enough years for the trend fit and the climatology to do anything.
 
     AAA gets a drought on top of its flood, so climatological and hydrological damage are both
-    present for one country and only hydrological for the others.
+    present for one country and only hydrological for the others. BBB gets a wet mass movement, which
+    is the type whose class the count columns and the damage columns used to disagree about.
     """
     tmp_path = tmp_path_factory.mktemp("replication")
     events = [
@@ -59,6 +66,18 @@ def wide_cache(tmp_path_factory):
                 "Start Year": year,
                 "End Year": year,
                 "Disaster Type": "Drought",
+            }
+        )
+        for year in YEARS
+    ]
+    events += [
+        emdat_event(
+            {
+                "ISO": "BBB",
+                "DisNo.": f"BBB-landslide-{year}",
+                "Start Year": year,
+                "End Year": year,
+                "Disaster Type": "Mass movement (wet)",
             }
         )
         for year in YEARS
@@ -134,14 +153,6 @@ def test_the_published_columns_are_all_present(replication):
         "precip_deviation",
         "Total_Damage_Adjusted_hydro",
         "Total_Damage_Adjusted_clim",
-        "Total_Affected_hydro",
-        "ln_population_density_squared",
-        "time_period",
-        "Total_Damage_Adjusted_all",
-        "Total_Damage_Adjusted_hydro_millions",
-        "damage_millions",
-        "ln_damage_millions",
-        "ln_Total_Damage_Adjusted_hydro_millions",
     }
 
     assert set(replication.columns) == expected
@@ -159,34 +170,21 @@ def test_the_gdp_and_density_logs_are_natural(replication):
     assert entry["ln_population_density"] == pytest.approx(np.log(11))
 
 
-def test_both_squared_terms_square_their_own_log(replication):
-    """One is written as a product and the other as a power; both must hold for every row."""
-    known = replication.drop_nulls(["ln_gdp_pc", "ln_population_density"])
+def test_the_squared_log_gdp_term_squares_its_own_log(replication):
+    known = replication.drop_nulls("ln_gdp_pc")
 
     assert len(known) > 0
     assert (known["square_ln_gdp_pc"] - known["ln_gdp_pc"] ** 2).abs().max() < 1e-12
-    assert (known["ln_population_density_squared"] - known["ln_population_density"] ** 2).abs().max() < 1e-12
 
 
-def test_the_time_trend_counts_years_over_a_century(replication):
-    """A raw year would dwarf every other regressor; the trend is rescaled."""
-    assert row(replication, "AAA", SAMPLE_YEAR)["time_period"] == pytest.approx((SAMPLE_YEAR - TREND_BASE_YEAR) / 100)
-
-
-def test_total_damage_adds_the_two_classes(replication):
-    both = replication.drop_nulls(["Total_Damage_Adjusted_hydro", "Total_Damage_Adjusted_clim"])
-
-    assert len(both) > 0
-    expected = both["Total_Damage_Adjusted_hydro"] + both["Total_Damage_Adjusted_clim"]
-    assert (both["Total_Damage_Adjusted_all"] - expected).abs().max() < 1e-9
-
-
-def test_a_country_with_no_climatological_damage_totals_to_missing(replication):
-    """pandas propagates the null through the sum; polars would sum it as zero and invent damage."""
+def test_a_country_with_no_climatological_damage_reports_none(replication):
+    """A class with nothing recorded stays missing. Whether that should count as zero damage depends on
+    the model reading it, so the panel does not decide.
+    """
     entry = row(replication, "BBB", SAMPLE_YEAR)
 
     assert entry["Total_Damage_Adjusted_clim"] is None
-    assert entry["Total_Damage_Adjusted_all"] is None
+    assert entry["Total_Damage_Adjusted_hydro"] is not None
 
 
 def test_a_country_year_with_no_disasters_stays_missing(replication):
@@ -197,18 +195,14 @@ def test_a_country_year_with_no_disasters_stays_missing(replication):
     assert quiet["hydrological_disasters"].is_null().all()
 
 
-def test_damages_are_converted_to_millions(replication):
+def test_damage_is_published_in_the_unit_em_dat_reports(replication):
+    """EM-DAT reports thousands of US dollars. Rescaling it here would put every reader of the panel on
+    a scale one model happened to want.
+    """
     entry = row(replication, "AAA", SAMPLE_YEAR)
 
-    assert entry["damage_millions"] == pytest.approx(entry["Total_Damage_Adjusted_all"] * 1e-6)
-    assert entry["Total_Damage_Adjusted_hydro_millions"] == pytest.approx(entry["Total_Damage_Adjusted_hydro"] * 1e-6)
-
-
-def test_the_damage_logs_are_offset_so_a_zero_survives(replication):
-    """Damage of zero is ordinary here, and log(0) is what this epsilon exists to avoid."""
-    entry = row(replication, "AAA", SAMPLE_YEAR)
-
-    assert entry["ln_damage_millions"] == pytest.approx(np.log(entry["damage_millions"] + LOG_EPSILON))
+    assert entry["Total_Damage_Adjusted_hydro"] == pytest.approx(DAMAGE_THOUSANDS)
+    assert entry["Total_Damage_Adjusted_clim"] == pytest.approx(DAMAGE_THOUSANDS)
 
 
 def test_precipitation_deviation_is_measured_against_the_named_baseline_period(replication):
@@ -233,3 +227,123 @@ def test_the_ocean_temperature_deviation_is_residual_around_its_trend(replicatio
 
     assert deviations.mean() == pytest.approx(0.0, abs=0.5)
     assert deviations.abs().max() < 5.0
+
+
+def paneled(rows) -> pl.DataFrame:
+    """A panel carrying only the key and the two features the tests below select on."""
+    return pl.DataFrame(rows, schema=["ISO", "year", "ln_gdp_pc", "co2"], orient="row").with_columns(
+        pl.col("year").cast(pl.Date)
+    )
+
+
+def bounded(isos) -> gpd.GeoDataFrame:
+    """Country geometries, whose shape does not matter because only the codes are read."""
+    return gpd.GeoDataFrame({"ISO_A3": list(isos)}, geometry=[Point(n, n) for n in range(len(isos))])
+
+
+TWO_FEATURES = ["ln_gdp_pc", "co2"]
+
+
+def test_a_row_missing_a_feature_cannot_enter_the_model():
+    """A regressor matrix has no room for a hole, so the row leaves rather than the column."""
+    panel = paneled([("AAA", date(2000, 1, 1), 1.0, 350.0), ("AAA", date(2001, 1, 1), None, 351.0)])
+
+    rows, _ = model_frame(panel, bounded(["AAA"]), features=TWO_FEATURES)
+
+    assert rows["year"].to_list() == [date(2000, 1, 1)]
+
+
+def test_a_null_in_a_column_the_caller_did_not_name_keeps_its_row():
+    """The panel carries damages that are legitimately missing, and dropping those rows would throw
+    away the covariates a model still reads.
+    """
+    panel = paneled([("AAA", date(2000, 1, 1), 1.0, 350.0)]).with_columns(pl.lit(None).alias("damage"))
+
+    rows, _ = model_frame(panel, bounded(["AAA"]), features=TWO_FEATURES)
+
+    assert rows["damage"].to_list() == [None]
+
+
+def test_a_country_with_no_geometry_leaves_the_panel():
+    panel = paneled([("AAA", date(2000, 1, 1), 1.0, 350.0), ("BBB", date(2000, 1, 1), 2.0, 350.0)])
+
+    rows, geometry = model_frame(panel, bounded(["AAA"]), features=TWO_FEATURES)
+
+    assert rows["ISO"].to_list() == ["AAA"]
+    assert geometry["ISO_A3"].to_list() == ["AAA"]
+
+
+def test_a_country_with_no_complete_row_leaves_the_geometry():
+    """Both sides are filtered, so a model indexing the two by position cannot misalign them."""
+    panel = paneled([("AAA", date(2000, 1, 1), 1.0, 350.0), ("BBB", date(2000, 1, 1), None, 350.0)])
+
+    rows, geometry = model_frame(panel, bounded(["AAA", "BBB"]), features=TWO_FEATURES)
+
+    assert rows["ISO"].to_list() == ["AAA"]
+    assert geometry["ISO_A3"].to_list() == ["AAA"]
+
+
+def test_a_place_narrows_both_sides_to_its_members():
+    panel = paneled(
+        [
+            ("AAA", date(2000, 1, 1), 1.0, 350.0),
+            ("BBB", date(2000, 1, 1), 2.0, 350.0),
+            ("CCC", date(2000, 1, 1), 3.0, 350.0),
+        ]
+    )
+
+    rows, geometry = model_frame(panel, bounded(["CCC", "BBB", "AAA"]), isos=["AAA", "CCC"], features=TWO_FEATURES)
+
+    assert rows["ISO"].to_list() == ["AAA", "CCC"]
+    assert geometry["ISO_A3"].to_list() == ["AAA", "CCC"]
+
+
+def test_a_requested_country_the_data_cannot_answer_for_is_refused():
+    """Returning the members that did survive would fit a region quietly missing one of its countries."""
+    panel = paneled([("AAA", date(2000, 1, 1), 1.0, 350.0)])
+
+    with pytest.raises(ValueError, match=r"\['BBB'\]"):
+        model_frame(panel, bounded(["AAA"]), isos=["AAA", "BBB"], features=TWO_FEATURES)
+
+
+def test_two_sides_naming_no_country_in_common_are_refused():
+    panel = paneled([("AAA", date(2000, 1, 1), 1.0, 350.0)])
+
+    with pytest.raises(ValueError, match="No country"):
+        model_frame(panel, bounded(["BBB"]), features=TWO_FEATURES)
+
+
+def test_the_countries_reconciliation_drops_are_named(caplog):
+    """Losing a country to a mismatch between two sources is the failure this project keeps hitting, so
+    it is reported rather than left to be noticed in a row count.
+    """
+    panel = paneled([("AAA", date(2000, 1, 1), 1.0, 350.0), ("BBB", date(2000, 1, 1), 2.0, 350.0)])
+
+    with caplog.at_level(logging.WARNING, logger="climate_risk.replication_data"):
+        model_frame(panel, bounded(["AAA", "CCC"]), features=TWO_FEATURES)
+
+    assert "BBB" in caplog.text
+    assert "CCC" in caplog.text
+
+
+def test_a_place_narrowing_the_result_is_not_reported_as_a_loss(caplog):
+    """The warning above is worth reading only if it names countries nobody asked to drop. Reporting a
+    single-country place would bury that under every other country in the world.
+    """
+    panel = paneled([("AAA", date(2000, 1, 1), 1.0, 350.0), ("BBB", date(2000, 1, 1), 2.0, 350.0)])
+
+    with caplog.at_level(logging.WARNING, logger="climate_risk.replication_data"):
+        model_frame(panel, bounded(["AAA", "BBB"]), isos=["AAA"], features=TWO_FEATURES)
+
+    assert caplog.text == ""
+
+
+def test_a_wet_mass_movement_counts_as_a_hydrological_disaster(replication):
+    """Its damage has always reached Total_Damage_Adjusted_hydro. The count column read a shorter list
+    of types, so a model regressing damage on counts read two definitions of one word.
+    """
+    flood_only = row(replication, "AAA", SAMPLE_YEAR)
+    flood_and_landslide = row(replication, "BBB", SAMPLE_YEAR)
+
+    assert flood_only["hydrological_disasters"] == 1
+    assert flood_and_landslide["hydrological_disasters"] == 2

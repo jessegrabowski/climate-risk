@@ -95,7 +95,7 @@ def administered_territories(iso: str, cache_dir: Path, *, layer: str = GADM_LAY
 
 
 def load_units_in_country(
-    iso: str, level: int, cache_dir: Path, *, layer: str = GADM_LAYER, force_reload: bool = False
+    iso: str, level: int, cache_dir: Path, *, layer: str = GADM_LAYER, force_reload: bool = False, verbose: bool = False
 ) -> gpd.GeoDataFrame:
     """
     Read every GADM unit one country holds at one administrative level.
@@ -115,6 +115,8 @@ def load_units_in_country(
         Layer to read inside the GeoPackage. Default ``GADM_LAYER``.
     force_reload : bool, optional
         Rebuild even when the units are already cached. Default False.
+    verbose : bool, optional
+        Log whether the units were read or built. Default False.
 
     Returns
     -------
@@ -163,6 +165,7 @@ def load_units_in_country(
         # parameters record.
         params={"iso": iso, "layer": layer, "level": level, "reading": builder_fingerprint(build, GID_COLUMNS)},
         force=force_reload,
+        verbose=verbose,
     )
 
 

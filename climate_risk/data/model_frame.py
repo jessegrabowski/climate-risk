@@ -9,11 +9,6 @@ EVENT_WINDOW_COLUMNS = ("DisNo.", "ISO", "year", "gids", "n_units", "finest_leve
 SOURCE_ORDER = pl.Enum(GEOMETRY_SOURCES)
 
 
-def _finest_level(gids: pl.Expr) -> pl.Expr:
-    """Depth of the deepest unit a window holds, counting dots in the GADM identifier."""
-    return gids.list.eval(pl.element().str.split("_").list.first().str.count_matches(r"\.")).list.max()
-
-
 def event_windows(events: pl.DataFrame, geography: pl.DataFrame) -> pl.DataFrame:
     """
     Collect each event into the one observation window its geography describes.
@@ -56,11 +51,12 @@ def event_windows(events: pl.DataFrame, geography: pl.DataFrame) -> pl.DataFrame
         )
 
     windows = (
-        geography.select("DisNo.", "gid", pl.col("geometry_source").cast(SOURCE_ORDER))
+        geography.select("DisNo.", "gid", "admin_level", pl.col("geometry_source").cast(SOURCE_ORDER))
         .unique()
         .group_by("DisNo.")
         .agg(
             pl.col("gid").drop_nulls().sort().alias("gids"),
+            pl.col("admin_level").max().alias("finest_level"),
             pl.col("geometry_source").min(),
         )
     )
@@ -70,7 +66,6 @@ def event_windows(events: pl.DataFrame, geography: pl.DataFrame) -> pl.DataFrame
         .join(windows, on="DisNo.", how="left")
         .with_columns(
             pl.col("gids").list.len().alias("n_units"),
-            _finest_level(pl.col("gids")).alias("finest_level"),
             pl.col("geometry_source").cast(pl.String),
         )
         .select(EVENT_WINDOW_COLUMNS)

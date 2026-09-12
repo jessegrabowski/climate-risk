@@ -27,6 +27,7 @@ Disaster events
     ~emdat_processing.load_emdat_events
     ~emdat_processing.event_filter
     ~emdat_processing.count_events_by_type
+    ~emdat_processing.types_in_class
     ~emdat_processing.total_damage
     ~emdat_processing.country_year_grid
 

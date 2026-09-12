@@ -64,8 +64,9 @@ GHS-POP.
 
 ## Services queried live
 
-World Bank Indicators (`load_wb_data`), FRED (`load_fred_data`), IMF IMTS
-(`load_partner_activity`) and Nominatim (`osm_geocoder`) answer a query rather than serving a file.
+World Bank Indicators (`load_wb_data`), FRED (`load_fred_data`), ILOSTAT (`load_labour_income_share`),
+IMF IMTS (`load_partner_activity`) and Nominatim (`osm_geocoder`) answer a query rather than serving a
+file.
 Responses are cached like anything else, so a warm run does not call them again. Nominatim's usage
 policy caps requests at one per second and the loader honors it, so geocoding a country's events for
 the first time takes as long as it takes.

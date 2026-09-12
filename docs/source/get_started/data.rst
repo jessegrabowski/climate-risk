@@ -120,7 +120,7 @@ GHS-POP, so a cache can stay small as long as the geospatial models are not bein
 Services queried live
 ---------------------
 
-Four sources answer a query instead of serving a file, and are declared as
+Five sources answer a query instead of serving a file, and are declared as
 :class:`~climate_risk.data.source.ApiSource`. The response is cached like anything else, so a warm
 run does not call them again.
 
@@ -142,6 +142,11 @@ run does not call them again.
        US and world macroeconomic series.
      - Terms of the St. Louis Fed
      - :func:`~climate_risk.data.fred.load_fred_data`
+   * - ILOSTAT
+     - Labour income as a share of GDP, estimated from harmonized survey microdata. Not
+       interchangeable with Penn World Table's national-accounts measure of the same concept.
+     - ILO terms of use
+     - :func:`~climate_risk.data.ilo.load_labour_income_share`
    * - IMF IMTS
      - Bilateral merchandise trade, used to build partner activity.
      - (c) International Monetary Fund
