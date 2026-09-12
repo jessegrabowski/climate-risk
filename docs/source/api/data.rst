@@ -25,6 +25,7 @@ These fetch on a cold cache, read from disk on a warm one, and re-fetch under ``
     ~ipcc.process_ipcc_scenarios
     ~world_bank.load_wb_data
     ~fred.load_fred_data
+    ~ilo.load_labour_income_share
     ~deflate.load_price_level
     ~partner_activity.load_partner_activity
     ~ghsl.population_on_cells
@@ -63,6 +64,7 @@ returns the frame the loader caches.
     ~ipcc.transform_ipcc
     ~world_bank.transform_world_bank
     ~fred.transform_fred
+    ~ilo.transform_labour_share
     ~partner_activity.transform_partner_activity
     ~pwt.transform_pwt
 
