@@ -42,10 +42,12 @@ EM_DAT_COL_DICT = {
     "Total Damage, Adjusted ('000 US$)": "Total_Damage_Adjusted",
 }
 
-PROB_COLS = [
-    "Country",
-    "ISO",
-    "Start_Year",
+# The study window opens in 1969 and closes on the newest event in the workbook.
+EMDAT_WINDOW_START = dt.date(1969, 1, 1)
+
+# The types the panel counts. A country with no wildfires still needs a Wildfire column, so these
+# are the columns the count frames carry whether or not the data contains them.
+DISASTER_TYPES = (
     "Drought",
     "Extreme temperature",
     "Flood",
@@ -53,31 +55,7 @@ PROB_COLS = [
     "Wildfire",
     "Mass movement (dry)",
     "Mass movement (wet)",
-    "Region",
-    "Subregion",
-]
-
-INTENSITY_COLS = [
-    "Country",
-    "ISO",
-    "Start_Year",
-    "Region",
-    "Deaths",
-    "Injured",
-    "Numb_Affected",
-    "Homeless",
-    "Total_Affected",
-    "Total_Damage",
-    "Total_Damage_Adjusted",
-    "Disaster Type",
-]
-
-# The study window opens in 1969 and closes on the newest event in the workbook.
-EMDAT_WINDOW_START = dt.date(1969, 1, 1)
-
-# The types the panel counts. A country with no wildfires still needs a Wildfire column, so these
-# are the columns the count frames carry whether or not the data contains them.
-DISASTER_TYPES = tuple(c for c in PROB_COLS if c not in {"Country", "ISO", "Start_Year", "Region", "Subregion"})
+)
 
 # Columns read before any rename. Nothing detects upstream schema drift, so this check is the
 # earliest point a changed export becomes a named error rather than a missing attribute.
@@ -271,7 +249,6 @@ def total_damage(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFrame:
     """
     totals = (
         events.filter(pl.col("Disaster Type").is_in(DISASTER_TYPES))
-        .select(INTENSITY_COLS)
         .group_by("ISO", "Start_Year")
         # polars totals a group of nothing but nulls to zero, which would price these events at nothing
         # rather than report that nobody priced them.
