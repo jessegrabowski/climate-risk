@@ -72,7 +72,6 @@ INDICATOR_NAMES = {
     "DT.DOD.DECT.CD": "external_debt",
     "BN.CAB.XOKA.GD.ZS": "current_account_gdp",
     "SL.EMP.TOTL.SP.ZS": "employment_rate",
-    "NY.GDP.PCAP.PP.KD": "gdp_per_cap_ppp_usd",
     "GC.TAX.TOTL.GD.ZS": "tax_revenue_gdp",
     "GC.XPN.TOTL.GD.ZS": "government_expense_gdp",
 }

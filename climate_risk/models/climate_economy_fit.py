@@ -410,13 +410,11 @@ def _ppp_gap_proxy(*, iso: str, frontier: str, year: int, cache_dir: Path) -> fl
     wb = load_wb_data(cache_dir).to_pandas()
 
     def gdp_per_worker(code: str) -> float:
-        covered = wb.loc[
-            (wb["country_code"] == code) & wb["gdp_per_cap_ppp_usd"].notna() & wb["employment_rate"].notna()
-        ]
+        covered = wb.loc[(wb["country_code"] == code) & wb["gdp_per_cap_ppp"].notna() & wb["employment_rate"].notna()]
         if covered.empty:
             raise ValueError(f"No PPP GDP per capita and employment rate ever both cover {code}.")
         row = covered.iloc[(covered["year"] - year).abs().argmin()]
-        return float(row["gdp_per_cap_ppp_usd"] / (row["employment_rate"] / 100))
+        return float(row["gdp_per_cap_ppp"] / (row["employment_rate"] / 100))
 
     return -float(np.log(gdp_per_worker(iso) / gdp_per_worker(frontier)))
 

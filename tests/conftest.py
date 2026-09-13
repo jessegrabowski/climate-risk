@@ -105,21 +105,24 @@ def toy_world_needing_repair():
 
 
 def toy_world_with_places():
-    """`toy_world_needing_repair` plus the five shipped countries, so a load can still be repaired.
+    """`toy_world_needing_repair` plus the seven shipped countries, so a load can still be repaired.
 
-    Costa Rica straddles `toy_coastline`; Laos, Zambia, Nepal and India sit well inland of it.
+    Costa Rica straddles `toy_coastline`; Laos, Zambia, Nepal, India, Morocco and China sit well
+    inland of it.
     """
     countries = gpd.GeoDataFrame(
         {
-            "WB_NAME": ["Lao PDR", "Zambia", "Costa Rica", "Nepal", "India"],
-            "ISO_A3": ["LAO", "ZMB", "CRI", "NPL", "IND"],
-            "CONTINENT": ["Asia", "Africa", "North America", "Asia", "Asia"],
+            "WB_NAME": ["Lao PDR", "Zambia", "Costa Rica", "Nepal", "India", "Morocco", "China"],
+            "ISO_A3": ["LAO", "ZMB", "CRI", "NPL", "IND", "MAR", "CHN"],
+            "CONTINENT": ["Asia", "Africa", "North America", "Asia", "Asia", "Africa", "Asia"],
             "geometry": [
                 box(20, 0, 21, 1),
                 box(23, 0, 24, 1),
                 box(29.5, 0, 30.5, 1),
                 box(34, 0, 35, 1),
                 box(39, 0, 40, 1),
+                box(44, 0, 45, 1),
+                box(49, 0, 50, 1),
             ],
         },
         crs="EPSG:4326",
