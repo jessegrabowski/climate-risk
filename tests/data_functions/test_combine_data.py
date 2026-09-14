@@ -105,6 +105,36 @@ def test_a_year_the_record_only_partly_covers_is_dropped():
     assert worldwide["date"].to_list() == [date(2020, 1, 1)]
 
 
+def test_a_monthly_panel_carries_each_month_of_rain_on_its_own_row(cache_dir):
+    """The panel builder has to hand its frequency to the precipitation totals, or every month but January reads null."""
+    monthly = build_country_panel(cache_dir, frequency="monthly")
+    june = monthly.filter((pl.col("ISO") == "AAA") & (pl.col("date") == date(1990, 6, 1)))
+
+    # AAA's 1990 months run 101..112, so June alone is 106.
+    assert june["precip"].to_list() == [pytest.approx(106.0)]
+
+
+def test_precipitation_totals_to_the_quarter_and_drops_a_partial_one():
+    """Three months make a quarter, and two months of the next year do not."""
+    monthly = pl.DataFrame(
+        {
+            "country_code": ["AAA"] * 14,
+            "time": [datetime(2020, month, 1) for month in range(1, 13)] + [datetime(2021, 1, 1), datetime(2021, 2, 1)],
+            "precip": [float(month) for month in range(1, 13)] + [50.0, 50.0],
+        }
+    )
+
+    by_country, _ = _total_precipitation(monthly, frequency="quarterly")
+
+    assert by_country["date"].to_list() == [date(2020, 1, 1), date(2020, 4, 1), date(2020, 7, 1), date(2020, 10, 1)]
+    assert by_country["precip"].to_list() == [
+        pytest.approx(6.0),
+        pytest.approx(15.0),
+        pytest.approx(24.0),
+        pytest.approx(33.0),
+    ]
+
+
 def test_the_worldwide_series_totals_every_country(time_series):
     """It feeds a country-invariant regressor, so it sums across countries rather than averaging."""
     nineteen_ninety = time_series.filter(pl.col("date") == date(1990, 1, 1))

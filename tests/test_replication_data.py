@@ -10,7 +10,7 @@ import pytest
 
 from shapely.geometry import Point
 
-from climate_risk.replication_data import create_replication_data, model_frame
+from climate_risk.replication_data import _precipitation_deviation, create_replication_data, model_frame
 from tests.conftest import (
     GPCC_CACHE_FILE,
     emdat_event,
@@ -213,6 +213,37 @@ def test_precipitation_deviation_is_measured_against_the_named_baseline_period(r
     sample = replication.filter((pl.col("ISO") == "AAA") & (pl.col("date") == date(1985, 1, 1)))
 
     assert sample["precip_deviation"].to_list() == [pytest.approx(47.5)]
+
+
+def test_a_seasonal_cycle_leaves_no_deviation_at_monthly_resolution():
+    """Each month is centered on its own baseline mean, so a cycle that repeats every year is not an anomaly."""
+    cycle = [10.0 * month for month in range(1, 13)]
+    monthly = pl.DataFrame(
+        {
+            "ISO": ["AAA"] * 360,
+            "date": [date(year, month, 1) for year in range(1961, 1991) for month in range(1, 13)],
+            "precip": cycle * 30,
+        }
+    )
+
+    deviation = _precipitation_deviation(monthly, (1961, 1990))
+
+    assert deviation["precip_deviation"].abs().max() == pytest.approx(0.0)
+
+
+def test_a_baseline_short_of_one_month_is_refused():
+    """A March climatology drawn from 29 Marches would be published under the name of thirty."""
+    rows = [(year, month) for year in range(1961, 1991) for month in range(1, 13) if (year, month) != (1961, 3)]
+    monthly = pl.DataFrame(
+        {
+            "ISO": ["AAA"] * len(rows),
+            "date": [date(year, month, 1) for year, month in rows],
+            "precip": [1.0] * len(rows),
+        }
+    )
+
+    with pytest.raises(ValueError, match="29 of the 30 years"):
+        _precipitation_deviation(monthly, (1961, 1990))
 
 
 def test_a_baseline_the_record_does_not_cover_is_refused(wide_cache):

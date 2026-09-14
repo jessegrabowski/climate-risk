@@ -49,6 +49,7 @@ EMDAT_WINDOW_START = dt.date(1969, 1, 1)
 # and `Expr.dt.truncate` read, so one string builds the grid and lands the events on it.
 AggregationFrequency = Literal["annual", "quarterly", "monthly"]
 AGGREGATION_INTERVALS: dict[AggregationFrequency, str] = {"annual": "1y", "quarterly": "1q", "monthly": "1mo"}
+MONTHS_PER_PERIOD: dict[AggregationFrequency, int] = {"annual": 12, "quarterly": 3, "monthly": 1}
 
 HYDROMETEOROLOGICAL = "Hydrometeorological"
 CLIMATOLOGICAL = "Climatological"

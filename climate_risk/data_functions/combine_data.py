@@ -15,6 +15,7 @@ from climate_risk.data_functions.emdat_processing import (
     AGGREGATION_INTERVALS,
     CLIMATOLOGICAL,
     HYDROMETEOROLOGICAL,
+    MONTHS_PER_PERIOD,
     AggregationFrequency,
     count_events_by_type,
     country_grid,
@@ -33,7 +34,6 @@ CLASS_MEASURES = ("Total_Damage_Adjusted",)
 
 # Annual precipitation is a sum, so a year the record only partly covers totals low. Dropping those
 # keeps a part-year at the end of the record from entering the panel as a drought.
-MONTHS_IN_YEAR = 12
 
 
 def _as_polars(frame: pd.DataFrame) -> pl.DataFrame:
@@ -84,37 +84,39 @@ def _shape_world_bank(indicators: pl.DataFrame) -> pl.DataFrame:
     )
 
 
-def _total_precipitation(gpcc: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
+def _total_precipitation(
+    gpcc: pl.DataFrame, *, frequency: AggregationFrequency = "annual"
+) -> tuple[pl.DataFrame, pl.DataFrame]:
     """
-    Total monthly precipitation to years.
+    Total monthly precipitation to periods.
 
-    Years the record covers only partly are dropped from both.
+    Periods the record covers only partly are dropped from both.
 
     Returns
     -------
     by_country : DataFrame
-        One row per country and year.
+        One row per country and period.
     worldwide : DataFrame
-        One row per year, summed across countries.
+        One row per period, summed across countries.
     """
     dated = gpcc.select(
         pl.col("country_code").alias("ISO"),
-        pl.date(pl.col("time").dt.year(), 1, 1).alias(SERIES_KEY),
+        pl.col("time").dt.truncate(AGGREGATION_INTERVALS[frequency]).dt.date().alias(SERIES_KEY),
         pl.col("time").dt.month().alias("month"),
         "precip",
     )
 
-    whole_years = (
+    whole_periods = (
         dated.group_by(SERIES_KEY)
         .agg(pl.col("month").n_unique().alias("months"))
-        .filter(pl.col("months") == MONTHS_IN_YEAR)
+        .filter(pl.col("months") == MONTHS_PER_PERIOD[frequency])
         .select(SERIES_KEY)
     )
-    covered = dated.join(whole_years, on=SERIES_KEY, how="inner")
+    covered = dated.join(whole_periods, on=SERIES_KEY, how="inner")
 
     # Added in calendar order. polars gathers each group's rows in whatever order its threads
     # finish, and floating-point addition is not associative, so an unordered sum of the same
-    # twelve months lands on a different total from one run to the next.
+    # months lands on a different total from one run to the next.
     by_country = (
         covered.group_by("ISO", SERIES_KEY).agg(pl.col("precip").sort_by("month").sum()).sort("ISO", SERIES_KEY)
     )
@@ -137,9 +139,9 @@ def _only_countries(frame: pl.DataFrame, codes: set[str]) -> pl.DataFrame:
     return frame.filter(pl.col("ISO").is_in(codes))
 
 
-def total_precipitation(cache_dir: Path) -> pl.DataFrame:
+def total_precipitation(cache_dir: Path, *, frequency: AggregationFrequency = "annual") -> pl.DataFrame:
     """
-    Total each country's precipitation to years.
+    Total each country's precipitation to periods.
 
     Covers the whole GPCC record, which reaches back further than the EM-DAT panel does.
 
@@ -147,11 +149,13 @@ def total_precipitation(cache_dir: Path) -> pl.DataFrame:
     ----------
     cache_dir : Path
         Directory the GPCC cache lives under.
+    frequency : {'annual', 'quarterly', 'monthly'}, optional
+        How long one period runs. Default ``'annual'``.
 
     Returns
     -------
     precipitation : DataFrame
-        ``ISO``, ``date`` and ``precip``, one row per country and year.
+        ``ISO``, ``date`` and ``precip``, one row per country and period.
 
     Examples
     --------
@@ -163,7 +167,7 @@ def total_precipitation(cache_dir: Path) -> pl.DataFrame:
 
         precipitation = total_precipitation(Path("data"))
     """
-    by_country, _ = _total_precipitation(_as_polars(load_gpcc_data(cache_dir)))
+    by_country, _ = _total_precipitation(_as_polars(load_gpcc_data(cache_dir)), frequency=frequency)
 
     return by_country
 
@@ -243,7 +247,7 @@ def build_country_panel(cache_dir: Path, *, frequency: AggregationFrequency = "a
 
     events, damage = _combine_emdat(selected, grid, count_events_by_type(selected, grid))
     world_bank = _shape_world_bank(load_wb_data(cache_dir))
-    precipitation = total_precipitation(cache_dir)
+    precipitation = total_precipitation(cache_dir, frequency=frequency)
 
     # A country needs both a disaster record and development indicators to earn a row.
     common = _countries_in_common(damage, world_bank)

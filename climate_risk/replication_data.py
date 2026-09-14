@@ -73,7 +73,7 @@ def _counted_or_missing(types: Sequence[str]) -> pl.Expr:
 
 def _precipitation_deviation(precipitation: pl.DataFrame, baseline: tuple[int, int]) -> pl.DataFrame:
     """
-    Center each country's precipitation on its own mean over the baseline climatology period.
+    Center each country's precipitation on its own mean for that period of the year over the baseline.
 
     Parameters
     ----------
@@ -85,25 +85,31 @@ def _precipitation_deviation(precipitation: pl.DataFrame, baseline: tuple[int, i
     Returns
     -------
     deviation : DataFrame
-        One row per country and year, carrying the deviation from that country's baseline mean.
+        One row per country and period, carrying the deviation from that country's baseline mean
+        for the same period of the year.
     """
     first_year, last_year = baseline
-    within_baseline = pl.col("date").dt.year().is_between(first_year, last_year)
-    reference = precipitation.filter(within_baseline)
+    # Every date is a period start, so its month names the period of the year at any frequency: one
+    # value for an annual series, four for quarterly, twelve for monthly.
+    period_of_year = pl.col("date").dt.month().alias("period_of_year")
+    reference = precipitation.filter(pl.col("date").dt.year().is_between(first_year, last_year))
 
     span = last_year - first_year + 1
-    covered = reference["date"].dt.year().n_unique()
-    if covered < span:
+    covered = reference.group_by(period_of_year).agg(pl.col("date").dt.year().n_unique().alias("years"))
+    shortest = min(covered["years"].to_list(), default=0)
+    if shortest < span:
         raise ValueError(
-            f"The precipitation record covers {covered} of the {span} years in the "
-            f"{first_year}-{last_year} baseline, so the climatology would be drawn from a shorter period "
-            f"than the one it is named for."
+            f"The precipitation record covers {shortest} of the {span} years in the "
+            f"{first_year}-{last_year} baseline for some period of the year, so that climatology would be "
+            f"drawn from fewer years than the baseline it is named for."
         )
 
-    climatology = reference.group_by("ISO").agg(pl.col("precip").mean().alias("baseline"))
+    climatology = reference.group_by("ISO", period_of_year).agg(pl.col("precip").mean().alias("baseline"))
 
-    return precipitation.join(climatology, on="ISO", how="left").select(
-        *PANEL_KEY, (pl.col("precip") - pl.col("baseline")).alias("precip_deviation")
+    return (
+        precipitation.with_columns(period_of_year)
+        .join(climatology, on=["ISO", "period_of_year"], how="left")
+        .select(*PANEL_KEY, (pl.col("precip") - pl.col("baseline")).alias("precip_deviation"))
     )
 
 
