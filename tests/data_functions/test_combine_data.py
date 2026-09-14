@@ -156,12 +156,14 @@ def test_the_time_series_carries_each_year_s_co2(time_series):
     assert by_year[date(1991, 1, 1)] == pytest.approx(355.0)
 
 
-def test_a_monthly_time_series_carries_co2_every_month_and_ocean_heat_in_january(cache_dir):
+def test_a_monthly_time_series_carries_co2_every_month_and_ocean_heat_each_quarter(cache_dir):
     monthly = build_time_series(cache_dir, frequency="monthly")
 
     assert len(monthly) == 24
     assert monthly["co2"].null_count() == 0
-    assert monthly.filter(pl.col("Temp").is_not_null())["date"].to_list() == [date(1990, 1, 1), date(1991, 1, 1)]
+    assert monthly.filter(pl.col("Temp").is_not_null())["date"].to_list() == [
+        date(year, month, 1) for year in (1990, 1991) for month in (1, 4, 7, 10)
+    ]
 
 
 def test_every_disaster_type_gets_a_column_even_when_unobserved(write_emdat_cache, write_full_cache):

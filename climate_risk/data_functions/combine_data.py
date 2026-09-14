@@ -179,8 +179,8 @@ def build_time_series(cache_dir: Path, *, frequency: AggregationFrequency = "ann
     cache_dir : Path
         Directory the source caches live under.
     frequency : {'annual', 'quarterly', 'monthly'}, optional
-        How long one period runs. Ocean temperature is published annually and joins on the first
-        period of each year alone. Default ``'annual'``.
+        How long one period runs. Ocean temperature is published by quarter, so a monthly series
+        carries it on the first month of each quarter alone. Default ``'annual'``.
 
     Returns
     -------
@@ -203,7 +203,7 @@ def build_time_series(cache_dir: Path, *, frequency: AggregationFrequency = "ann
         partial(_outer_join, on=SERIES_KEY),
         [
             _keyed_by_date(load_co2_data(cache_dir, frequency=frequency)),
-            _keyed_by_date(load_ocean_heat_data(cache_dir)),
+            _keyed_by_date(load_ocean_heat_data(cache_dir, frequency=frequency)),
             worldwide,
         ],
     ).sort(SERIES_KEY)

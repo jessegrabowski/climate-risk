@@ -9,32 +9,46 @@ AGGREGATION_INTERVALS: dict[AggregationFrequency, str] = {"annual": "1y", "quart
 MONTHS_PER_PERIOD: dict[AggregationFrequency, int] = {"annual": 12, "quarterly": 3, "monthly": 1}
 
 
-def mean_by_period(series: pl.DataFrame, frequency: AggregationFrequency, *, date: str, value: str) -> pl.DataFrame:
+def mean_by_period(
+    series: pl.DataFrame,
+    frequency: AggregationFrequency,
+    *,
+    date: str,
+    value: str,
+    resolution: AggregationFrequency = "monthly",
+) -> pl.DataFrame:
     """
-    Average a monthly series over each period, dropping any period with a month missing.
+    Average a series over each period, dropping any period the series does not cover in full.
 
     Parameters
     ----------
     series : DataFrame
-        One row per month.
+        One row per period of ``resolution``.
     frequency : {'annual', 'quarterly', 'monthly'}
         How long one period runs.
     date : str
         The column holding each row's date.
     value : str
         The column to average.
+    resolution : {'annual', 'quarterly', 'monthly'}, optional
+        How long one row of ``series`` runs. A request finer than this returns the rows as they are.
+        Default ``'monthly'``.
 
     Returns
     -------
     averaged : DataFrame
         One row per complete period, dated to its first day, sorted.
     """
+    rows_per_period = MONTHS_PER_PERIOD[frequency] // MONTHS_PER_PERIOD[resolution]
+    if rows_per_period == 0:
+        return series.sort(date)
+
     period = pl.col(date).dt.truncate(AGGREGATION_INTERVALS[frequency]).alias(date)
 
     return (
         series.group_by(period)
-        .agg(pl.col(value).mean(), pl.col(date).dt.month().n_unique().alias("months"))
-        .filter(pl.col("months") == MONTHS_PER_PERIOD[frequency])
-        .drop("months")
+        .agg(pl.col(value).mean(), pl.len().alias("rows"))
+        .filter(pl.col("rows") == rows_per_period)
+        .drop("rows")
         .sort(date)
     )
