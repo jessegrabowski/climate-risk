@@ -10,7 +10,12 @@ import pytest
 
 from shapely.geometry import Point
 
-from climate_risk.replication_data import _precipitation_deviation, create_replication_data, model_frame
+from climate_risk.replication_data import (
+    _deviation_from_trend,
+    _precipitation_deviation,
+    create_replication_data,
+    model_frame,
+)
 from tests.conftest import (
     GPCC_CACHE_FILE,
     emdat_event,
@@ -257,6 +262,31 @@ def test_the_ocean_temperature_deviation_is_residual_around_its_trend(replicatio
 
     assert deviations.mean() == pytest.approx(0.0, abs=0.5)
     assert deviations.abs().max() < 5.0
+
+
+def test_a_monthly_frame_carries_every_month_and_the_series_at_their_own_pace(wide_cache):
+    """CO2 is monthly, ocean heat quarterly, and the trend window still drops the first and last year."""
+    monthly = create_replication_data(wide_cache, frequency="monthly")
+    year = pl.col("date").dt.year()
+    aaa = monthly.filter((pl.col("ISO") == "AAA") & year.is_between(1986, 2019)).sort("date")
+
+    assert aaa.group_by(year).len()["len"].unique().to_list() == [12]
+    assert aaa["precip_deviation"].null_count() == 0
+    assert aaa["co2"].null_count() == 0
+    assert monthly.filter(year == 2020)["co2"].null_count() == len(monthly.filter(year == 2020))
+    quarter_months = aaa.filter(pl.col("dev_from_trend_ocean_temp").is_not_null())["date"].dt.month()
+    assert quarter_months.unique().sort().to_list() == [1, 4, 7, 10]
+
+
+def test_a_sub_annual_trend_leaves_the_quarterly_cycle_in_the_deviation():
+    """The record is quarterly below a year, so the trend must not absorb part of a four-row cycle."""
+    dates = [date(year, month, 1) for year in range(1990, 2010) for month in (1, 4, 7, 10)]
+    cycle = {1: 3.0, 4: -1.0, 7: -3.0, 10: 1.0}
+    climate = pl.DataFrame({"date": dates, "Temp": [0.5 * i + cycle[day.month] for i, day in enumerate(dates)]})
+
+    deviation = _deviation_from_trend(climate, frequency="monthly")["dev_from_trend_ocean_temp"].to_numpy()
+
+    assert deviation[4:] == pytest.approx(deviation[:-4], abs=1e-6)
 
 
 def paneled(rows) -> pl.DataFrame:
