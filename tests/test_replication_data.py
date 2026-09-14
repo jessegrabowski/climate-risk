@@ -40,8 +40,8 @@ DAMAGE_THOUSANDS = 120
 # The second year of the span, so the expected values below are the fixture's formulas at i = 1.
 SAMPLE_YEAR = YEARS[1]
 
-# The panel grid reaches back before the first event, so these carry no disasters at all.
-QUIET_YEAR = 1975
+# The grid opens on the event filter's first year, and the fixture's events start in 1985.
+QUIET_YEAR = 1983
 
 
 @pytest.fixture(scope="module")
@@ -191,7 +191,7 @@ def test_a_country_year_with_no_disasters_stays_missing(replication):
     """A country-year with no record stays missing; summing it as a zero would erase the distinction."""
     quiet = replication.filter(pl.col("year") == date(QUIET_YEAR, 1, 1))
 
-    assert len(quiet) > 0
+    assert len(quiet) == replication["ISO"].n_unique()
     assert quiet["hydrological_disasters"].is_null().all()
 
 

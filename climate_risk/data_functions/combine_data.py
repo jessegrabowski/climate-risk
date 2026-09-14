@@ -1,3 +1,5 @@
+import datetime as dt
+
 from functools import partial, reduce
 from pathlib import Path
 
@@ -200,7 +202,7 @@ def build_country_year_panel(cache_dir: Path) -> pl.DataFrame:
     """
     Merge events, damages, development indicators and precipitation onto one country-year row.
 
-    Covers the years EM-DAT records and the countries that have both a disaster record and
+    Covers the years the event filter selects and the countries that have both a disaster record and
     development indicators. Precipitation reaches further back, and :func:`annual_precipitation` has
     the whole record.
 
@@ -224,9 +226,13 @@ def build_country_year_panel(cache_dir: Path) -> pl.DataFrame:
 
         panel = build_country_year_panel(Path("data"))
     """
+    filters = EventFilters()
     raw = load_emdat_events(cache_dir)
-    grid = country_year_grid(raw)
-    selected = raw.filter(event_filter(EventFilters()))
+    selected = raw.filter(event_filter(filters))
+
+    # The grid and the counts must open on the same year. Earlier grid years have no counts to join,
+    # and the nulls that leaves are indistinguishable from a country-year that recorded nothing.
+    grid = country_year_grid(raw, window_start=dt.date(filters.start_year, 1, 1))
 
     events, damage = _combine_emdat(selected, grid, count_events_by_type(selected, grid))
     world_bank = _shape_world_bank(load_wb_data(cache_dir))
@@ -238,7 +244,7 @@ def build_country_year_panel(cache_dir: Path) -> pl.DataFrame:
     damage = _only_countries(damage, common)
     world_bank = _only_countries(world_bank, common)
 
-    # Left-joined onto the event grid, so the panel spans the years EM-DAT covers and no more.
+    # Left-joined onto the event grid, so the panel spans the filter's window and no more.
     return reduce(
         partial(_left_join, on=PANEL_KEY),
         [events, damage, world_bank, precipitation.rename({SERIES_KEY: "Start_Year"})],

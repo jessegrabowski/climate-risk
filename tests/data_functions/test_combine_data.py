@@ -3,6 +3,7 @@ from datetime import date, datetime
 import polars as pl
 import pytest
 
+from climate_risk.config.schema import EventFilters
 from climate_risk.data_functions.combine_data import (
     _annual_precipitation,
     annual_precipitation,
@@ -54,11 +55,16 @@ def test_the_panel_spans_the_full_country_year_grid(panel):
 
 
 def test_a_country_year_with_no_indicators_still_reaches_the_panel(panel):
-    """The panel spans the years EM-DAT records, which reach back to 1969; the indicators cover 1990-91."""
-    early = panel.filter(pl.col("Start_Year") == date(1970, 1, 1))
+    """The panel spans the event filter's window; the indicators cover 1990-91 alone."""
+    early = panel.filter(pl.col("Start_Year") == date(1985, 1, 1))
 
-    assert len(early) > 0
+    assert len(early) == panel["ISO"].n_unique()
     assert early["gdp_per_cap_usd"].is_null().all()
+
+
+def test_the_panel_opens_on_the_year_the_event_filter_does(panel):
+    """A grid opening before the counts do fills the gap with nulls no reader can tell from real ones."""
+    assert panel["Start_Year"].min() == date(EventFilters().start_year, 1, 1)
 
 
 def test_precipitation_is_totalled_over_the_year_not_averaged(cache_dir):
