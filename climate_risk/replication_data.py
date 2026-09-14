@@ -21,7 +21,7 @@ from climate_risk.geo.raster import ISO_COLUMN
 
 _log = logging.getLogger(__name__)
 
-PANEL_KEY = ["ISO", "year"]
+PANEL_KEY = ["ISO", "date"]
 
 HYDROLOGICAL_TYPES = types_in_class(HYDROMETEOROLOGICAL)
 CLIMATOLOGICAL_TYPES = types_in_class(CLIMATOLOGICAL)
@@ -47,7 +47,7 @@ MODEL_FEATURES = (
 
 PUBLISHED_COLUMNS = [
     "ISO",
-    "year",
+    "date",
     "climatological_disasters",
     "hydrological_disasters",
     "population",
@@ -88,11 +88,11 @@ def _precipitation_deviation(precipitation: pl.DataFrame, baseline: tuple[int, i
         One row per country and year, carrying the deviation from that country's baseline mean.
     """
     first_year, last_year = baseline
-    within_baseline = pl.col("year").dt.year().is_between(first_year, last_year)
+    within_baseline = pl.col("date").dt.year().is_between(first_year, last_year)
     reference = precipitation.filter(within_baseline)
 
     span = last_year - first_year + 1
-    covered = reference["year"].dt.year().n_unique()
+    covered = reference["date"].dt.year().n_unique()
     if covered < span:
         raise ValueError(
             f"The precipitation record covers {covered} of the {span} years in the "
@@ -109,13 +109,13 @@ def _precipitation_deviation(precipitation: pl.DataFrame, baseline: tuple[int, i
 
 def _deviation_from_trend(climate: pl.DataFrame) -> pl.DataFrame:
     """Return the ocean temperature's residual around its STL trend. statsmodels fits pandas only."""
-    observed = climate.drop_nulls("Temp").to_pandas().set_index("year")["Temp"]
+    observed = climate.drop_nulls("Temp").to_pandas().set_index("date")["Temp"]
     residual = observed - STL(observed, period=OCEAN_TREND_PERIOD).fit().trend
 
     converted: pl.DataFrame = pl.from_pandas(residual.rename("dev_from_trend_ocean_temp").reset_index())
 
     # The pandas round-trip widens the key to a datetime, which would not join back.
-    return converted.with_columns(pl.col("year").cast(pl.Date))
+    return converted.with_columns(pl.col("date").cast(pl.Date))
 
 
 def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIMATOLOGY_BASELINE) -> pl.DataFrame:
@@ -150,11 +150,11 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
 
         panel = create_replication_data(Path("data"))
     """
-    panel = build_country_year_panel(cache_dir).rename({"Start_Year": "year"})
+    panel = build_country_year_panel(cache_dir)
 
     # The first and last years are dropped. The reason is unrecorded, and the trend below is fitted
     # over this window, so widening it moves every published deviation.
-    climate = build_time_series(cache_dir).select("year", "co2", "Temp", "precip").slice(1, -1)
+    climate = build_time_series(cache_dir).select("date", "co2", "Temp", "precip").slice(1, -1)
 
     regressors = panel.select(
         *PANEL_KEY,
@@ -174,8 +174,8 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
     frame = (
         regressors.join(damages, on=PANEL_KEY, how="left")
         .join(deviation, on=PANEL_KEY, how="left")
-        .join(climate.select("year", "co2"), on="year", how="left")
-        .join(_deviation_from_trend(climate), on="year", how="left")
+        .join(climate.select("date", "co2"), on="date", how="left")
+        .join(_deviation_from_trend(climate), on="date", how="left")
     )
 
     return frame.select(*PUBLISHED_COLUMNS)

@@ -22,8 +22,8 @@ from climate_risk.data_functions.emdat_processing import (
 )
 
 # The panel is keyed on the EM-DAT column names, which the other sources are renamed onto.
-PANEL_KEY = ["ISO", "Start_Year"]
-SERIES_KEY = "year"
+PANEL_KEY = ["ISO", "date"]
+SERIES_KEY = "date"
 
 # The measures the panel carries split by disaster class. The rest of DAMAGE_VARS reaches it totalled
 # across classes only.
@@ -77,7 +77,7 @@ def _shape_world_bank(indicators: pl.DataFrame) -> pl.DataFrame:
     """Rename the World Bank columns onto the panel's key and date its years."""
     return indicators.select(
         pl.col("country_code").alias("ISO"),
-        pl.date(pl.col("year"), 1, 1).alias("Start_Year"),
+        pl.date(pl.col("year"), 1, 1).alias("date"),
         pl.exclude("country_code", "year"),
     )
 
@@ -214,7 +214,7 @@ def build_country_year_panel(cache_dir: Path) -> pl.DataFrame:
     Returns
     -------
     panel : DataFrame
-        One row per country and year, keyed on ``ISO`` and ``Start_Year``.
+        One row per country and year, keyed on ``ISO`` and ``date``.
 
     Examples
     --------
@@ -247,5 +247,5 @@ def build_country_year_panel(cache_dir: Path) -> pl.DataFrame:
     # Left-joined onto the event grid, so the panel spans the filter's window and no more.
     return reduce(
         partial(_left_join, on=PANEL_KEY),
-        [events, damage, world_bank, precipitation.rename({SERIES_KEY: "Start_Year"})],
+        [events, damage, world_bank, precipitation],
     ).sort(PANEL_KEY)

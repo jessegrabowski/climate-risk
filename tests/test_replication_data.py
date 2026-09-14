@@ -122,14 +122,14 @@ def replication(wide_cache):
 
 def row(frame: pl.DataFrame, iso: str, year: int) -> dict:
     """The one row for a country and year, as a plain mapping."""
-    match = frame.filter((pl.col("ISO") == iso) & (pl.col("year") == date(year, 1, 1)))
+    match = frame.filter((pl.col("ISO") == iso) & (pl.col("date") == date(year, 1, 1)))
 
     assert len(match) == 1, f"expected one row for {iso} {year}, got {len(match)}"
     return match.to_dicts()[0]
 
 
 def test_the_frame_is_one_row_per_country_and_year(replication):
-    assert not replication.select("ISO", "year").is_duplicated().any()
+    assert not replication.select("ISO", "date").is_duplicated().any()
 
 
 def test_only_countries_present_in_both_disaster_and_indicator_data_survive(replication):
@@ -141,7 +141,7 @@ def test_the_published_columns_are_all_present(replication):
     """Downstream models select by name, so a dropped column is a silent regression."""
     expected = {
         "ISO",
-        "year",
+        "date",
         "climatological_disasters",
         "hydrological_disasters",
         "population",
@@ -189,7 +189,7 @@ def test_a_country_with_no_climatological_damage_reports_none(replication):
 
 def test_a_country_year_with_no_disasters_stays_missing(replication):
     """A country-year with no record stays missing; summing it as a zero would erase the distinction."""
-    quiet = replication.filter(pl.col("year") == date(QUIET_YEAR, 1, 1))
+    quiet = replication.filter(pl.col("date") == date(QUIET_YEAR, 1, 1))
 
     assert len(quiet) == replication["ISO"].n_unique()
     assert quiet["hydrological_disasters"].is_null().all()
@@ -210,7 +210,7 @@ def test_precipitation_deviation_is_measured_against_the_named_baseline_period(r
     # AAA's precipitation runs 100 + 5i from 1955. The 1961-1990 window is i = 6..35 and averages
     # 202.5, so 1985 sits 47.5 above it; the record's first 30 years would average 172.5 and put it
     # at 77.5 instead.
-    sample = replication.filter((pl.col("ISO") == "AAA") & (pl.col("year") == date(1985, 1, 1)))
+    sample = replication.filter((pl.col("ISO") == "AAA") & (pl.col("date") == date(1985, 1, 1)))
 
     assert sample["precip_deviation"].to_list() == [pytest.approx(47.5)]
 
@@ -231,8 +231,8 @@ def test_the_ocean_temperature_deviation_is_residual_around_its_trend(replicatio
 
 def paneled(rows) -> pl.DataFrame:
     """A panel carrying only the key and the two features the tests below select on."""
-    return pl.DataFrame(rows, schema=["ISO", "year", "ln_gdp_pc", "co2"], orient="row").with_columns(
-        pl.col("year").cast(pl.Date)
+    return pl.DataFrame(rows, schema=["ISO", "date", "ln_gdp_pc", "co2"], orient="row").with_columns(
+        pl.col("date").cast(pl.Date)
     )
 
 
@@ -250,7 +250,7 @@ def test_a_row_missing_a_feature_cannot_enter_the_model():
 
     rows, _ = model_frame(panel, bounded(["AAA"]), features=TWO_FEATURES)
 
-    assert rows["year"].to_list() == [date(2000, 1, 1)]
+    assert rows["date"].to_list() == [date(2000, 1, 1)]
 
 
 def test_a_null_in_a_column_the_caller_did_not_name_keeps_its_row():

@@ -28,7 +28,7 @@ EMDAT = ManualSource(
 )
 
 EM_DAT_COL_DICT = {
-    "Start Year": "Start_Year",
+    "Start Year": "date",
     "Total Deaths": "Deaths",
     "No. Injured": "Injured",
     "No. Affected": "Numb_Affected",
@@ -139,7 +139,7 @@ def _read_workbook(emdat_path: Path) -> pl.DataFrame:
         )
 
     return workbook.rename(EM_DAT_COL_DICT).with_columns(
-        pl.date(pl.col("Start_Year"), 1, 1).alias("Start_Year"),
+        pl.date(pl.col("date"), 1, 1).alias("date"),
         pl.col("Disaster Type").replace_strict(DISASTER_CLASSES, default=None).alias("disaster_class"),
     )
 
@@ -161,7 +161,7 @@ def country_year_grid(events: pl.DataFrame, *, window_start: dt.date = EMDAT_WIN
     Returns
     -------
     grid : DataFrame
-        ``ISO``, ``Start_Year``, ``Region`` and ``Subregion``, sorted by country and year.
+        ``ISO``, ``date``, ``Region`` and ``Subregion``, sorted by country and year.
 
     Examples
     --------
@@ -171,9 +171,9 @@ def country_year_grid(events: pl.DataFrame, *, window_start: dt.date = EMDAT_WIN
 
         grid = country_year_grid(events)
     """
-    newest_event = events["Start_Year"].max()
+    newest_event = events["date"].max()
     if not isinstance(newest_event, dt.date):
-        raise ValueError("Every Start_Year in the workbook is missing, so the window has no end.")
+        raise ValueError("Every date in the workbook is missing, so the window has no end.")
 
     if window_start > newest_event:
         raise ValueError(
@@ -187,9 +187,9 @@ def country_year_grid(events: pl.DataFrame, *, window_start: dt.date = EMDAT_WIN
 
     return (
         events.select(pl.col("ISO").unique())
-        .join(years.alias("Start_Year").to_frame(), how="cross")
+        .join(years.alias("date").to_frame(), how="cross")
         .join(regions, on="ISO", how="left")
-        .sort("ISO", "Start_Year")
+        .sort("ISO", "date")
     )
 
 
@@ -220,17 +220,17 @@ def count_events_by_type(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFra
     """
     counted = (
         events.filter(pl.col("Disaster Type").is_in(DISASTER_TYPES))
-        .group_by("ISO", "Start_Year", "Disaster Type")
+        .group_by("ISO", "date", "Disaster Type")
         .len()
         .with_columns(pl.col("len").cast(COUNT_DTYPE))
-        .pivot(on="Disaster Type", index=["ISO", "Start_Year"], values="len")
+        .pivot(on="Disaster Type", index=["ISO", "date"], values="len")
     )
     absent = [pl.lit(None, dtype=COUNT_DTYPE).alias(name) for name in DISASTER_TYPES if name not in counted.columns]
 
     return (
-        grid.join(counted.with_columns(absent), on=["ISO", "Start_Year"], how="left")
-        .select("ISO", "Start_Year", "Region", "Subregion", *DISASTER_TYPES)
-        .sort("ISO", "Start_Year")
+        grid.join(counted.with_columns(absent), on=["ISO", "date"], how="left")
+        .select("ISO", "date", "Region", "Subregion", *DISASTER_TYPES)
+        .sort("ISO", "date")
     )
 
 
@@ -260,7 +260,7 @@ def total_damage(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFrame:
     """
     totals = (
         events.filter(pl.col("Disaster Type").is_in(DISASTER_TYPES))
-        .group_by("ISO", "Start_Year")
+        .group_by("ISO", "date")
         # polars totals a group of nothing but nulls to zero, which would price these events at nothing
         # rather than report that nobody priced them.
         .agg(
@@ -270,9 +270,9 @@ def total_damage(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFrame:
     )
 
     return (
-        grid.join(totals, on=["ISO", "Start_Year"], how="left")
-        .select("ISO", "Start_Year", *DAMAGE_VARS, "Region", "Subregion")
-        .sort("ISO", "Start_Year")
+        grid.join(totals, on=["ISO", "date"], how="left")
+        .select("ISO", "date", *DAMAGE_VARS, "Region", "Subregion")
+        .sort("ISO", "date")
     )
 
 
@@ -787,10 +787,10 @@ def event_filter(filters: EventFilters) -> pl.Expr:
         laos = load_place("lao")
         counted = events.filter(event_filter(laos.event_filters))
     """
-    counts = pl.col("Start_Year") >= pl.date(filters.start_year, 1, 1)
+    counts = pl.col("date") >= pl.date(filters.start_year, 1, 1)
 
     if filters.end_year is not None:
-        counts = counts & (pl.col("Start_Year") <= pl.date(filters.end_year, 12, 31))
+        counts = counts & (pl.col("date") <= pl.date(filters.end_year, 12, 31))
 
     if filters.min_total_affected is not None:
         counts = counts & (pl.col("Total_Affected") > filters.min_total_affected)
