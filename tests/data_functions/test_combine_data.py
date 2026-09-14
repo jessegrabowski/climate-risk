@@ -5,10 +5,10 @@ import pytest
 
 from climate_risk.config.schema import EventFilters
 from climate_risk.data_functions.combine_data import (
-    _annual_precipitation,
-    annual_precipitation,
-    build_country_year_panel,
+    _total_precipitation,
+    build_country_panel,
     build_time_series,
+    total_precipitation,
 )
 from tests.conftest import emdat_event, write_merge_cache
 
@@ -21,7 +21,7 @@ def cache_dir(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def panel(cache_dir):
-    return build_country_year_panel(cache_dir)
+    return build_country_panel(cache_dir)
 
 
 @pytest.fixture(scope="module")
@@ -43,10 +43,10 @@ def test_a_country_without_precipitation_keeps_its_row(panel):
 def test_the_precipitation_record_outlives_the_panel(cache_dir, panel):
     """FFF has only rainfall, so the panel drops it — the record itself still has to carry it."""
     assert "FFF" not in panel["ISO"].to_list()
-    assert "FFF" in annual_precipitation(cache_dir)["ISO"].to_list()
+    assert "FFF" in total_precipitation(cache_dir)["ISO"].to_list()
 
 
-def test_the_panel_spans_the_full_country_year_grid(panel):
+def test_the_panel_spans_the_full_country_grid(panel):
     countries = panel["ISO"].n_unique()
     years = panel["date"].n_unique()
 
@@ -69,7 +69,7 @@ def test_the_panel_opens_on_the_year_the_event_filter_does(panel):
 
 def test_precipitation_is_totalled_over_the_year_not_averaged(cache_dir):
     """GPCC publishes monthly; the panel wants the year's total rainfall, not a monthly mean."""
-    annual = annual_precipitation(cache_dir).filter((pl.col("ISO") == "AAA") & (pl.col("date") == date(1990, 1, 1)))
+    annual = total_precipitation(cache_dir).filter((pl.col("ISO") == "AAA") & (pl.col("date") == date(1990, 1, 1)))
 
     # AAA's 1990 months run 101..112, totalling 1278 against a monthly mean of 106.5.
     assert annual["precip"].to_list() == [pytest.approx(1278.0)]
@@ -86,7 +86,7 @@ def test_a_year_the_record_only_partly_covers_is_dropped():
         }
     )
 
-    by_country, worldwide = _annual_precipitation(monthly)
+    by_country, worldwide = _total_precipitation(monthly)
 
     assert by_country["date"].to_list() == [date(2020, 1, 1)]
     assert worldwide["date"].to_list() == [date(2020, 1, 1)]
@@ -115,7 +115,7 @@ def test_every_disaster_type_gets_a_column_even_when_unobserved(write_emdat_cach
         for year in (1990, 1991)
     )
 
-    events = build_country_year_panel(cache_dir)
+    events = build_country_panel(cache_dir)
 
     assert {"Drought", "Flood", "Storm", "Wildfire", "Extreme temperature"} <= set(events.columns)
     assert events["Wildfire"].is_null().all()
@@ -130,7 +130,7 @@ def test_damage_columns_survive_a_class_with_no_events(write_emdat_cache, write_
         for year in (1990, 1991)
     )
 
-    damage = build_country_year_panel(cache_dir)
+    damage = build_country_panel(cache_dir)
 
     assert "Total_Damage_Adjusted_clim" in damage.columns
     assert damage["Total_Damage_Adjusted_clim"].is_null().all()

@@ -18,7 +18,7 @@ from climate_risk.data_functions.emdat_processing import (
     TEXT_UNIT_SCHEMA,
     NamedPlace,
     count_events_by_type,
-    country_year_grid,
+    country_grid,
     event_filter,
     event_geography,
     event_units,
@@ -41,7 +41,7 @@ def count_panel(cache_dir, *, filters=None, window_start=EMDAT_WINDOW_START):
     raw = load_emdat_events(cache_dir)
     events = raw.filter(event_filter(filters or EventFilters()))
 
-    return count_events_by_type(events, country_year_grid(raw, window_start=window_start))
+    return count_events_by_type(events, country_grid(raw, window_start=window_start))
 
 
 WINDOW_START = date(1969, 1, 1)
@@ -324,7 +324,7 @@ def test_damage_totals_sum_within_a_country_year_and_leave_empty_ones_null(write
     )
     raw = load_emdat_events(cache_dir)
 
-    damage = total_damage(raw.filter(event_filter(EventFilters())), country_year_grid(raw))
+    damage = total_damage(raw.filter(event_filter(EventFilters())), country_grid(raw))
 
     assert damage.filter(pl.col("date") == date(1995, 1, 1))["Deaths"].to_list() == [15.0]
 
@@ -362,7 +362,7 @@ def test_a_country_year_whose_events_record_no_figures_stays_null(write_emdat_ca
     )
     raw = load_emdat_events(cache_dir)
 
-    damage = total_damage(raw.filter(event_filter(EventFilters())), country_year_grid(raw))
+    damage = total_damage(raw.filter(event_filter(EventFilters())), country_grid(raw))
     year = damage.filter(pl.col("date") == date(1995, 1, 1))
 
     assert len(year) == 1
@@ -390,7 +390,7 @@ def test_a_priced_event_still_totals_beside_unpriced_ones(write_emdat_cache):
     )
     raw = load_emdat_events(cache_dir)
 
-    damage = total_damage(raw.filter(event_filter(EventFilters())), country_year_grid(raw))
+    damage = total_damage(raw.filter(event_filter(EventFilters())), country_grid(raw))
 
     assert damage.filter(pl.col("date") == date(1995, 1, 1))["Total_Damage_Adjusted"].to_list() == [40.0]
 
@@ -418,7 +418,7 @@ def test_a_workbook_with_no_usable_year_is_rejected(write_emdat_cache):
     cache_dir = write_emdat_cache([emdat_event({"Start Year": None})])
 
     with pytest.raises(ValueError, match="Every date in the workbook is missing"):
-        country_year_grid(load_emdat_events(cache_dir))
+        country_grid(load_emdat_events(cache_dir))
 
 
 def test_every_disaster_type_gets_a_column_in_a_stable_order(write_emdat_cache):

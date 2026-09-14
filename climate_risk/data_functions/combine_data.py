@@ -15,7 +15,7 @@ from climate_risk.data_functions.emdat_processing import (
     CLIMATOLOGICAL,
     HYDROMETEOROLOGICAL,
     count_events_by_type,
-    country_year_grid,
+    country_grid,
     event_filter,
     load_emdat_events,
     total_damage,
@@ -82,7 +82,7 @@ def _shape_world_bank(indicators: pl.DataFrame) -> pl.DataFrame:
     )
 
 
-def _annual_precipitation(gpcc: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
+def _total_precipitation(gpcc: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
     """
     Total monthly precipitation to years.
 
@@ -135,7 +135,7 @@ def _only_countries(frame: pl.DataFrame, codes: set[str]) -> pl.DataFrame:
     return frame.filter(pl.col("ISO").is_in(codes))
 
 
-def annual_precipitation(cache_dir: Path) -> pl.DataFrame:
+def total_precipitation(cache_dir: Path) -> pl.DataFrame:
     """
     Total each country's precipitation to years.
 
@@ -149,7 +149,7 @@ def annual_precipitation(cache_dir: Path) -> pl.DataFrame:
     Returns
     -------
     precipitation : DataFrame
-        ``ISO``, ``year`` and ``precip``, one row per country and year.
+        ``ISO``, ``date`` and ``precip``, one row per country and year.
 
     Examples
     --------
@@ -157,11 +157,11 @@ def annual_precipitation(cache_dir: Path) -> pl.DataFrame:
 
         from pathlib import Path
 
-        from climate_risk import annual_precipitation
+        from climate_risk import total_precipitation
 
-        precipitation = annual_precipitation(Path("data"))
+        precipitation = total_precipitation(Path("data"))
     """
-    by_country, _ = _annual_precipitation(_as_polars(load_gpcc_data(cache_dir)))
+    by_country, _ = _total_precipitation(_as_polars(load_gpcc_data(cache_dir)))
 
     return by_country
 
@@ -178,7 +178,7 @@ def build_time_series(cache_dir: Path) -> pl.DataFrame:
     Returns
     -------
     series : DataFrame
-        ``year``, CO2, ocean temperature and worldwide precipitation, one row per year.
+        ``date``, CO2, ocean temperature and worldwide precipitation, one row per year.
 
     Examples
     --------
@@ -190,7 +190,7 @@ def build_time_series(cache_dir: Path) -> pl.DataFrame:
 
         series = build_time_series(Path("data"))
     """
-    _, worldwide = _annual_precipitation(_as_polars(load_gpcc_data(cache_dir)))
+    _, worldwide = _total_precipitation(_as_polars(load_gpcc_data(cache_dir)))
 
     return reduce(
         partial(_outer_join, on=SERIES_KEY),
@@ -198,12 +198,12 @@ def build_time_series(cache_dir: Path) -> pl.DataFrame:
     ).sort(SERIES_KEY)
 
 
-def build_country_year_panel(cache_dir: Path) -> pl.DataFrame:
+def build_country_panel(cache_dir: Path) -> pl.DataFrame:
     """
     Merge events, damages, development indicators and precipitation onto one country-year row.
 
     Covers the years the event filter selects and the countries that have both a disaster record and
-    development indicators. Precipitation reaches further back, and :func:`annual_precipitation` has
+    development indicators. Precipitation reaches further back, and :func:`total_precipitation` has
     the whole record.
 
     Parameters
@@ -222,9 +222,9 @@ def build_country_year_panel(cache_dir: Path) -> pl.DataFrame:
 
         from pathlib import Path
 
-        from climate_risk import build_country_year_panel
+        from climate_risk import build_country_panel
 
-        panel = build_country_year_panel(Path("data"))
+        panel = build_country_panel(Path("data"))
     """
     filters = EventFilters()
     raw = load_emdat_events(cache_dir)
@@ -232,11 +232,11 @@ def build_country_year_panel(cache_dir: Path) -> pl.DataFrame:
 
     # The grid and the counts must open on the same year. Earlier grid years have no counts to join,
     # and the nulls that leaves are indistinguishable from a country-year that recorded nothing.
-    grid = country_year_grid(raw, window_start=dt.date(filters.start_year, 1, 1))
+    grid = country_grid(raw, window_start=dt.date(filters.start_year, 1, 1))
 
     events, damage = _combine_emdat(selected, grid, count_events_by_type(selected, grid))
     world_bank = _shape_world_bank(load_wb_data(cache_dir))
-    precipitation = annual_precipitation(cache_dir)
+    precipitation = total_precipitation(cache_dir)
 
     # A country needs both a disaster record and development indicators to earn a row.
     common = _countries_in_common(damage, world_bank)

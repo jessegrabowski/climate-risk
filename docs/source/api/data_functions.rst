@@ -14,9 +14,9 @@ Analysis frames
 .. autosummary::
     :toctree: generated/
 
-    ~combine_data.build_country_year_panel
+    ~combine_data.build_country_panel
     ~combine_data.build_time_series
-    ~combine_data.annual_precipitation
+    ~combine_data.total_precipitation
 
 Disaster events
 ---------------
@@ -29,7 +29,7 @@ Disaster events
     ~emdat_processing.count_events_by_type
     ~emdat_processing.types_in_class
     ~emdat_processing.total_damage
-    ~emdat_processing.country_year_grid
+    ~emdat_processing.country_grid
 
 Event geography
 ---------------

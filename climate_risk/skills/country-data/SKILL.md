@@ -5,7 +5,7 @@ description: >-
   walls that stop every newcomer: every loader takes an explicit cache_dir with no default, and four
   of the upstream sources are license-walled and cannot be downloaded by code at all. Use this
   whenever someone is loading, fetching or caching data with climate_risk, is choosing between
-  load_emdat_events, build_country_year_panel, build_time_series or a single-source loader, is
+  load_emdat_events, build_country_panel, build_time_series or a single-source loader, is
   adding a new country or region, or asks "where do I put the data", "why can't it download EM-DAT",
   "what is cache_dir", "NotImplementedError No emdat.xlsx was found", "how do I add a country", or
   "why is it downloading again". Also use it before writing any downloader, default cache path, or

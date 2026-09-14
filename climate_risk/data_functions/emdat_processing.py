@@ -148,7 +148,7 @@ def _read_workbook(emdat_path: Path) -> pl.DataFrame:
     )
 
 
-def country_year_grid(events: pl.DataFrame, *, window_start: dt.date = EMDAT_WINDOW_START) -> pl.DataFrame:
+def country_grid(events: pl.DataFrame, *, window_start: dt.date = EMDAT_WINDOW_START) -> pl.DataFrame:
     """
     Cross every country with every year in the window, carrying each country's region.
 
@@ -171,9 +171,9 @@ def country_year_grid(events: pl.DataFrame, *, window_start: dt.date = EMDAT_WIN
     --------
     .. code-block:: python
 
-        from climate_risk.data_functions.emdat_processing import country_year_grid
+        from climate_risk.data_functions.emdat_processing import country_grid
 
-        grid = country_year_grid(events)
+        grid = country_grid(events)
     """
     newest_event = events["date"].max()
     if not isinstance(newest_event, dt.date):
@@ -206,7 +206,7 @@ def count_events_by_type(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFra
     events : DataFrame
         Events to count, already narrowed to whichever ones should be counted.
     grid : DataFrame
-        The country-year panel from :func:`country_year_grid`.
+        The country-year panel from :func:`country_grid`.
 
     Returns
     -------
@@ -218,9 +218,9 @@ def count_events_by_type(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFra
     --------
     .. code-block:: python
 
-        from climate_risk.data_functions.emdat_processing import count_events_by_type, country_year_grid
+        from climate_risk.data_functions.emdat_processing import count_events_by_type, country_grid
 
-        counts = count_events_by_type(events, country_year_grid(events))
+        counts = count_events_by_type(events, country_grid(events))
     """
     counted = (
         events.filter(pl.col("Disaster Type").is_in(DISASTER_TYPES))
@@ -247,7 +247,7 @@ def total_damage(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFrame:
     events : DataFrame
         Events to total, already narrowed to whichever ones should count.
     grid : DataFrame
-        The country-year panel from :func:`country_year_grid`.
+        The country-year panel from :func:`country_grid`.
 
     Returns
     -------
@@ -258,9 +258,9 @@ def total_damage(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFrame:
     --------
     .. code-block:: python
 
-        from climate_risk.data_functions.emdat_processing import country_year_grid, total_damage
+        from climate_risk.data_functions.emdat_processing import country_grid, total_damage
 
-        damage = total_damage(events, country_year_grid(events))
+        damage = total_damage(events, country_grid(events))
     """
     totals = (
         events.filter(pl.col("Disaster Type").is_in(DISASTER_TYPES))

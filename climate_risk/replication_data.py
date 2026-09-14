@@ -11,9 +11,9 @@ from statsmodels.tsa.seasonal import STL
 from climate_risk.config.registry import resolve_isos
 from climate_risk.config.schema import Place
 from climate_risk.data_functions.combine_data import (
-    annual_precipitation,
-    build_country_year_panel,
+    build_country_panel,
     build_time_series,
+    total_precipitation,
 )
 from climate_risk.data_functions.emdat_processing import CLIMATOLOGICAL, HYDROMETEOROLOGICAL, types_in_class
 from climate_risk.data_functions.shapefiles_data_loader import load_shapefile
@@ -78,7 +78,7 @@ def _precipitation_deviation(precipitation: pl.DataFrame, baseline: tuple[int, i
     Parameters
     ----------
     precipitation : DataFrame
-        One row per country and year, carrying ``ISO``, ``year`` and ``precip``.
+        One row per country and period, carrying ``ISO``, ``date`` and ``precip``.
     baseline : tuple of int
         The first and last year of the reference period, both included.
 
@@ -150,7 +150,7 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
 
         panel = create_replication_data(Path("data"))
     """
-    panel = build_country_year_panel(cache_dir)
+    panel = build_country_panel(cache_dir)
 
     # The first and last years are dropped. The reason is unrecorded, and the trend below is fitted
     # over this window, so widening it moves every published deviation.
@@ -169,7 +169,7 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
 
     # Drawn from the whole precipitation record, which reaches back before the panel's first year
     # and so can cover the baseline climatology.
-    deviation = _precipitation_deviation(annual_precipitation(cache_dir), baseline)
+    deviation = _precipitation_deviation(total_precipitation(cache_dir), baseline)
 
     frame = (
         regressors.join(damages, on=PANEL_KEY, how="left")
@@ -197,7 +197,7 @@ def model_frame(
     Parameters
     ----------
     panel : DataFrame
-        One row per country and year, keyed on ``ISO`` and ``year``, from
+        One row per country and period, keyed on ``ISO`` and ``date``, from
         :func:`create_replication_data`.
     boundaries : GeoDataFrame
         Country geometries carrying an ``ISO_A3`` column, from

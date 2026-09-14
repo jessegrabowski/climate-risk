@@ -17,7 +17,7 @@ The contract
     cache_dir = Path("/data/climate-risk")
 
     co2 = cr.load_co2_data(cache_dir)
-    panel = cr.build_country_year_panel(cache_dir)
+    panel = cr.build_country_panel(cache_dir)
 
 Making the argument required has three consequences.
 
