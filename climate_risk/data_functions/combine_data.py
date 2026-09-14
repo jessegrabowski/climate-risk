@@ -12,8 +12,10 @@ from climate_risk.data.gpcc import load_gpcc_data
 from climate_risk.data.ocean_heat import load_ocean_heat_data
 from climate_risk.data.world_bank import load_wb_data
 from climate_risk.data_functions.emdat_processing import (
+    AGGREGATION_INTERVALS,
     CLIMATOLOGICAL,
     HYDROMETEOROLOGICAL,
+    AggregationFrequency,
     count_events_by_type,
     country_grid,
     event_filter,
@@ -61,9 +63,9 @@ def _combine_emdat(events: pl.DataFrame, grid: pl.DataFrame, counts: pl.DataFram
     Returns
     -------
     events : DataFrame
-        Counts per country, year and disaster type.
+        Counts per country, period and disaster type.
     damage : DataFrame
-        Totals per country and year, with each disaster class joined on as suffixed columns.
+        Totals per country and period, with each disaster class joined on as suffixed columns.
     """
     damage = total_damage(events, grid)
     for disaster_class, suffix in ((HYDROMETEOROLOGICAL, "hydro"), (CLIMATOLOGICAL, "clim")):
@@ -198,7 +200,7 @@ def build_time_series(cache_dir: Path) -> pl.DataFrame:
     ).sort(SERIES_KEY)
 
 
-def build_country_panel(cache_dir: Path) -> pl.DataFrame:
+def build_country_panel(cache_dir: Path, *, frequency: AggregationFrequency = "annual") -> pl.DataFrame:
     """
     Merge events, damages, development indicators and precipitation onto one country-year row.
 
@@ -210,11 +212,13 @@ def build_country_panel(cache_dir: Path) -> pl.DataFrame:
     ----------
     cache_dir : Path
         Directory the source caches live under.
+    frequency : {'annual', 'quarterly', 'monthly'}, optional
+        How long one period of the panel runs. Default ``'annual'``.
 
     Returns
     -------
     panel : DataFrame
-        One row per country and year, keyed on ``ISO`` and ``date``.
+        One row per country and period, keyed on ``ISO`` and ``date``.
 
     Examples
     --------
@@ -227,12 +231,15 @@ def build_country_panel(cache_dir: Path) -> pl.DataFrame:
         panel = build_country_panel(Path("data"))
     """
     filters = EventFilters()
-    raw = load_emdat_events(cache_dir)
-    selected = raw.filter(event_filter(filters))
 
-    # The grid and the counts must open on the same year. Earlier grid years have no counts to join,
-    # and the nulls that leaves are indistinguishable from a country-year that recorded nothing.
-    grid = country_grid(raw, window_start=dt.date(filters.start_year, 1, 1))
+    # Events are dated to their period once, and the grid opens on the filter's first year, so the
+    # grid and the totals can disagree on neither the period a date falls in nor the years covered.
+    # A grid period with no counts to join reads as null, which is what a quiet period reads as too.
+    events_by_period = load_emdat_events(cache_dir).with_columns(
+        pl.col("date").dt.truncate(AGGREGATION_INTERVALS[frequency])
+    )
+    selected = events_by_period.filter(event_filter(filters))
+    grid = country_grid(events_by_period, window_start=dt.date(filters.start_year, 1, 1), frequency=frequency)
 
     events, damage = _combine_emdat(selected, grid, count_events_by_type(selected, grid))
     world_bank = _shape_world_bank(load_wb_data(cache_dir))

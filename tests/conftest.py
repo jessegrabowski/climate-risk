@@ -32,6 +32,7 @@ EMDAT_EVENT_DEFAULTS = {
     "Subregion": "South-eastern Asia",
     "Disaster Type": "Flood",
     "Start Year": 1990,
+    "Start Month": 1,
     "End Year": 1990,
     "Total Deaths": 500,
     "No. Injured": 10,
@@ -311,6 +312,7 @@ def write_merge_cache(cache_dir):
                 "ISO": "AAA",
                 "DisNo.": "AAA-landslide",
                 "Start Year": 1991,
+                "Start Month": 9,
                 "End Year": 1991,
                 "Disaster Type": "Mass movement (wet)",
             }

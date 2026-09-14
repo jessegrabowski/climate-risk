@@ -67,6 +67,19 @@ def test_the_panel_opens_on_the_year_the_event_filter_does(panel):
     assert panel["date"].min() == date(EventFilters().start_year, 1, 1)
 
 
+def test_repartitioning_the_panel_moves_no_events(cache_dir):
+    """A finer grid slices the same events differently. It must not create, drop or misplace any."""
+    annual = build_country_panel(cache_dir)
+    monthly = build_country_panel(cache_dir, frequency="monthly")
+
+    assert monthly["Flood"].sum() == annual["Flood"].sum()
+    assert monthly["date"].dt.month().n_unique() == 12
+
+    # AAA's landslide starts in September 1991, and only there.
+    landslides = monthly.filter((pl.col("ISO") == "AAA") & (pl.col("Mass movement (wet)") == 1))
+    assert landslides["date"].to_list() == [date(1991, 9, 1)]
+
+
 def test_precipitation_is_totalled_over_the_year_not_averaged(cache_dir):
     """GPCC publishes monthly; the panel wants the year's total rainfall, not a monthly mean."""
     annual = total_precipitation(cache_dir).filter((pl.col("ISO") == "AAA") & (pl.col("date") == date(1990, 1, 1)))

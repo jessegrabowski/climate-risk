@@ -92,14 +92,38 @@ def test_workbook_missing_a_column_names_it(write_emdat_cache):
         load_emdat_events(write_emdat_cache([event]))
 
 
-def test_the_event_date_is_built_from_the_year_the_workbook_gives(write_emdat_cache):
-    """The workbook dates an event by integer year, and everything downstream joins on a Date."""
-    cache_dir = write_emdat_cache([emdat_event({"Start Year": 1994, "End Year": 1994})])
+def test_the_event_date_is_built_from_the_year_and_month_the_workbook_gives(write_emdat_cache):
+    """The workbook dates an event by integer year and month; everything downstream joins on a Date."""
+    cache_dir = write_emdat_cache([emdat_event({"Start Year": 1994, "Start Month": 7, "End Year": 1994})])
 
     events = load_emdat_events(cache_dir)
 
-    assert events["date"].to_list() == [date(1994, 1, 1)]
+    assert events["date"].to_list() == [date(1994, 7, 1)]
     assert "start_year" not in events.columns
+
+
+def test_an_event_whose_month_is_missing_is_dated_to_january(write_emdat_cache):
+    """EM-DAT leaves the month off some events. A null date would drop them from every count."""
+    cache_dir = write_emdat_cache([emdat_event({"Start Year": 1994, "Start Month": None, "End Year": 1994})])
+
+    assert load_emdat_events(cache_dir)["date"].to_list() == [date(1994, 1, 1)]
+
+
+@pytest.mark.parametrize(
+    ("frequency", "periods"),
+    [
+        ("annual", [date(1990, 1, 1)]),
+        ("quarterly", [date(1990, 1, 1), date(1990, 4, 1), date(1990, 7, 1), date(1990, 10, 1)]),
+        ("monthly", [date(1990, month, 1) for month in range(1, 13)]),
+    ],
+)
+def test_the_grid_runs_one_period_per_step_of_its_frequency(write_emdat_cache, frequency, periods):
+    """The grid closes on the newest event, so a December event opens every period of its year."""
+    cache_dir = write_emdat_cache([emdat_event({"Start Year": 1990, "Start Month": 12, "End Year": 1990})])
+
+    grid = country_grid(load_emdat_events(cache_dir), window_start=date(1990, 1, 1), frequency=frequency)
+
+    assert grid["date"].to_list() == periods
 
 
 def test_every_country_year_appears_even_without_events(write_emdat_cache):

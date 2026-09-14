@@ -3,7 +3,7 @@ import json
 import re
 
 from pathlib import Path
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 
 import polars as pl
 
@@ -45,6 +45,11 @@ EM_DAT_COL_DICT = {
 # The study window opens in 1969 and closes on the newest event in the workbook.
 EMDAT_WINDOW_START = dt.date(1969, 1, 1)
 
+# How coarsely a panel counts. The values are the interval polars wants, which both `date_range`
+# and `Expr.dt.truncate` read, so one string builds the grid and lands the events on it.
+AggregationFrequency = Literal["annual", "quarterly", "monthly"]
+AGGREGATION_INTERVALS: dict[AggregationFrequency, str] = {"annual": "1y", "quarterly": "1q", "monthly": "1mo"}
+
 HYDROMETEOROLOGICAL = "Hydrometeorological"
 CLIMATOLOGICAL = "Climatological"
 
@@ -64,7 +69,9 @@ DISASTER_TYPES = tuple(DISASTER_CLASSES)
 
 # Columns read before any rename. Nothing detects upstream schema drift, so this check is the
 # earliest point a changed export becomes a named error rather than a missing attribute.
-REQUIRED_EMDAT_COLUMNS = {"ISO", "Region", "Subregion", "Disaster Type", "GADM Admin Units"} | set(EM_DAT_COL_DICT)
+REQUIRED_EMDAT_COLUMNS = {"ISO", "Start Month", "Region", "Subregion", "Disaster Type", "GADM Admin Units"} | set(
+    EM_DAT_COL_DICT
+)
 
 # EM-DAT writes empty strings, not blank cells: undeclared, a numeric column that nothing fills reads
 # as text, and totalling it then raises. An export narrow enough to price no event at all is ordinary
@@ -141,14 +148,19 @@ def _read_workbook(emdat_path: Path) -> pl.DataFrame:
     return (
         workbook.rename(EM_DAT_COL_DICT)
         .with_columns(
-            pl.date(pl.col("start_year"), 1, 1).alias("date"),
+            pl.date(pl.col("start_year"), pl.col("Start Month").fill_null(1), 1).alias("date"),
             pl.col("Disaster Type").replace_strict(DISASTER_CLASSES, default=None).alias("disaster_class"),
         )
         .drop("start_year")
     )
 
 
-def country_grid(events: pl.DataFrame, *, window_start: dt.date = EMDAT_WINDOW_START) -> pl.DataFrame:
+def country_grid(
+    events: pl.DataFrame,
+    *,
+    window_start: dt.date = EMDAT_WINDOW_START,
+    frequency: AggregationFrequency = "annual",
+) -> pl.DataFrame:
     """
     Cross every country with every year in the window, carrying each country's region.
 
@@ -161,6 +173,8 @@ def country_grid(events: pl.DataFrame, *, window_start: dt.date = EMDAT_WINDOW_S
         The workbook, as :func:`load_emdat_events` returns it.
     window_start : datetime.date, optional
         First year of the panel. Default ``EMDAT_WINDOW_START``.
+    frequency : {'annual', 'quarterly', 'monthly'}, optional
+        How long one period of the grid runs. Default ``'annual'``.
 
     Returns
     -------
@@ -185,13 +199,15 @@ def country_grid(events: pl.DataFrame, *, window_start: dt.date = EMDAT_WINDOW_S
             f"({newest_event}), so every output frame would be empty."
         )
 
-    years: pl.Series = pl.date_range(window_start, newest_event, interval="1y", eager=True)
+    periods: pl.Series = pl.date_range(
+        window_start, newest_event, interval=AGGREGATION_INTERVALS[frequency], eager=True
+    )
 
     regions = events.select("ISO", "Region", "Subregion").unique(subset="ISO", keep="first")
 
     return (
         events.select(pl.col("ISO").unique())
-        .join(years.alias("date").to_frame(), how="cross")
+        .join(periods.alias("date").to_frame(), how="cross")
         .join(regions, on="ISO", how="left")
         .sort("ISO", "date")
     )
@@ -199,7 +215,7 @@ def country_grid(events: pl.DataFrame, *, window_start: dt.date = EMDAT_WINDOW_S
 
 def count_events_by_type(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFrame:
     """
-    Count events per country, year and disaster type, over every row of ``grid``.
+    Count events per country, period and disaster type, over every row of ``grid``.
 
     Parameters
     ----------
@@ -240,7 +256,7 @@ def count_events_by_type(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFra
 
 def total_damage(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFrame:
     """
-    Total each damage measure per country and year, over every row of ``grid``.
+    Total each damage measure per country and period, over every row of ``grid``.
 
     Parameters
     ----------
@@ -294,8 +310,9 @@ def load_emdat_events(cache_dir: Path) -> pl.DataFrame:
     Returns
     -------
     events : DataFrame
-        One row per recorded event, keyed by ``DisNo.``, carrying ``disaster_class`` and the renamed
-        damage columns.
+        One row per recorded event, keyed by ``DisNo.``, carrying ``disaster_class``, the renamed damage
+        columns, and ``date``, the first of the event's start month. An event whose month is missing
+        is dated to January.
 
     Examples
     --------
