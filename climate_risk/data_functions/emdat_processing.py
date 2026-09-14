@@ -28,7 +28,7 @@ EMDAT = ManualSource(
 )
 
 EM_DAT_COL_DICT = {
-    "Start Year": "date",
+    "Start Year": "start_year",
     "Total Deaths": "Deaths",
     "No. Injured": "Injured",
     "No. Affected": "Numb_Affected",
@@ -138,9 +138,13 @@ def _read_workbook(emdat_path: Path) -> pl.DataFrame:
             f"Re-download the database, or update EM_DAT_COL_DICT if the export has changed."
         )
 
-    return workbook.rename(EM_DAT_COL_DICT).with_columns(
-        pl.date(pl.col("date"), 1, 1).alias("date"),
-        pl.col("Disaster Type").replace_strict(DISASTER_CLASSES, default=None).alias("disaster_class"),
+    return (
+        workbook.rename(EM_DAT_COL_DICT)
+        .with_columns(
+            pl.date(pl.col("start_year"), 1, 1).alias("date"),
+            pl.col("Disaster Type").replace_strict(DISASTER_CLASSES, default=None).alias("disaster_class"),
+        )
+        .drop("start_year")
     )
 
 

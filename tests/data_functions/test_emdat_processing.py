@@ -92,6 +92,16 @@ def test_workbook_missing_a_column_names_it(write_emdat_cache):
         load_emdat_events(write_emdat_cache([event]))
 
 
+def test_the_event_date_is_built_from_the_year_the_workbook_gives(write_emdat_cache):
+    """The workbook dates an event by integer year, and everything downstream joins on a Date."""
+    cache_dir = write_emdat_cache([emdat_event({"Start Year": 1994, "End Year": 1994})])
+
+    events = load_emdat_events(cache_dir)
+
+    assert events["date"].to_list() == [date(1994, 1, 1)]
+    assert "start_year" not in events.columns
+
+
 def test_every_country_year_appears_even_without_events(write_emdat_cache):
     """Count models need zero-event country-years present as rows, not absent."""
     cache_dir = write_emdat_cache([emdat_event({"ISO": "AAA"}), emdat_event({"ISO": "BBB", "DisNo.": "1990-0002-BBB"})])
