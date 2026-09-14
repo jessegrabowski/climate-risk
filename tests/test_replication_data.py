@@ -14,6 +14,7 @@ from climate_risk.replication_data import _precipitation_deviation, create_repli
 from tests.conftest import (
     GPCC_CACHE_FILE,
     emdat_event,
+    seed_co2_cache,
     seed_ocean_heat_cache,
     seed_world_bank_cache,
     write_emdat_workbook,
@@ -90,9 +91,7 @@ def wide_cache(tmp_path_factory):
         for i, year in enumerate(YEARS)
     ]
     seed_world_bank_cache(tmp_path, world_bank)
-    pl.DataFrame(
-        {"Date": [date(year, 1, 1) for year in YEARS], "co2": [float(350 + i) for i in range(len(YEARS))]}
-    ).write_parquet(tmp_path / "co2.parquet")
+    seed_co2_cache(tmp_path, {year: float(350 + offset) for offset, year in enumerate(YEARS)})
     # A wave rather than a ramp, so STL has a trend to separate a deviation from.
     seed_ocean_heat_cache(
         tmp_path,

@@ -16,11 +16,11 @@ publisher. NOAA's CO2 record is one line of it:
 
 ```python
 CO2 = DataSource(
-    url="https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_annmean_mlo.csv",
-    filename="co2_annmean_mlo.csv",
+    url="https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.csv",
+    filename="co2_mm_mlo.csv",
     license="public domain (U.S. Government work, 17 U.S.C. 105)",
     citation="...",
-    retrieved="2026-08-05",
+    retrieved="2026-09-14",
 )
 ```
 

@@ -51,7 +51,7 @@ Raw downloads keep the filename their publisher uses, at the top of the cache:
 
 .. code-block:: text
 
-    co2_annmean_mlo.csv
+    co2_mm_mlo.csv
     HadCRUT.5.0.2.0.analysis.anomalies.ensemble_mean.nc
     emdat.xlsx
 

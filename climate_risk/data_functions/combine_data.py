@@ -123,8 +123,8 @@ def _total_precipitation(
     return by_country, worldwide
 
 
-def _keyed_by_year(series: pl.DataFrame) -> pl.DataFrame:
-    """Re-key an annual series onto the panel's year column. Both loaders date theirs to a year start."""
+def _keyed_by_date(series: pl.DataFrame) -> pl.DataFrame:
+    """Re-key a loader's series onto the panel's date column. Every loader dates a period to its first day."""
     return series.rename({"Date": SERIES_KEY}).sort(SERIES_KEY)
 
 
@@ -170,19 +170,22 @@ def total_precipitation(cache_dir: Path, *, frequency: AggregationFrequency = "a
     return by_country
 
 
-def build_time_series(cache_dir: Path) -> pl.DataFrame:
+def build_time_series(cache_dir: Path, *, frequency: AggregationFrequency = "annual") -> pl.DataFrame:
     """
-    Merge the worldwide annual series into one frame.
+    Merge the worldwide series into one frame.
 
     Parameters
     ----------
     cache_dir : Path
         Directory the source caches live under.
+    frequency : {'annual', 'quarterly', 'monthly'}, optional
+        How long one period runs. Ocean temperature is published annually and joins on the first
+        period of each year alone. Default ``'annual'``.
 
     Returns
     -------
     series : DataFrame
-        ``date``, CO2, ocean temperature and worldwide precipitation, one row per year.
+        ``date``, CO2, ocean temperature and worldwide precipitation, one row per period.
 
     Examples
     --------
@@ -194,11 +197,15 @@ def build_time_series(cache_dir: Path) -> pl.DataFrame:
 
         series = build_time_series(Path("data"))
     """
-    _, worldwide = _total_precipitation(_as_polars(load_gpcc_data(cache_dir)))
+    _, worldwide = _total_precipitation(_as_polars(load_gpcc_data(cache_dir)), frequency=frequency)
 
     return reduce(
         partial(_outer_join, on=SERIES_KEY),
-        [_keyed_by_year(load_co2_data(cache_dir)), _keyed_by_year(load_ocean_heat_data(cache_dir)), worldwide],
+        [
+            _keyed_by_date(load_co2_data(cache_dir, frequency=frequency)),
+            _keyed_by_date(load_ocean_heat_data(cache_dir)),
+            worldwide,
+        ],
     ).sort(SERIES_KEY)
 
 
