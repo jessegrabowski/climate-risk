@@ -62,7 +62,7 @@ def event_windows(events: pl.DataFrame, geography: pl.DataFrame) -> pl.DataFrame
     )
 
     return (
-        events.select("DisNo.", "ISO", pl.col("Start_Year").dt.year().alias("year"))
+        events.select("DisNo.", "ISO", pl.col("date").dt.year().alias("year"))
         .join(windows, on="DisNo.", how="left")
         .with_columns(
             pl.col("gids").list.len().alias("n_units"),

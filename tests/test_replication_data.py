@@ -10,10 +10,16 @@ import pytest
 
 from shapely.geometry import Point
 
-from climate_risk.replication_data import create_replication_data, model_frame
+from climate_risk.replication_data import (
+    _deviation_from_trend,
+    _precipitation_deviation,
+    create_replication_data,
+    model_frame,
+)
 from tests.conftest import (
     GPCC_CACHE_FILE,
     emdat_event,
+    seed_co2_cache,
     seed_ocean_heat_cache,
     seed_world_bank_cache,
     write_emdat_workbook,
@@ -90,9 +96,7 @@ def wide_cache(tmp_path_factory):
         for i, year in enumerate(YEARS)
     ]
     seed_world_bank_cache(tmp_path, world_bank)
-    pl.DataFrame(
-        {"Date": [date(year, 1, 1) for year in YEARS], "co2": [float(350 + i) for i in range(len(YEARS))]}
-    ).write_parquet(tmp_path / "co2.parquet")
+    seed_co2_cache(tmp_path, {year: float(350 + offset) for offset, year in enumerate(YEARS)})
     # A wave rather than a ramp, so STL has a trend to separate a deviation from.
     seed_ocean_heat_cache(
         tmp_path,
@@ -122,14 +126,14 @@ def replication(wide_cache):
 
 def row(frame: pl.DataFrame, iso: str, year: int) -> dict:
     """The one row for a country and year, as a plain mapping."""
-    match = frame.filter((pl.col("ISO") == iso) & (pl.col("year") == date(year, 1, 1)))
+    match = frame.filter((pl.col("ISO") == iso) & (pl.col("date") == date(year, 1, 1)))
 
     assert len(match) == 1, f"expected one row for {iso} {year}, got {len(match)}"
     return match.to_dicts()[0]
 
 
 def test_the_frame_is_one_row_per_country_and_year(replication):
-    assert not replication.select("ISO", "year").is_duplicated().any()
+    assert not replication.select("ISO", "date").is_duplicated().any()
 
 
 def test_only_countries_present_in_both_disaster_and_indicator_data_survive(replication):
@@ -141,7 +145,7 @@ def test_the_published_columns_are_all_present(replication):
     """Downstream models select by name, so a dropped column is a silent regression."""
     expected = {
         "ISO",
-        "year",
+        "date",
         "climatological_disasters",
         "hydrological_disasters",
         "population",
@@ -189,7 +193,7 @@ def test_a_country_with_no_climatological_damage_reports_none(replication):
 
 def test_a_country_year_with_no_disasters_stays_missing(replication):
     """A country-year with no record stays missing; summing it as a zero would erase the distinction."""
-    quiet = replication.filter(pl.col("year") == date(QUIET_YEAR, 1, 1))
+    quiet = replication.filter(pl.col("date") == date(QUIET_YEAR, 1, 1))
 
     assert len(quiet) == replication["ISO"].n_unique()
     assert quiet["hydrological_disasters"].is_null().all()
@@ -210,9 +214,40 @@ def test_precipitation_deviation_is_measured_against_the_named_baseline_period(r
     # AAA's precipitation runs 100 + 5i from 1955. The 1961-1990 window is i = 6..35 and averages
     # 202.5, so 1985 sits 47.5 above it; the record's first 30 years would average 172.5 and put it
     # at 77.5 instead.
-    sample = replication.filter((pl.col("ISO") == "AAA") & (pl.col("year") == date(1985, 1, 1)))
+    sample = replication.filter((pl.col("ISO") == "AAA") & (pl.col("date") == date(1985, 1, 1)))
 
     assert sample["precip_deviation"].to_list() == [pytest.approx(47.5)]
+
+
+def test_a_seasonal_cycle_leaves_no_deviation_at_monthly_resolution():
+    """Each month is centered on its own baseline mean, so a cycle that repeats every year is not an anomaly."""
+    cycle = [10.0 * month for month in range(1, 13)]
+    monthly = pl.DataFrame(
+        {
+            "ISO": ["AAA"] * 360,
+            "date": [date(year, month, 1) for year in range(1961, 1991) for month in range(1, 13)],
+            "precip": cycle * 30,
+        }
+    )
+
+    deviation = _precipitation_deviation(monthly, (1961, 1990))
+
+    assert deviation["precip_deviation"].abs().max() == pytest.approx(0.0)
+
+
+def test_a_baseline_short_of_one_month_is_refused():
+    """A March climatology drawn from 29 Marches would be published under the name of thirty."""
+    rows = [(year, month) for year in range(1961, 1991) for month in range(1, 13) if (year, month) != (1961, 3)]
+    monthly = pl.DataFrame(
+        {
+            "ISO": ["AAA"] * len(rows),
+            "date": [date(year, month, 1) for year, month in rows],
+            "precip": [1.0] * len(rows),
+        }
+    )
+
+    with pytest.raises(ValueError, match="29 of the 30 years"):
+        _precipitation_deviation(monthly, (1961, 1990))
 
 
 def test_a_baseline_the_record_does_not_cover_is_refused(wide_cache):
@@ -229,10 +264,35 @@ def test_the_ocean_temperature_deviation_is_residual_around_its_trend(replicatio
     assert deviations.abs().max() < 5.0
 
 
+def test_a_monthly_frame_carries_every_month_and_the_series_at_their_own_pace(wide_cache):
+    """CO2 is monthly, ocean heat quarterly, and the trend window still drops the first and last year."""
+    monthly = create_replication_data(wide_cache, frequency="monthly")
+    year = pl.col("date").dt.year()
+    aaa = monthly.filter((pl.col("ISO") == "AAA") & year.is_between(1986, 2019)).sort("date")
+
+    assert aaa.group_by(year).len()["len"].unique().to_list() == [12]
+    assert aaa["precip_deviation"].null_count() == 0
+    assert aaa["co2"].null_count() == 0
+    assert monthly.filter(year == 2020)["co2"].null_count() == len(monthly.filter(year == 2020))
+    quarter_months = aaa.filter(pl.col("dev_from_trend_ocean_temp").is_not_null())["date"].dt.month()
+    assert quarter_months.unique().sort().to_list() == [1, 4, 7, 10]
+
+
+def test_a_sub_annual_trend_leaves_the_quarterly_cycle_in_the_deviation():
+    """The record is quarterly below a year, so the trend must not absorb part of a four-row cycle."""
+    dates = [date(year, month, 1) for year in range(1990, 2010) for month in (1, 4, 7, 10)]
+    cycle = {1: 3.0, 4: -1.0, 7: -3.0, 10: 1.0}
+    climate = pl.DataFrame({"date": dates, "Temp": [0.5 * i + cycle[day.month] for i, day in enumerate(dates)]})
+
+    deviation = _deviation_from_trend(climate, frequency="monthly")["dev_from_trend_ocean_temp"].to_numpy()
+
+    assert deviation[4:] == pytest.approx(deviation[:-4], abs=1e-6)
+
+
 def paneled(rows) -> pl.DataFrame:
     """A panel carrying only the key and the two features the tests below select on."""
-    return pl.DataFrame(rows, schema=["ISO", "year", "ln_gdp_pc", "co2"], orient="row").with_columns(
-        pl.col("year").cast(pl.Date)
+    return pl.DataFrame(rows, schema=["ISO", "date", "ln_gdp_pc", "co2"], orient="row").with_columns(
+        pl.col("date").cast(pl.Date)
     )
 
 
@@ -250,7 +310,7 @@ def test_a_row_missing_a_feature_cannot_enter_the_model():
 
     rows, _ = model_frame(panel, bounded(["AAA"]), features=TWO_FEATURES)
 
-    assert rows["year"].to_list() == [date(2000, 1, 1)]
+    assert rows["date"].to_list() == [date(2000, 1, 1)]
 
 
 def test_a_null_in_a_column_the_caller_did_not_name_keeps_its_row():

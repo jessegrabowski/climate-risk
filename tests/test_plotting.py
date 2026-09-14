@@ -40,12 +40,12 @@ YEARS = pd.to_datetime(["1990", "1991", "1990", "1991"])
 
 @pytest.fixture
 def counts():
-    return pd.DataFrame({"ISO": ISO_CODES, "Start_Year": YEARS, "is_disaster": [1, 0, 1, 1]})
+    return pd.DataFrame({"ISO": ISO_CODES, "date": YEARS, "is_disaster": [1, 0, 1, 1]})
 
 
 @pytest.fixture
 def damages():
-    return pd.DataFrame({"ISO": ISO_CODES, "year": YEARS, "damage_millions": [1.0, 2.0, 3.0, 4.0]})
+    return pd.DataFrame({"ISO": ISO_CODES, "date": YEARS, "damage_millions": [1.0, 2.0, 3.0, 4.0]})
 
 
 def _posterior_predictive(name):

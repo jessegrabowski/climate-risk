@@ -68,6 +68,17 @@ returns the frame the loader caches.
     ~partner_activity.transform_partner_activity
     ~pwt.transform_pwt
 
+Aggregating over time
+---------------------
+
+Loaders that publish below a year take a ``frequency`` and average each period. The vocabulary is
+shared with the panel builders, so a monthly panel and a monthly CO2 series land on the same dates.
+
+.. autosummary::
+    :toctree: generated/
+
+    ~frequency.mean_by_period
+
 Constant dollars
 ----------------
 

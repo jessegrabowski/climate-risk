@@ -8,6 +8,7 @@ from typing import NamedTuple
 import polars as pl
 
 from climate_risk.config.schema import EventFilters
+from climate_risk.data.frequency import AGGREGATION_INTERVALS, AggregationFrequency
 from climate_risk.data.source import ManualSource
 from climate_risk.exceptions import DataValidationError
 
@@ -28,7 +29,7 @@ EMDAT = ManualSource(
 )
 
 EM_DAT_COL_DICT = {
-    "Start Year": "Start_Year",
+    "Start Year": "start_year",
     "Total Deaths": "Deaths",
     "No. Injured": "Injured",
     "No. Affected": "Numb_Affected",
@@ -64,7 +65,9 @@ DISASTER_TYPES = tuple(DISASTER_CLASSES)
 
 # Columns read before any rename. Nothing detects upstream schema drift, so this check is the
 # earliest point a changed export becomes a named error rather than a missing attribute.
-REQUIRED_EMDAT_COLUMNS = {"ISO", "Region", "Subregion", "Disaster Type", "GADM Admin Units"} | set(EM_DAT_COL_DICT)
+REQUIRED_EMDAT_COLUMNS = {"ISO", "Start Month", "Region", "Subregion", "Disaster Type", "GADM Admin Units"} | set(
+    EM_DAT_COL_DICT
+)
 
 # EM-DAT writes empty strings, not blank cells: undeclared, a numeric column that nothing fills reads
 # as text, and totalling it then raises. An export narrow enough to price no event at all is ordinary
@@ -138,13 +141,22 @@ def _read_workbook(emdat_path: Path) -> pl.DataFrame:
             f"Re-download the database, or update EM_DAT_COL_DICT if the export has changed."
         )
 
-    return workbook.rename(EM_DAT_COL_DICT).with_columns(
-        pl.date(pl.col("Start_Year"), 1, 1).alias("Start_Year"),
-        pl.col("Disaster Type").replace_strict(DISASTER_CLASSES, default=None).alias("disaster_class"),
+    return (
+        workbook.rename(EM_DAT_COL_DICT)
+        .with_columns(
+            pl.date(pl.col("start_year"), pl.col("Start Month").fill_null(1), 1).alias("date"),
+            pl.col("Disaster Type").replace_strict(DISASTER_CLASSES, default=None).alias("disaster_class"),
+        )
+        .drop("start_year")
     )
 
 
-def country_year_grid(events: pl.DataFrame, *, window_start: dt.date = EMDAT_WINDOW_START) -> pl.DataFrame:
+def country_grid(
+    events: pl.DataFrame,
+    *,
+    window_start: dt.date = EMDAT_WINDOW_START,
+    frequency: AggregationFrequency = "annual",
+) -> pl.DataFrame:
     """
     Cross every country with every year in the window, carrying each country's region.
 
@@ -157,23 +169,25 @@ def country_year_grid(events: pl.DataFrame, *, window_start: dt.date = EMDAT_WIN
         The workbook, as :func:`load_emdat_events` returns it.
     window_start : datetime.date, optional
         First year of the panel. Default ``EMDAT_WINDOW_START``.
+    frequency : {'annual', 'quarterly', 'monthly'}, optional
+        How long one period of the grid runs. Default ``'annual'``.
 
     Returns
     -------
     grid : DataFrame
-        ``ISO``, ``Start_Year``, ``Region`` and ``Subregion``, sorted by country and year.
+        ``ISO``, ``date``, ``Region`` and ``Subregion``, sorted by country and year.
 
     Examples
     --------
     .. code-block:: python
 
-        from climate_risk.data_functions.emdat_processing import country_year_grid
+        from climate_risk.data_functions.emdat_processing import country_grid
 
-        grid = country_year_grid(events)
+        grid = country_grid(events)
     """
-    newest_event = events["Start_Year"].max()
+    newest_event = events["date"].max()
     if not isinstance(newest_event, dt.date):
-        raise ValueError("Every Start_Year in the workbook is missing, so the window has no end.")
+        raise ValueError("Every date in the workbook is missing, so the window has no end.")
 
     if window_start > newest_event:
         raise ValueError(
@@ -181,28 +195,30 @@ def country_year_grid(events: pl.DataFrame, *, window_start: dt.date = EMDAT_WIN
             f"({newest_event}), so every output frame would be empty."
         )
 
-    years: pl.Series = pl.date_range(window_start, newest_event, interval="1y", eager=True)
+    periods: pl.Series = pl.date_range(
+        window_start, newest_event, interval=AGGREGATION_INTERVALS[frequency], eager=True
+    )
 
     regions = events.select("ISO", "Region", "Subregion").unique(subset="ISO", keep="first")
 
     return (
         events.select(pl.col("ISO").unique())
-        .join(years.alias("Start_Year").to_frame(), how="cross")
+        .join(periods.alias("date").to_frame(), how="cross")
         .join(regions, on="ISO", how="left")
-        .sort("ISO", "Start_Year")
+        .sort("ISO", "date")
     )
 
 
 def count_events_by_type(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFrame:
     """
-    Count events per country, year and disaster type, over every row of ``grid``.
+    Count events per country, period and disaster type, over every row of ``grid``.
 
     Parameters
     ----------
     events : DataFrame
         Events to count, already narrowed to whichever ones should be counted.
     grid : DataFrame
-        The country-year panel from :func:`country_year_grid`.
+        The country-year panel from :func:`country_grid`.
 
     Returns
     -------
@@ -214,36 +230,36 @@ def count_events_by_type(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFra
     --------
     .. code-block:: python
 
-        from climate_risk.data_functions.emdat_processing import count_events_by_type, country_year_grid
+        from climate_risk.data_functions.emdat_processing import count_events_by_type, country_grid
 
-        counts = count_events_by_type(events, country_year_grid(events))
+        counts = count_events_by_type(events, country_grid(events))
     """
     counted = (
         events.filter(pl.col("Disaster Type").is_in(DISASTER_TYPES))
-        .group_by("ISO", "Start_Year", "Disaster Type")
+        .group_by("ISO", "date", "Disaster Type")
         .len()
         .with_columns(pl.col("len").cast(COUNT_DTYPE))
-        .pivot(on="Disaster Type", index=["ISO", "Start_Year"], values="len")
+        .pivot(on="Disaster Type", index=["ISO", "date"], values="len")
     )
     absent = [pl.lit(None, dtype=COUNT_DTYPE).alias(name) for name in DISASTER_TYPES if name not in counted.columns]
 
     return (
-        grid.join(counted.with_columns(absent), on=["ISO", "Start_Year"], how="left")
-        .select("ISO", "Start_Year", "Region", "Subregion", *DISASTER_TYPES)
-        .sort("ISO", "Start_Year")
+        grid.join(counted.with_columns(absent), on=["ISO", "date"], how="left")
+        .select("ISO", "date", "Region", "Subregion", *DISASTER_TYPES)
+        .sort("ISO", "date")
     )
 
 
 def total_damage(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFrame:
     """
-    Total each damage measure per country and year, over every row of ``grid``.
+    Total each damage measure per country and period, over every row of ``grid``.
 
     Parameters
     ----------
     events : DataFrame
         Events to total, already narrowed to whichever ones should count.
     grid : DataFrame
-        The country-year panel from :func:`country_year_grid`.
+        The country-year panel from :func:`country_grid`.
 
     Returns
     -------
@@ -254,13 +270,13 @@ def total_damage(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFrame:
     --------
     .. code-block:: python
 
-        from climate_risk.data_functions.emdat_processing import country_year_grid, total_damage
+        from climate_risk.data_functions.emdat_processing import country_grid, total_damage
 
-        damage = total_damage(events, country_year_grid(events))
+        damage = total_damage(events, country_grid(events))
     """
     totals = (
         events.filter(pl.col("Disaster Type").is_in(DISASTER_TYPES))
-        .group_by("ISO", "Start_Year")
+        .group_by("ISO", "date")
         # polars totals a group of nothing but nulls to zero, which would price these events at nothing
         # rather than report that nobody priced them.
         .agg(
@@ -270,9 +286,9 @@ def total_damage(events: pl.DataFrame, grid: pl.DataFrame) -> pl.DataFrame:
     )
 
     return (
-        grid.join(totals, on=["ISO", "Start_Year"], how="left")
-        .select("ISO", "Start_Year", *DAMAGE_VARS, "Region", "Subregion")
-        .sort("ISO", "Start_Year")
+        grid.join(totals, on=["ISO", "date"], how="left")
+        .select("ISO", "date", *DAMAGE_VARS, "Region", "Subregion")
+        .sort("ISO", "date")
     )
 
 
@@ -290,8 +306,9 @@ def load_emdat_events(cache_dir: Path) -> pl.DataFrame:
     Returns
     -------
     events : DataFrame
-        One row per recorded event, keyed by ``DisNo.``, carrying ``disaster_class`` and the renamed
-        damage columns.
+        One row per recorded event, keyed by ``DisNo.``, carrying ``disaster_class``, the renamed damage
+        columns, and ``date``, the first of the event's start month. An event whose month is missing
+        is dated to January.
 
     Examples
     --------
@@ -787,10 +804,10 @@ def event_filter(filters: EventFilters) -> pl.Expr:
         laos = load_place("lao")
         counted = events.filter(event_filter(laos.event_filters))
     """
-    counts = pl.col("Start_Year") >= pl.date(filters.start_year, 1, 1)
+    counts = pl.col("date") >= pl.date(filters.start_year, 1, 1)
 
     if filters.end_year is not None:
-        counts = counts & (pl.col("Start_Year") <= pl.date(filters.end_year, 12, 31))
+        counts = counts & (pl.col("date") <= pl.date(filters.end_year, 12, 31))
 
     if filters.min_total_affected is not None:
         counts = counts & (pl.col("Total_Affected") > filters.min_total_affected)

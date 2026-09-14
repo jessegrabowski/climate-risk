@@ -32,6 +32,7 @@ EMDAT_EVENT_DEFAULTS = {
     "Subregion": "South-eastern Asia",
     "Disaster Type": "Flood",
     "Start Year": 1990,
+    "Start Month": 1,
     "End Year": 1990,
     "Total Deaths": 500,
     "No. Injured": 10,
@@ -260,6 +261,22 @@ def seed_world_bank_cache(cache_dir, rows):
         world_bank.load_wb_data(cache_dir)
 
 
+def seed_co2_cache(cache_dir, annual_means):
+    """
+    Write the processed CO2 cache, holding each year flat at its mean.
+
+    The loader keeps a period only when every month of it is present, so each year is written as
+    twelve months of the same value and its annual mean reads back as that value. The cache key is
+    stated literally, so a wrong one fails rather than agreeing with itself.
+    """
+    pl.DataFrame(
+        {
+            "Date": [date(year, month, 1) for year in annual_means for month in range(1, 13)],
+            "co2": [level for level in annual_means.values() for _ in range(12)],
+        }
+    ).write_parquet(cache_dir / "co2__resolution=monthly.parquet")
+
+
 def seed_ocean_heat_cache(cache_dir, annual):
     """
     Write ``annual`` into the ocean heat cache, as the seasonal file NCEI publishes.
@@ -311,6 +328,7 @@ def write_merge_cache(cache_dir):
                 "ISO": "AAA",
                 "DisNo.": "AAA-landslide",
                 "Start Year": 1991,
+                "Start Month": 9,
                 "End Year": 1991,
                 "Disaster Type": "Mass movement (wet)",
             }
@@ -330,10 +348,7 @@ def write_merge_cache(cache_dir):
             ("EEE", 1991, 4400.0, 44.0, 4040000),
         ],
     )
-    # The cache key is stated literally, so a wrong one fails rather than agreeing with itself.
-    pl.DataFrame({"Date": [date(1990, 1, 1), date(1991, 1, 1)], "co2": [354.0, 355.0]}).write_parquet(
-        cache_dir / "co2.parquet"
-    )
+    seed_co2_cache(cache_dir, {1990: 354.0, 1991: 355.0})
     seed_ocean_heat_cache(cache_dir, pl.DataFrame({"Date": [date(1990, 1, 1), date(1991, 1, 1)], "Temp": [1.0, 2.0]}))
     # GPCC publishes monthly, and only whole years survive the annual total, so each year here
     # carries all twelve months. A total stays distinguishable from an average.
