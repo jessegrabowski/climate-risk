@@ -58,7 +58,7 @@ def test_a_country_year_with_no_indicators_still_reaches_the_panel(panel):
     """The panel spans the event filter's window; the indicators cover 1990-91 alone."""
     early = panel.filter(pl.col("Start_Year") == date(1985, 1, 1))
 
-    assert len(early) > 0
+    assert len(early) == panel["ISO"].n_unique()
     assert early["gdp_per_cap_usd"].is_null().all()
 
 
