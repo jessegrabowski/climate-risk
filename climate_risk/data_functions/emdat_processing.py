@@ -3,11 +3,12 @@ import json
 import re
 
 from pathlib import Path
-from typing import Literal, NamedTuple
+from typing import NamedTuple
 
 import polars as pl
 
 from climate_risk.config.schema import EventFilters
+from climate_risk.data.frequency import AGGREGATION_INTERVALS, AggregationFrequency
 from climate_risk.data.source import ManualSource
 from climate_risk.exceptions import DataValidationError
 
@@ -44,12 +45,6 @@ EM_DAT_COL_DICT = {
 
 # The study window opens in 1969 and closes on the newest event in the workbook.
 EMDAT_WINDOW_START = dt.date(1969, 1, 1)
-
-# How coarsely a panel counts. The values are the interval polars wants, which both `date_range`
-# and `Expr.dt.truncate` read, so one string builds the grid and lands the events on it.
-AggregationFrequency = Literal["annual", "quarterly", "monthly"]
-AGGREGATION_INTERVALS: dict[AggregationFrequency, str] = {"annual": "1y", "quarterly": "1q", "monthly": "1mo"}
-MONTHS_PER_PERIOD: dict[AggregationFrequency, int] = {"annual": 12, "quarterly": 3, "monthly": 1}
 
 HYDROMETEOROLOGICAL = "Hydrometeorological"
 CLIMATOLOGICAL = "Climatological"
