@@ -4,13 +4,16 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from arviz_plots import PlotCollection, plot_dist, plot_ppc_pit, plot_ppc_rootogram
+from arviz_plots import plot_dist, plot_ppc_rootogram
 from preliz.distributions.distributions import Continuous
 
 from climate_risk.plotting import PALETTE
 
 STATISTICS = ["zero share", "mean", "max"]
 INTERVALS = np.linspace(0.05, 0.95, 25)
+NOMINAL_WIDTHS = np.linspace(0.01, 0.99, 99)
+ENVELOPE_DRAWS = 500
+ENVELOPE_PROB = 0.99
 
 
 def summarize(idata: xr.DataTree, names: list[str]) -> pd.DataFrame:
@@ -69,8 +72,33 @@ def plot_rootograms(idata: xr.DataTree, counts: pd.DataFrame, classes: list[str]
     plt.show()
 
 
-def plot_coverage(idata: xr.DataTree, iso: np.ndarray, classes: list[str]) -> None:
-    """Coverage of the central predictive intervals per country-year, and per country total."""
+def coverage_minus_nominal(predictive: xr.DataArray,
+                           observed: xr.DataArray,
+                           nominal: np.ndarray,
+                           rng: np.random.Generator) -> np.ndarray:
+    """Share of observations inside each central predictive interval, less the nominal share.
+
+    Counts are discrete, so the probability integral transform is randomized within the atom at the observed
+    value, which makes it uniform under a calibrated model.
+    """
+    below = (predictive < observed).mean(dim=("chain", "draw"))
+    at = (predictive == observed).mean(dim=("chain", "draw"))
+    pit = below + rng.uniform(size=below.shape) * at
+    width = 2 * np.abs(pit - 0.5)
+
+    return np.array([(width <= level).mean().item() for level in nominal]) - nominal
+
+
+def plot_coverage(idata: xr.DataTree, iso: np.ndarray, classes: list[str], seed: int = 0) -> None:
+    """Coverage of the central predictive intervals per country-year, and per country total.
+
+    The envelope is the pointwise band of the same curve computed from uniform draws, which is what a calibrated
+    model would produce with that many observations.
+    """
+    # arviz_plots.plot_ppc_pit(coverage=True) evaluates its ECDF on the range of the PIT values instead of [0, 1]
+    # (arviz-stats issue 450), so the curve is built here.
+    rng = np.random.default_rng(seed)
+    nominal = NOMINAL_WIDTHS
     by_iso = xr.DataArray(iso, dims="obs_idx", name="iso")
     levels = {
         "country-year": (idata.posterior_predictive["y"], idata.observed_data["y"]),
@@ -78,31 +106,31 @@ def plot_coverage(idata: xr.DataTree, iso: np.ndarray, classes: list[str]) -> No
                           idata.observed_data["y"].groupby(by_iso).sum()),
     }
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 7))
+    fig, axes = plt.subplots(2, 2, figsize=(12, 7), sharex=True)
 
     for (level, (predictive, observed)), row in zip(levels.items(), axes, strict=True):
+        n_observations = observed.isel(disaster=0).size
+        uniform_width = 2 * np.abs(rng.uniform(size=(ENVELOPE_DRAWS, n_observations)) - 0.5)
+        envelope = np.stack([(uniform_width <= level).mean(axis=1) - level for level in nominal], axis=1)
+        low, high = np.quantile(envelope, [(1 - ENVELOPE_PROB) / 2, (1 + ENVELOPE_PROB) / 2], axis=0)
+
         for disaster, axis in zip(classes, row, strict=True):
-            tree = xr.DataTree.from_dict({
-                "posterior_predictive": predictive.sel(disaster=disaster, drop=True).to_dataset(name="y"),
-                "observed_data": observed.sel(disaster=disaster, drop=True).to_dataset(name="y"),
-            })
-            # plot_ppc_pit draws into whatever axis its collection holds, so each panel gets a collection
-            # wrapped around one subplot.
-            viz = xr.DataTree.from_dict({"/": xr.Dataset({"figure": xr.DataArray(np.array(fig, dtype=object))}),
-                                         "plot": xr.Dataset({"y": xr.DataArray(np.array(axis, dtype=object))})})
-            collection = PlotCollection(tree["posterior_predictive"].to_dataset(), viz, backend="matplotlib")
-            plot_ppc_pit(tree,
-                         var_names="y",
-                         coverage=True,
-                         plot_collection=collection,
-                         visuals={"title": False, "p_value_text": False, "xlabel": False, "ylabel": False})
+            curve = coverage_minus_nominal(predictive.sel(disaster=disaster, drop=True),
+                                           observed.sel(disaster=disaster, drop=True),
+                                           nominal,
+                                           rng)
+            axis.fill_between(100 * nominal, low, high, color=PALETTE["primary"], alpha=0.15, linewidth=0)
+            axis.plot(100 * nominal, curve, color=PALETTE["primary"])
+            axis.axhline(0, color=PALETTE["observed"], linewidth=1, linestyle="--")
             axis.set_title(f"{disaster}, per {level}", loc="left")
 
     for axis in axes[-1]:
         axis.set_xlabel("interval width (%)")
     for axis in axes[:, 0]:
         axis.set_ylabel("coverage minus nominal")
-    fig.suptitle("Interval coverage against nominal, with the 99% simultaneous envelope", x=0.01, ha="left")
+    fig.suptitle(f"Interval coverage against nominal, with the {ENVELOPE_PROB:.0%} envelope of a calibrated model",
+                 x=0.01,
+                 ha="left")
     plt.show()
 
 
