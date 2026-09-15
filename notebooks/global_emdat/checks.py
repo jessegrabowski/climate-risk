@@ -134,6 +134,17 @@ def plot_coverage(idata: xr.DataTree, iso: np.ndarray, classes: list[str], seed:
     plt.show()
 
 
+def plot_walk(axis: plt.Axes, years: list[int], draws: xr.DataArray, title: str) -> None:
+    """Stacked central intervals of a walk over years, with its mean and a zero line, on one axis."""
+    for prob in INTERVALS[::-1]:
+        low, high = draws.quantile([(1 - prob) / 2, (1 + prob) / 2], dim="sample").to_numpy()
+        axis.fill_between(years, low, high, color=PALETTE["primary"], alpha=0.08, linewidth=0)
+
+    axis.plot(years, draws.mean(dim="sample"), color=PALETTE["primary"])
+    axis.axhline(0, color=PALETTE["observed"], linewidth=1, linestyle="--")
+    axis.set_title(title, loc="left")
+
+
 def plot_posterior_with_prior(posterior: xr.Dataset, priors: dict[str, Continuous], n_cols: int = 4) -> plt.Figure:
     """Facet one KDE per named parameter, with its prior's density drawn over it."""
     n_rows = -(-len(priors) // n_cols)
