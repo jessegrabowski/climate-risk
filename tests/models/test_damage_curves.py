@@ -16,7 +16,7 @@ from climate_risk.models.damage_curves import (
 PANEL = pl.DataFrame(
     {
         "ISO": ["AAA", "AAA", "BBB", "BBB"],
-        "year": [2000, 2001, 2000, 2002],
+        "date": [2000, 2001, 2000, 2002],
         "ln_population_density": [1.0, 1.1, 2.0, 2.2],
         "ln_gdp_pc": [3.0, 3.1, 4.0, 4.2],
         "square_ln_gdp_pc": [9.0, 9.61, 16.0, 17.64],
@@ -89,7 +89,7 @@ def test_future_mu_combines_country_effect_and_standardized_features():
     # StandardScaler fit on f1=[-1,1] gives mean 0, std 1; on f2=[-2,2] gives mean 0, std 2. So the
     # future row (f1=1.0, f2=-2.0) standardizes to (1.0, -1.0).
     historical_panel = pl.DataFrame(
-        {"ISO": ["AAA", "AAA"], "year": [2000, 2001], "f1": [-1.0, 1.0], "f2": [-2.0, 2.0], "target": [0.0, 0.0]}
+        {"ISO": ["AAA", "AAA"], "date": [2000, 2001], "f1": [-1.0, 1.0], "f2": [-2.0, 2.0], "target": [0.0, 0.0]}
     )
     future_covariates = pl.DataFrame({"ISO": ["AAA"], "year": [2030], "f1": [1.0], "f2": [-2.0]})
     posterior = xr.Dataset(
@@ -134,7 +134,7 @@ def _future_country_idata(*, beta_len, country_effect, psi, **extra):
 _HISTORICAL_PANEL = pl.DataFrame(
     {
         "ISO": ["AAA", "AAA"],
-        "year": [2000, 2001],
+        "date": [2000, 2001],
         frequency.TARGET: [0.0, 0.0],
         damage.TARGET: [0.0, 0.0],
         **{feature: [-1.0, 1.0] for feature in frequency.FEATURES},

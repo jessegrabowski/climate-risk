@@ -28,7 +28,7 @@ def _historical_row(
 ) -> dict:
     return {
         "ISO": iso,
-        "year": date(year, 1, 1),
+        "date": date(year, 1, 1),
         "population": population,
         "ln_population_density": ln_population_density,
         "ln_gdp_pc": ln_gdp_pc,

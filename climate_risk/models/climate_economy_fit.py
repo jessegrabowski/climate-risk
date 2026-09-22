@@ -12,7 +12,7 @@ from preliz.distributions.distributions import Distribution
 
 from climate_risk.data.pwt import load_pwt_data
 from climate_risk.data.world_bank import load_wb_data
-from climate_risk.data_functions.combine_data import build_country_year_panel, build_time_series
+from climate_risk.data_functions.combine_data import build_country_panel, build_time_series
 from climate_risk.models.climate_economy import OBSERVED, PREINDUSTRIAL_CO2_PPM, SHOCKS, ClimateEconomy
 from climate_risk.sample import sample_or_load
 
@@ -163,14 +163,14 @@ def build_observed_series(*, iso: str, frontier: str, cache_dir: Path, start: st
 
         series = build_observed_series(iso="NPL", frontier="USA", cache_dir=Path("data"), start="1990")
     """
-    time_series = build_time_series(cache_dir).to_pandas().set_index("year")
-    panel = build_country_year_panel(cache_dir).to_pandas()
+    time_series = build_time_series(cache_dir).to_pandas().set_index("date")
+    panel = build_country_panel(cache_dir).to_pandas()
     pwt = load_pwt_data(cache_dir).to_pandas()
     pwt["year"] = pd.to_datetime(pwt["year"], format="%Y")
 
     country = (
         panel.loc[panel["ISO"] == iso]
-        .set_index("Start_Year")[["real_gdp_usd", "population", "precip"]]
+        .set_index("date")[["real_gdp_usd", "population", "precip"]]
         .rename_axis("year")
         .sort_index()
     )

@@ -8,7 +8,7 @@ import xarray as xr
 from statsmodels.tsa.seasonal import STL
 
 from climate_risk.data.world_bank import load_wb_data
-from climate_risk.data_functions.combine_data import annual_precipitation, build_time_series
+from climate_risk.data_functions.combine_data import build_time_series, total_precipitation
 from climate_risk.replication_data import CLIMATOLOGY_BASELINE
 
 # The seasonal period replication_data.py fits the historical ocean-heat trend with. Extending the
@@ -31,9 +31,9 @@ FUTURE_COVARIATE_COLUMNS = [
 
 def _baseline_precip(iso: str, cache_dir: Path) -> float:
     """A country's mean annual precipitation over the climatology baseline, in GPCC's own units."""
-    precip = annual_precipitation(cache_dir).to_pandas()
+    precip = total_precipitation(cache_dir).to_pandas()
     first, last = CLIMATOLOGY_BASELINE
-    block = precip.loc[(precip["ISO"] == iso) & (precip["year"].dt.year.between(first, last))]
+    block = precip.loc[(precip["ISO"] == iso) & (precip["date"].dt.year.between(first, last))]
 
     return float(block["precip"].mean())
 
@@ -59,7 +59,7 @@ def _dev_from_trend_ocean_temp(temp_std_forecast: pd.Series, cache_dir: Path) ->
     it (centred and scaled by the historical series' own mean and standard deviation), so it is
     converted back to raw units before joining the two.
     """
-    time_series = build_time_series(cache_dir).to_pandas().set_index("year")
+    time_series = build_time_series(cache_dir).to_pandas().set_index("date")
     ocean_heat = time_series["Temp"].dropna()
 
     forecast_raw = temp_std_forecast * ocean_heat.std() + ocean_heat.mean()
@@ -122,8 +122,8 @@ def project_future_covariates(
             cache_dir=cache_dir,
         )
     """
-    historical = historical_panel.filter((pl.col("ISO") == iso) & (pl.col("year").dt.year().is_in(target_years)))
-    historical_years = set(historical["year"].dt.year().to_list())
+    historical = historical_panel.filter((pl.col("ISO") == iso) & (pl.col("date").dt.year().is_in(target_years)))
+    historical_years = set(historical["date"].dt.year().to_list())
     forecast_years = [year for year in target_years if year not in historical_years]
 
     density_per_capita = _density_per_capita(iso, cache_dir)
@@ -133,7 +133,7 @@ def project_future_covariates(
     # it rather than silently dropping the row's contribution to the linear predictor.
     historical_rows = historical.select(
         "ISO",
-        pl.col("year").dt.year().cast(pl.Int64),
+        pl.col("date").dt.year().cast(pl.Int64).alias("year"),
         "population",
         pl.when(pl.col("ln_population_density").is_not_null())
         .then(pl.col("ln_population_density"))

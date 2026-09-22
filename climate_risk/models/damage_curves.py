@@ -76,8 +76,8 @@ def simulate_country_damage(
     freq_rows = _prepare_frequency_panel(panel)
     damage_rows = _prepare_damage_panel(panel)
 
-    freq_years = freq_rows.loc[freq_rows["ISO"] == iso, "year"]
-    damage_years = damage_rows.loc[damage_rows["ISO"] == iso, "year"]
+    freq_years = freq_rows.loc[freq_rows["ISO"] == iso, "date"]
+    damage_years = damage_rows.loc[damage_rows["ISO"] == iso, "date"]
 
     common_years = sorted(set(freq_years) & set(damage_years))
     if not common_years:
