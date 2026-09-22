@@ -26,7 +26,7 @@ Quick example
     cache_dir = Path("data")
 
     co2 = cr.load_co2_data(cache_dir)
-    panel = cr.build_country_year_panel(cache_dir)
+    panel = cr.build_country_panel(cache_dir)
 
 ``load_co2_data`` downloads its source on the first call and reads the cache on every later one, so
 a warm run never touches the network. Loaders whose upstream forbids automated download raise

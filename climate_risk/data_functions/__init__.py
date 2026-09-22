@@ -5,17 +5,16 @@ from climate_risk.data.ipcc import process_ipcc_scenarios
 from climate_risk.data.ocean_heat import load_ocean_heat_data
 from climate_risk.data.world_bank import load_wb_data
 from climate_risk.data_functions.combine_data import (
-    annual_precipitation,
-    build_country_year_panel,
+    build_country_panel,
     build_time_series,
+    total_precipitation,
 )
 from climate_risk.data_functions.emdat_processing import load_emdat_events
 from climate_risk.data_functions.rivers_data_loader import load_rivers_data
 from climate_risk.data_functions.shapefiles_data_loader import load_shapefile
 
 __all__ = [
-    "annual_precipitation",
-    "build_country_year_panel",
+    "build_country_panel",
     "build_time_series",
     "load_co2_data",
     "load_emdat_events",
@@ -26,4 +25,5 @@ __all__ = [
     "load_shapefile",
     "load_wb_data",
     "process_ipcc_scenarios",
+    "total_precipitation",
 ]

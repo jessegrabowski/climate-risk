@@ -50,13 +50,13 @@ minutes on a cold cache. It is downloaded once.
 Load a country panel
 --------------------
 
-:func:`~climate_risk.data_functions.combine_data.build_country_year_panel` is the modeling frame:
+:func:`~climate_risk.data_functions.combine_data.build_country_panel` is the modeling frame:
 disaster counts and damages from EM-DAT, development indicators from the World Bank, and annual
 precipitation, on one row per country and year.
 
 .. code-block:: python
 
-    panel = cr.build_country_year_panel(cache_dir)
+    panel = cr.build_country_panel(cache_dir)
 
 This one needs EM-DAT, which cannot be downloaded by code. On a cache that does not have it the call
 raises and tells you where to get the file and where to put it:

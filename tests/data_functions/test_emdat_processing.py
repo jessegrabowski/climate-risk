@@ -18,7 +18,7 @@ from climate_risk.data_functions.emdat_processing import (
     TEXT_UNIT_SCHEMA,
     NamedPlace,
     count_events_by_type,
-    country_year_grid,
+    country_grid,
     event_filter,
     event_geography,
     event_units,
@@ -41,7 +41,7 @@ def count_panel(cache_dir, *, filters=None, window_start=EMDAT_WINDOW_START):
     raw = load_emdat_events(cache_dir)
     events = raw.filter(event_filter(filters or EventFilters()))
 
-    return count_events_by_type(events, country_year_grid(raw, window_start=window_start))
+    return count_events_by_type(events, country_grid(raw, window_start=window_start))
 
 
 WINDOW_START = date(1969, 1, 1)
@@ -49,7 +49,7 @@ WINDOW_START = date(1969, 1, 1)
 
 def row(frame: pl.DataFrame, iso: str, year: str) -> dict:
     """The one row for a country and year, as a plain mapping."""
-    match = frame.filter((pl.col("ISO") == iso) & (pl.col("Start_Year") == date.fromisoformat(year)))
+    match = frame.filter((pl.col("ISO") == iso) & (pl.col("date") == date.fromisoformat(year)))
 
     assert len(match) == 1, f"expected one row for {iso} {year}, got {len(match)}"
     return match.to_dicts()[0]
@@ -92,6 +92,40 @@ def test_workbook_missing_a_column_names_it(write_emdat_cache):
         load_emdat_events(write_emdat_cache([event]))
 
 
+def test_the_event_date_is_built_from_the_year_and_month_the_workbook_gives(write_emdat_cache):
+    """The workbook dates an event by integer year and month; everything downstream joins on a Date."""
+    cache_dir = write_emdat_cache([emdat_event({"Start Year": 1994, "Start Month": 7, "End Year": 1994})])
+
+    events = load_emdat_events(cache_dir)
+
+    assert events["date"].to_list() == [date(1994, 7, 1)]
+    assert "start_year" not in events.columns
+
+
+def test_an_event_whose_month_is_missing_is_dated_to_january(write_emdat_cache):
+    """EM-DAT leaves the month off some events. A null date would drop them from every count."""
+    cache_dir = write_emdat_cache([emdat_event({"Start Year": 1994, "Start Month": None, "End Year": 1994})])
+
+    assert load_emdat_events(cache_dir)["date"].to_list() == [date(1994, 1, 1)]
+
+
+@pytest.mark.parametrize(
+    ("frequency", "periods"),
+    [
+        ("annual", [date(1990, 1, 1)]),
+        ("quarterly", [date(1990, 1, 1), date(1990, 4, 1), date(1990, 7, 1), date(1990, 10, 1)]),
+        ("monthly", [date(1990, month, 1) for month in range(1, 13)]),
+    ],
+)
+def test_the_grid_runs_one_period_per_step_of_its_frequency(write_emdat_cache, frequency, periods):
+    """The grid closes on the newest event, so a December event opens every period of its year."""
+    cache_dir = write_emdat_cache([emdat_event({"Start Year": 1990, "Start Month": 12, "End Year": 1990})])
+
+    grid = country_grid(load_emdat_events(cache_dir), window_start=date(1990, 1, 1), frequency=frequency)
+
+    assert grid["date"].to_list() == periods
+
+
 def test_every_country_year_appears_even_without_events(write_emdat_cache):
     """Count models need zero-event country-years present as rows, not absent."""
     cache_dir = write_emdat_cache([emdat_event({"ISO": "AAA"}), emdat_event({"ISO": "BBB", "DisNo.": "1990-0002-BBB"})])
@@ -99,9 +133,9 @@ def test_every_country_year_appears_even_without_events(write_emdat_cache):
     events = count_panel(cache_dir)
     years = range(WINDOW_START.year, 1991)
 
-    assert events.columns[:2] == ["ISO", "Start_Year"]
+    assert events.columns[:2] == ["ISO", "date"]
     assert set(events["ISO"]) == {"AAA", "BBB"}
-    assert events["Start_Year"].n_unique() == len(years)
+    assert events["date"].n_unique() == len(years)
     assert len(events) == 2 * len(years)
 
 
@@ -110,7 +144,7 @@ def test_window_start_can_be_overridden(write_emdat_cache):
 
     years = count_panel(cache_dir, window_start=date(1985, 1, 1))
 
-    assert years["Start_Year"].min() == date(1985, 1, 1)
+    assert years["date"].min() == date(1985, 1, 1)
 
 
 def test_window_start_after_the_newest_event_is_rejected(write_emdat_cache):
@@ -314,12 +348,12 @@ def test_damage_totals_sum_within_a_country_year_and_leave_empty_ones_null(write
     )
     raw = load_emdat_events(cache_dir)
 
-    damage = total_damage(raw.filter(event_filter(EventFilters())), country_year_grid(raw))
+    damage = total_damage(raw.filter(event_filter(EventFilters())), country_grid(raw))
 
-    assert damage.filter(pl.col("Start_Year") == date(1995, 1, 1))["Deaths"].to_list() == [15.0]
+    assert damage.filter(pl.col("date") == date(1995, 1, 1))["Deaths"].to_list() == [15.0]
 
     # Asserted to exist first: `is_null().all()` is vacuously true on a row the grid dropped.
-    quiet_year = damage.filter(pl.col("Start_Year") == date(1994, 1, 1))
+    quiet_year = damage.filter(pl.col("date") == date(1994, 1, 1))
     assert len(quiet_year) == 1
     assert quiet_year["Deaths"].is_null().all()
 
@@ -352,8 +386,8 @@ def test_a_country_year_whose_events_record_no_figures_stays_null(write_emdat_ca
     )
     raw = load_emdat_events(cache_dir)
 
-    damage = total_damage(raw.filter(event_filter(EventFilters())), country_year_grid(raw))
-    year = damage.filter(pl.col("Start_Year") == date(1995, 1, 1))
+    damage = total_damage(raw.filter(event_filter(EventFilters())), country_grid(raw))
+    year = damage.filter(pl.col("date") == date(1995, 1, 1))
 
     assert len(year) == 1
     assert [name for name in DAMAGE_VARS if not year[name].is_null().all()] == []
@@ -380,16 +414,16 @@ def test_a_priced_event_still_totals_beside_unpriced_ones(write_emdat_cache):
     )
     raw = load_emdat_events(cache_dir)
 
-    damage = total_damage(raw.filter(event_filter(EventFilters())), country_year_grid(raw))
+    damage = total_damage(raw.filter(event_filter(EventFilters())), country_grid(raw))
 
-    assert damage.filter(pl.col("Start_Year") == date(1995, 1, 1))["Total_Damage_Adjusted"].to_list() == [40.0]
+    assert damage.filter(pl.col("date") == date(1995, 1, 1))["Total_Damage_Adjusted"].to_list() == [40.0]
 
 
 def test_the_window_extends_to_the_newest_event(write_emdat_cache):
     """A refreshed download must extend the panel, not silently lose its newest years."""
     cache_dir = write_emdat_cache([emdat_event({"Start Year": 2025})])
 
-    years = count_panel(cache_dir)["Start_Year"]
+    years = count_panel(cache_dir)["date"]
 
     assert years.max() == date(2025, 1, 1)
     assert years.min() == WINDOW_START
@@ -404,11 +438,11 @@ def test_mass_movement_events_reach_the_count_frames(write_emdat_cache):
 
 
 def test_a_workbook_with_no_usable_year_is_rejected(write_emdat_cache):
-    """A null Start_Year leaves the window with no end, which would otherwise fail deep in a join."""
+    """A null date leaves the window with no end, which would otherwise fail deep in a join."""
     cache_dir = write_emdat_cache([emdat_event({"Start Year": None})])
 
-    with pytest.raises(ValueError, match="Every Start_Year in the workbook is missing"):
-        country_year_grid(load_emdat_events(cache_dir))
+    with pytest.raises(ValueError, match="Every date in the workbook is missing"):
+        country_grid(load_emdat_events(cache_dir))
 
 
 def test_every_disaster_type_gets_a_column_in_a_stable_order(write_emdat_cache):
@@ -417,7 +451,7 @@ def test_every_disaster_type_gets_a_column_in_a_stable_order(write_emdat_cache):
 
     events = count_panel(cache_dir)
 
-    assert events.columns == ["ISO", "Start_Year", "Region", "Subregion", *DISASTER_TYPES]
+    assert events.columns == ["ISO", "date", "Region", "Subregion", *DISASTER_TYPES]
 
 
 # The licensed workbook, which cannot be committed or fetched. Absent on CI and on a fresh clone.

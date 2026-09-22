@@ -4,6 +4,7 @@ import polars as pl
 
 from climate_risk.data.cache import builder_fingerprint, cached, polars_parquet
 from climate_risk.data.fetch import fetch
+from climate_risk.data.frequency import AGGREGATION_INTERVALS, AggregationFrequency, mean_by_period
 from climate_risk.data.source import DataSource
 
 OCEAN_HEAT = DataSource(
@@ -27,7 +28,7 @@ OCEAN_HEAT_BASELINE_OFFSET = 152
 
 def transform_ocean_heat(seasonal: pl.DataFrame) -> pl.DataFrame:
     """
-    Average seasonal ocean-heat anomalies to calendar years and shift them onto the project baseline.
+    Date each seasonal ocean-heat anomaly to its quarter and shift it onto the project baseline.
 
     Parameters
     ----------
@@ -38,34 +39,41 @@ def transform_ocean_heat(seasonal: pl.DataFrame) -> pl.DataFrame:
     Returns
     -------
     ocean_heat : DataFrame
-        Annual means dated to each year's first day, offset by ``OCEAN_HEAT_BASELINE_OFFSET``.
+        One row per season, dated to the first day of the quarter its month falls in, offset by
+        ``OCEAN_HEAT_BASELINE_OFFSET``.
     """
-    # Only the year survives the average, so the year is all that is read.
-    year = pl.col("Date").str.split("-").list.first().cast(pl.Int32)
-
-    return (
-        seasonal.group_by(year.alias("year"))
-        .agg(pl.col("Temp").mean())
-        .select(pl.date(pl.col("year"), 1, 1).alias("Date"), pl.col("Temp") + OCEAN_HEAT_BASELINE_OFFSET)
-        .sort("Date")
+    year_and_month = pl.col("Date").str.split("-").list.to_struct(fields=["year", "month"])
+    season = pl.date(
+        year_and_month.struct.field("year").cast(pl.Int32), year_and_month.struct.field("month").cast(pl.Int8), 1
     )
 
+    return seasonal.select(
+        season.dt.truncate(AGGREGATION_INTERVALS["quarterly"]).alias("Date"),
+        pl.col("Temp") + OCEAN_HEAT_BASELINE_OFFSET,
+    ).sort("Date")
 
-def load_ocean_heat_data(cache_dir: Path, *, force_reload: bool = False) -> pl.DataFrame:
+
+def load_ocean_heat_data(
+    cache_dir: Path, *, frequency: AggregationFrequency = "annual", force_reload: bool = False
+) -> pl.DataFrame:
     """
-    Load the NOAA/NCEI global ocean heat content record, averaged to one value a year.
+    Load the NOAA/NCEI global ocean heat content record, averaged over each period.
 
     Parameters
     ----------
     cache_dir : Path
         Directory the source caches live under.
+    frequency : {'annual', 'quarterly', 'monthly'}, optional
+        How long one period runs. The record is published by quarter, so a year is kept only when all
+        four of its seasons are, and a monthly request returns one row per quarter, dated to its first
+        month. Default ``'annual'``.
     force_reload : bool, optional
         Download again and rebuild the cache rather than reading it. Default False.
 
     Returns
     -------
     ocean_heat : DataFrame
-        One row per year, with a ``Date`` column and a ``Temp`` column.
+        One row per period, with a ``Date`` column and a ``Temp`` column.
 
     Examples
     --------
@@ -86,4 +94,8 @@ def load_ocean_heat_data(cache_dir: Path, *, force_reload: bool = False) -> pl.D
 
     reading = builder_fingerprint(build, transform_ocean_heat, OCEAN_HEAT_BASELINE_OFFSET)
 
-    return cached(cache_dir, "ocean_heat", build, polars_parquet(), params={"reading": reading}, force=force_reload)
+    quarterly = cached(
+        cache_dir, "ocean_heat", build, polars_parquet(), params={"reading": reading}, force=force_reload
+    )
+
+    return mean_by_period(quarterly, frequency, date="Date", value="Temp", resolution="quarterly")

@@ -429,7 +429,7 @@ def plot_aggregated_series(
 
         from climate_risk.plotting import plot_aggregated_series
 
-        figure = plot_aggregated_series(panel, ["damage"], "year", "sum")
+        figure = plot_aggregated_series(panel, ["damage"], "date", "sum")
     """
     fig, axes = plt.subplots(graph_rows, AGGREGATE_COLUMNS, figsize=figure_size)
 
@@ -490,7 +490,7 @@ def plot_aggregated_series_by_region(
 
         from climate_risk.plotting import plot_aggregated_series_by_region
 
-        figure = plot_aggregated_series_by_region(panel, ["damage"], "year", "sum")
+        figure = plot_aggregated_series_by_region(panel, ["damage"], "date", "sum")
     """
     fig, axes = plt.subplots(graph_rows, AGGREGATE_COLUMNS, figsize=figure_size)
 
@@ -642,15 +642,15 @@ def plot_predicted_counts(idata: xr.DataTree, df: pd.DataFrame, country: str) ->
 
     fig, ax = plt.subplots()
     ax.plot(
-        data["Start_Year"],
+        data["date"],
         data["predictions"],
         zorder=1000,
         color=PALETTE["secondary"],
         label="Mean Predicted Disaster Count",
     )
-    ax.scatter(data["Start_Year"], data["is_disaster"], color="k", label="Actual prob")
+    ax.scatter(data["date"], data["is_disaster"], color="k", label="Actual prob")
     ax.fill_between(
-        data["Start_Year"],
+        data["date"],
         data["higher_y_hat_95"],
         data["lower_y_hat_95"],
         alpha=0.25,
@@ -658,7 +658,7 @@ def plot_predicted_counts(idata: xr.DataTree, df: pd.DataFrame, country: str) ->
         label="95% HDI",
     )
     ax.fill_between(
-        data["Start_Year"],
+        data["date"],
         data["lower_y_hat_50"],
         data["higher_y_hat_50"],
         alpha=0.5,
@@ -667,7 +667,7 @@ def plot_predicted_counts(idata: xr.DataTree, df: pd.DataFrame, country: str) ->
     )
     ax.legend(loc="upper left")
 
-    ax.set_xlabel("Start_Year")
+    ax.set_xlabel("date")
     ax.set_ylabel("Disaster Count")
 
     return fig
@@ -745,13 +745,13 @@ def plot_predicted_damages(idata: xr.DataTree, df: pd.DataFrame, country: str, t
 
     fig, ax = plt.subplots()
     ax.scatter(
-        data["year"],
+        data["date"],
         (data[target_variable].astype(float)),
         color="k",
         label=("Real hydrometereological events damage in millions of dollars"),
     )
     ax.fill_between(
-        data["year"],
+        data["date"],
         data["higher_damage_75"],
         data["lower_damage_75"],
         alpha=0.25,
@@ -759,7 +759,7 @@ def plot_predicted_damages(idata: xr.DataTree, df: pd.DataFrame, country: str, t
         label="75% HDI",
     )
     ax.fill_between(
-        data["year"],
+        data["date"],
         data["lower_damage_50"],
         data["higher_damage_50"],
         alpha=0.5,
@@ -767,7 +767,7 @@ def plot_predicted_damages(idata: xr.DataTree, df: pd.DataFrame, country: str, t
         label="50% HDI",
     )
     ax.legend(loc="upper left", fontsize=14)
-    ax.set_xlabel("year", fontsize=14)
+    ax.set_xlabel("date", fontsize=14)
     ax.set_ylabel("Disaster damages in 2000 USD millions", fontsize=14)
     ax.tick_params(axis="both", which="major", labelsize=12)
 

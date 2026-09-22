@@ -10,10 +10,11 @@ from statsmodels.tsa.seasonal import STL
 
 from climate_risk.config.registry import resolve_isos
 from climate_risk.config.schema import Place
+from climate_risk.data.frequency import AggregationFrequency
 from climate_risk.data_functions.combine_data import (
-    annual_precipitation,
-    build_country_year_panel,
+    build_country_panel,
     build_time_series,
+    total_precipitation,
 )
 from climate_risk.data_functions.emdat_processing import CLIMATOLOGICAL, HYDROMETEOROLOGICAL, types_in_class
 from climate_risk.data_functions.shapefiles_data_loader import load_shapefile
@@ -21,7 +22,7 @@ from climate_risk.geo.raster import ISO_COLUMN
 
 _log = logging.getLogger(__name__)
 
-PANEL_KEY = ["ISO", "year"]
+PANEL_KEY = ["ISO", "date"]
 
 HYDROLOGICAL_TYPES = types_in_class(HYDROMETEOROLOGICAL)
 CLIMATOLOGICAL_TYPES = types_in_class(CLIMATOLOGICAL)
@@ -29,8 +30,14 @@ CLIMATOLOGICAL_TYPES = types_in_class(CLIMATOLOGICAL)
 # The WMO reference period each country's precipitation is centered on, inclusive of both ends.
 CLIMATOLOGY_BASELINE = (1961, 1990)
 
-# The seasonal period the ocean-heat trend is fitted with.
-OCEAN_TREND_PERIOD = 3
+# The STL settings the ocean-heat trend is fitted with. The annual ones are those the published
+# results were estimated under. Below a year the record is quarterly, so the cycle is four rows long,
+# and the wide seasonal window holds its shape steady across years.
+OCEAN_TREND_STL: dict[AggregationFrequency, dict[str, int]] = {
+    "annual": {"period": 3},
+    "quarterly": {"period": 4, "seasonal": 13},
+    "monthly": {"period": 4, "seasonal": 13},
+}
 
 MILLION = 1e6
 
@@ -47,7 +54,7 @@ MODEL_FEATURES = (
 
 PUBLISHED_COLUMNS = [
     "ISO",
-    "year",
+    "date",
     "climatological_disasters",
     "hydrological_disasters",
     "population",
@@ -73,54 +80,65 @@ def _counted_or_missing(types: Sequence[str]) -> pl.Expr:
 
 def _precipitation_deviation(precipitation: pl.DataFrame, baseline: tuple[int, int]) -> pl.DataFrame:
     """
-    Center each country's precipitation on its own mean over the baseline climatology period.
+    Center each country's precipitation on its own mean for that period of the year over the baseline.
 
     Parameters
     ----------
     precipitation : DataFrame
-        One row per country and year, carrying ``ISO``, ``year`` and ``precip``.
+        One row per country and period, carrying ``ISO``, ``date`` and ``precip``.
     baseline : tuple of int
         The first and last year of the reference period, both included.
 
     Returns
     -------
     deviation : DataFrame
-        One row per country and year, carrying the deviation from that country's baseline mean.
+        One row per country and period, carrying the deviation from that country's baseline mean
+        for the same period of the year.
     """
     first_year, last_year = baseline
-    within_baseline = pl.col("year").dt.year().is_between(first_year, last_year)
-    reference = precipitation.filter(within_baseline)
+    # Every date is a period start, so its month names the period of the year at any frequency: one
+    # value for an annual series, four for quarterly, twelve for monthly.
+    period_of_year = pl.col("date").dt.month().alias("period_of_year")
+    reference = precipitation.filter(pl.col("date").dt.year().is_between(first_year, last_year))
 
     span = last_year - first_year + 1
-    covered = reference["year"].dt.year().n_unique()
-    if covered < span:
+    covered = reference.group_by(period_of_year).agg(pl.col("date").dt.year().n_unique().alias("years"))
+    shortest = min(covered["years"].to_list(), default=0)
+    if shortest < span:
         raise ValueError(
-            f"The precipitation record covers {covered} of the {span} years in the "
-            f"{first_year}-{last_year} baseline, so the climatology would be drawn from a shorter period "
-            f"than the one it is named for."
+            f"The precipitation record covers {shortest} of the {span} years in the "
+            f"{first_year}-{last_year} baseline for some period of the year, so that climatology would be "
+            f"drawn from fewer years than the baseline it is named for."
         )
 
-    climatology = reference.group_by("ISO").agg(pl.col("precip").mean().alias("baseline"))
+    climatology = reference.group_by("ISO", period_of_year).agg(pl.col("precip").mean().alias("baseline"))
 
-    return precipitation.join(climatology, on="ISO", how="left").select(
-        *PANEL_KEY, (pl.col("precip") - pl.col("baseline")).alias("precip_deviation")
+    return (
+        precipitation.with_columns(period_of_year)
+        .join(climatology, on=["ISO", "period_of_year"], how="left")
+        .select(*PANEL_KEY, (pl.col("precip") - pl.col("baseline")).alias("precip_deviation"))
     )
 
 
-def _deviation_from_trend(climate: pl.DataFrame) -> pl.DataFrame:
+def _deviation_from_trend(climate: pl.DataFrame, frequency: AggregationFrequency) -> pl.DataFrame:
     """Return the ocean temperature's residual around its STL trend. statsmodels fits pandas only."""
-    observed = climate.drop_nulls("Temp").to_pandas().set_index("year")["Temp"]
-    residual = observed - STL(observed, period=OCEAN_TREND_PERIOD).fit().trend
+    observed = climate.drop_nulls("Temp").to_pandas().set_index("date")["Temp"]
+    residual = observed - STL(observed, **OCEAN_TREND_STL[frequency]).fit().trend
 
     converted: pl.DataFrame = pl.from_pandas(residual.rename("dev_from_trend_ocean_temp").reset_index())
 
     # The pandas round-trip widens the key to a datetime, which would not join back.
-    return converted.with_columns(pl.col("year").cast(pl.Date))
+    return converted.with_columns(pl.col("date").cast(pl.Date))
 
 
-def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIMATOLOGY_BASELINE) -> pl.DataFrame:
+def create_replication_data(
+    cache_dir: Path,
+    *,
+    baseline: tuple[int, int] = CLIMATOLOGY_BASELINE,
+    frequency: AggregationFrequency = "annual",
+) -> pl.DataFrame:
     """
-    Assemble the country-year panel the paper's results are estimated from.
+    Assemble the country panel the paper's results are estimated from.
 
     Joins the disaster panel to the climate series and adds the detrended deviations, so the frame
     holds both the levels and the departures from trend the models use.
@@ -134,11 +152,13 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
         Directory the source caches live under.
     baseline : tuple of int, optional
         First and last year of the climatology the deviations are measured against.
+    frequency : {'annual', 'quarterly', 'monthly'}, optional
+        How long one period runs. Default ``'annual'``.
 
     Returns
     -------
     panel : DataFrame
-        One row per country and year.
+        One row per country and period.
 
     Examples
     --------
@@ -150,11 +170,16 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
 
         panel = create_replication_data(Path("data"))
     """
-    panel = build_country_year_panel(cache_dir).rename({"Start_Year": "year"})
+    panel = build_country_panel(cache_dir, frequency=frequency)
 
     # The first and last years are dropped. The reason is unrecorded, and the trend below is fitted
     # over this window, so widening it moves every published deviation.
-    climate = build_time_series(cache_dir).select("year", "co2", "Temp", "precip").slice(1, -1)
+    year = pl.col("date").dt.year()
+    climate = (
+        build_time_series(cache_dir, frequency=frequency)
+        .select("date", "co2", "Temp", "precip")
+        .filter(year.is_between(year.min() + 1, year.max() - 1))
+    )
 
     regressors = panel.select(
         *PANEL_KEY,
@@ -169,13 +194,13 @@ def create_replication_data(cache_dir: Path, *, baseline: tuple[int, int] = CLIM
 
     # Drawn from the whole precipitation record, which reaches back before the panel's first year
     # and so can cover the baseline climatology.
-    deviation = _precipitation_deviation(annual_precipitation(cache_dir), baseline)
+    deviation = _precipitation_deviation(total_precipitation(cache_dir, frequency=frequency), baseline)
 
     frame = (
         regressors.join(damages, on=PANEL_KEY, how="left")
         .join(deviation, on=PANEL_KEY, how="left")
-        .join(climate.select("year", "co2"), on="year", how="left")
-        .join(_deviation_from_trend(climate), on="year", how="left")
+        .join(climate.select("date", "co2"), on="date", how="left")
+        .join(_deviation_from_trend(climate, frequency=frequency), on="date", how="left")
     )
 
     return frame.select(*PUBLISHED_COLUMNS)
@@ -197,7 +222,7 @@ def model_frame(
     Parameters
     ----------
     panel : DataFrame
-        One row per country and year, keyed on ``ISO`` and ``year``, from
+        One row per country and period, keyed on ``ISO`` and ``date``, from
         :func:`create_replication_data`.
     boundaries : GeoDataFrame
         Country geometries carrying an ``ISO_A3`` column, from
@@ -210,7 +235,7 @@ def model_frame(
     Returns
     -------
     rows : DataFrame
-        The panel's complete rows for the retained countries, sorted by country and year.
+        The panel's complete rows for the retained countries, sorted by country and period.
     geometry : GeoDataFrame
         The boundaries of those same countries, in the same country order.
     """
@@ -245,6 +270,7 @@ def load_model_frame(
     *,
     place: Place | None = None,
     baseline: tuple[int, int] = CLIMATOLOGY_BASELINE,
+    frequency: AggregationFrequency = "annual",
     features: Sequence[str] = MODEL_FEATURES,
 ) -> tuple[pl.DataFrame, gpd.GeoDataFrame]:
     """
@@ -258,13 +284,15 @@ def load_model_frame(
         Restrict to the countries this place covers. Default None, meaning every country available.
     baseline : tuple of int, optional
         First and last year of the climatology the deviations are measured against.
+    frequency : {'annual', 'quarterly', 'monthly'}, optional
+        How long one period runs. Default ``'annual'``.
     features : sequence of str, optional
         The columns a row must carry a value in to be kept. Default ``MODEL_FEATURES``.
 
     Returns
     -------
     rows : DataFrame
-        The panel's complete rows for the retained countries, sorted by country and year.
+        The panel's complete rows for the retained countries, sorted by country and period.
     geometry : GeoDataFrame
         The boundaries of those same countries, in the same country order.
 
@@ -280,7 +308,7 @@ def load_model_frame(
         rows, geometry = load_model_frame(Path("data"), place=load_place("sea"))
     """
     return model_frame(
-        create_replication_data(cache_dir, baseline=baseline),
+        create_replication_data(cache_dir, baseline=baseline, frequency=frequency),
         load_shapefile("world", cache_dir),
         isos=resolve_isos(place) if place is not None else None,
         features=features,

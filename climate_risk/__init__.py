@@ -1,8 +1,7 @@
 import logging
 
 from climate_risk.data_functions import (
-    annual_precipitation,
-    build_country_year_panel,
+    build_country_panel,
     build_time_series,
     load_co2_data,
     load_emdat_events,
@@ -13,6 +12,7 @@ from climate_risk.data_functions import (
     load_shapefile,
     load_wb_data,
     process_ipcc_scenarios,
+    total_precipitation,
 )
 
 _log = logging.getLogger(__name__)
@@ -24,8 +24,7 @@ if not logging.root.handlers:
         _log.addHandler(handler)
 
 __all__ = [
-    "annual_precipitation",
-    "build_country_year_panel",
+    "build_country_panel",
     "build_time_series",
     "load_co2_data",
     "load_emdat_events",
@@ -36,4 +35,5 @@ __all__ = [
     "load_shapefile",
     "load_wb_data",
     "process_ipcc_scenarios",
+    "total_precipitation",
 ]

@@ -13,7 +13,7 @@ def workbook(*disnos, year=1995, iso="LAO"):
         {
             "DisNo.": list(disnos),
             "ISO": [iso] * len(disnos),
-            "Start_Year": [datetime.date(year, 6, 1)] * len(disnos),
+            "date": [datetime.date(year, 6, 1)] * len(disnos),
         }
     )
 

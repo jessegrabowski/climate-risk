@@ -11,20 +11,20 @@ extra columns are unwanted.
 ```python
 import climate_risk as cr
 
-panel = cr.build_country_year_panel(cache_dir)
+panel = cr.build_country_panel(cache_dir)
 series = cr.build_time_series(cache_dir)
-precipitation = cr.annual_precipitation(cache_dir)
+precipitation = cr.total_precipitation(cache_dir)
 ```
 
-`build_country_year_panel` is the modeling frame: disaster counts and damages from EM-DAT, World
+`build_country_panel` is the modeling frame: disaster counts and damages from EM-DAT, World
 Bank development indicators, and annual precipitation, on one row per country and year keyed on
-`ISO` and `Start_Year`. A country earns a row only when it has both a disaster record and
+`ISO` and `date`. A country earns a row only when it has both a disaster record and
 development indicators. **Needs EM-DAT**, so it is the call that first raises for a cache without it.
 
 `build_time_series` merges CO2, ocean heat and worldwide precipitation onto one row per year. It
 downloads GPCC, which is gigabytes on a cold cache.
 
-`annual_precipitation` totals GPCC to `ISO`, `year`, `precip`. It covers the whole GPCC record,
+`total_precipitation` totals GPCC to `ISO`, `date`, `precip`. It covers the whole GPCC record,
 which reaches further back than the EM-DAT panel does.
 
 ## The event table
