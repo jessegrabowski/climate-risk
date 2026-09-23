@@ -265,6 +265,12 @@ def simulate_future_damage(
             iso="NPL",
         )
     """
+    # damage.FEATURES reads `ln_population`, derived here rather than upstream so historical_panel and
+    # future_covariates keep carrying raw `population` for frequency.FEATURES, which still standardizes it
+    # directly.
+    historical_panel = damage._with_ln_population(historical_panel)
+    future_covariates = damage._with_ln_population(future_covariates)
+
     freq_mu = _future_mu(
         future_covariates=future_covariates,
         historical_panel=historical_panel,

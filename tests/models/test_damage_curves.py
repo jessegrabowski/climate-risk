@@ -130,18 +130,26 @@ def _future_country_idata(*, beta_len, country_effect, psi, **extra):
 
 
 # frequency.FEATURES is a superset of damage.FEATURES, so one panel and one future row, each
-# carrying every frequency feature, covers what both models read.
+# carrying every frequency feature, covers what both models read. `population` is kept positive
+# (unlike the other features' placeholder -1.0/1.0) since damage.FEATURES derives `ln_population`
+# from it.
 _HISTORICAL_PANEL = pl.DataFrame(
     {
         "ISO": ["AAA", "AAA"],
         "date": [2000, 2001],
         frequency.TARGET: [0.0, 0.0],
         damage.TARGET: [0.0, 0.0],
-        **{feature: [-1.0, 1.0] for feature in frequency.FEATURES},
+        **{feature: [-1.0, 1.0] for feature in frequency.FEATURES if feature != "population"},
+        "population": [1.0, 2.0],
     }
 )
 _FUTURE_COVARIATES = pl.DataFrame(
-    {"ISO": ["AAA"], "year": [2030], **{feature: [1.0] for feature in frequency.FEATURES}}
+    {
+        "ISO": ["AAA"],
+        "year": [2030],
+        **{feature: [1.0] for feature in frequency.FEATURES if feature != "population"},
+        "population": [1.5],
+    }
 )
 
 

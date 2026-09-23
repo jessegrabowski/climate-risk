@@ -12,12 +12,21 @@ from climate_risk.stats.scaling import standardize
 # frequency notebook's quadratic GDP term is a frequency-specific addition, not part of the paper's
 # named covariate list either way (see climate_risk/models/frequency.py's own note on this). This
 # module is asked for parity minus that term, so it is the five the paper names outright.
+#
+# Population is logged rather than standardized raw. Raw population (millions) puts India and China
+# 7-9 standard deviations out on the ~150-country training panel, and softplus(beta * z) at that z is
+# where the country-level damage curve's implausible tail (documented separately, not in this repo)
+# traces back to. Logging it first is the same treatment `ln_population_density` already gets, and
+# matches the fix Jesse's own from-scratch rewrite of the frequency model already adopted for the
+# identical reason (unmerged PR #217, notebooks/global_emdat/01_zinb_glm.ipynb: "Standardized raw
+# population puts China at eleven standard deviations, and a prior on a coefficient multiplying that
+# has no scale to be set on").
 FEATURES = [
     "ln_population_density",
     "ln_gdp_pc",
     "precip_deviation",
     "co2",
-    "population",
+    "ln_population",
 ]
 
 TARGET = "Total_Damage_Adjusted_hydro"
@@ -28,6 +37,11 @@ TARGET = "Total_Damage_Adjusted_hydro"
 # so there is no overflow mode to clip against here — only the floor matters, and softplus already
 # provides it.
 MIN_MU = 1e-8
+
+
+def _with_ln_population(panel: pl.DataFrame) -> pl.DataFrame:
+    """Add `ln_population`, the log of the millions-scale `population` column FEATURES now uses."""
+    return panel.with_columns(pl.col("population").log().alias("ln_population"))
 
 
 def _prepare_panel(panel: pl.DataFrame) -> pd.DataFrame:
@@ -65,7 +79,9 @@ def _prepare_panel(panel: pl.DataFrame) -> pd.DataFrame:
         One row per retained country-year, carrying ``ISO``, the raw :data:`TARGET`, and one
         ``*__standardized`` column per entry of :data:`FEATURES`.
     """
-    complete = panel.drop_nulls(subset=FEATURES).with_columns(pl.col(TARGET).fill_null(0)).to_pandas()
+    complete = (
+        _with_ln_population(panel).drop_nulls(subset=FEATURES).with_columns(pl.col(TARGET).fill_null(0)).to_pandas()
+    )
     _, standardized = standardize(complete, FEATURES)
 
     return standardized
