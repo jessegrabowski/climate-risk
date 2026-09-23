@@ -7,7 +7,9 @@ from climate_risk.models.frequency import FEATURES, TARGET, build_frequency_mode
 
 
 def synthetic_panel(rng: np.random.Generator, n: int = 40, isos: tuple[str, ...] | None = None) -> pl.DataFrame:
-    data = {feature: rng.normal(size=n) for feature in FEATURES}
+    # The real panel carries raw `population`, not `ln_population`; _prepare_panel derives the latter.
+    data = {feature: rng.normal(size=n) for feature in FEATURES if feature != "ln_population"}
+    data["population"] = rng.lognormal(mean=2.0, sigma=1.0, size=n)
     data[TARGET] = rng.poisson(2, size=n).astype(float)
     if isos is not None:
         data["ISO"] = rng.choice(isos, size=n)

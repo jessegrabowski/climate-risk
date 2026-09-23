@@ -18,13 +18,22 @@ from climate_risk.stats.scaling import standardize
 # (climate_risk/models/aggregated_poisson.py's eventual caller), which pairs each disaster with a
 # raster cell rather than a country-year. Nothing here drops them from a candidate set; they were
 # never candidates for a country-year panel in the first place.
+#
+# Population is logged rather than standardized raw, for the same reason climate_risk.models.damage
+# does it: raw population (millions) puts India and China 7-9 standard deviations out on the
+# ~150-country training panel, and beta[population] blows up through the softplus link out there.
+# Logging it first is the same treatment `ln_population_density` already gets, and matches the fix
+# Jesse's own from-scratch rewrite of this model already adopted for the identical reason (unmerged
+# PR #217, notebooks/global_emdat/01_zinb_glm.ipynb: "Standardized raw population puts China at
+# eleven standard deviations, and a prior on a coefficient multiplying that has no scale to be set
+# on").
 FEATURES = [
     "ln_population_density",
     "ln_gdp_pc",
     "square_ln_gdp_pc",
     "precip_deviation",
     "co2",
-    "population",
+    "ln_population",
 ]
 
 TARGET = "hydrological_disasters"
@@ -36,9 +45,16 @@ MIN_MU = 1e-8
 MAX_MU = 300.0
 
 
+def _with_ln_population(panel: pl.DataFrame) -> pl.DataFrame:
+    """Add `ln_population`, the log of the millions-scale `population` column FEATURES now uses."""
+    return panel.with_columns(pl.col("population").log().alias("ln_population"))
+
+
 def _prepare_panel(panel: pl.DataFrame) -> pd.DataFrame:
     """Drop a null covariate, zero-fill a null target, and standardise the covariates."""
-    complete = panel.drop_nulls(subset=FEATURES).with_columns(pl.col(TARGET).fill_null(0)).to_pandas()
+    complete = (
+        _with_ln_population(panel).drop_nulls(subset=FEATURES).with_columns(pl.col(TARGET).fill_null(0)).to_pandas()
+    )
     _, standardized = standardize(complete, FEATURES)
 
     return standardized
