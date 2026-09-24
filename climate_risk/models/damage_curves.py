@@ -158,6 +158,79 @@ def _standardized_features(
     return result
 
 
+def covariate_support(*, future_covariates: pl.DataFrame, historical_panel: pl.DataFrame) -> pl.DataFrame:
+    """
+    Flag future covariates that fall outside the range either Stage 2 model was fit on.
+
+    :func:`simulate_future_damage` extrapolates the fitted linear predictor to whatever covariates it
+    is handed, and nothing in the result says when a feature sits beyond every row the coefficient
+    was estimated from. This reports that per year, model and feature, in the same standardized
+    units the model sees, so a damage curve can be read alongside how far out of sample it is.
+
+    Parameters
+    ----------
+    future_covariates : DataFrame
+        As passed to :func:`simulate_future_damage`.
+    historical_panel : DataFrame
+        As passed to :func:`simulate_future_damage`.
+
+    Returns
+    -------
+    support : DataFrame
+        One row per ``year``, ``model`` (``"frequency"`` or ``"damage"``) and ``feature``, with the
+        raw ``value``, its standardized ``z``, the training rows' ``z_min``/``z_max``, ``excess_sd``
+        (how many training standard deviations ``z`` lies beyond that range, 0 inside it) and
+        ``out_of_support`` (``excess_sd > 0``).
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from climate_risk.models.damage_curves import covariate_support
+
+        support = covariate_support(future_covariates=future_covariates, historical_panel=historical_panel)
+        support.filter(pl.col("out_of_support")).sort("excess_sd", descending=True)
+    """
+    historical_panel = frequency._with_ln_population(historical_panel)
+    future_covariates = frequency._with_ln_population(future_covariates)
+
+    frames = []
+    for model, features, target in (
+        ("frequency", frequency.FEATURES, FREQUENCY_TARGET),
+        ("damage", damage.FEATURES, DAMAGE_TARGET),
+    ):
+        # The training rows' own standardized range is the same scaler applied back to them.
+        training_z = _standardized_features(
+            future_covariates=historical_panel.drop_nulls(features),
+            historical_panel=historical_panel,
+            features=features,
+            target=target,
+        )
+        future_z = _standardized_features(
+            future_covariates=future_covariates, historical_panel=historical_panel, features=features, target=target
+        )
+        for i, feature in enumerate(features):
+            frames.append(
+                pl.DataFrame(
+                    {
+                        "year": future_covariates["year"],
+                        "model": model,
+                        "feature": feature,
+                        "value": future_covariates[feature].cast(pl.Float64),
+                        "z": future_z[:, i],
+                        "z_min": training_z[:, i].min(),
+                        "z_max": training_z[:, i].max(),
+                    }
+                )
+            )
+
+    result = pl.concat(frames).with_columns(
+        excess_sd=pl.max_horizontal(pl.col("z") - pl.col("z_max"), pl.col("z_min") - pl.col("z"), pl.lit(0.0))
+    )
+
+    return result.with_columns(out_of_support=pl.col("excess_sd") > 0)
+
+
 def _future_mu(
     *,
     future_covariates: pl.DataFrame,

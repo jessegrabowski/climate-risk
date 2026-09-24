@@ -6,6 +6,7 @@ import xarray as xr
 from climate_risk.models import damage, frequency
 from climate_risk.models.damage_curves import (
     _future_mu,
+    covariate_support,
     damage_return_years,
     simulate_country_damage,
     simulate_future_damage,
@@ -182,3 +183,26 @@ def test_simulate_future_damage_has_sample_and_year_dims():
 
     assert set(draws.dims) == {"sample", "year"}
     assert draws.sizes["year"] == 1
+
+
+def _future_row(**overrides):
+    row = {"ISO": "AAA", "year": 2030} | PANEL.drop("date").row(0, named=True) | overrides
+    return pl.DataFrame([row])
+
+
+def test_covariate_support_flags_nothing_inside_the_training_range():
+    support = covariate_support(future_covariates=_future_row(), historical_panel=PANEL)
+
+    assert support.height == len(frequency.FEATURES) + len(damage.FEATURES)
+    assert not support["out_of_support"].any()
+    assert (support["excess_sd"] == 0).all()
+
+
+def test_covariate_support_measures_the_excess_in_training_standard_deviations():
+    # co2 is [300, 301, 302, 303] in PANEL: population std sqrt(1.25), so this is two std past the max.
+    support = covariate_support(future_covariates=_future_row(co2=303.0 + 2 * np.sqrt(1.25)), historical_panel=PANEL)
+
+    flagged = support.filter(pl.col("out_of_support"))
+    assert sorted(flagged["model"].to_list()) == ["damage", "frequency"]
+    assert set(flagged["feature"]) == {"co2"}
+    assert flagged["excess_sd"].to_list() == pytest.approx([2.0, 2.0])
