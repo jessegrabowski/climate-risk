@@ -1,6 +1,6 @@
-# m8_linear_labor_approx.gcn
+# catdsge_v3_linear_approx.gcn
 #
-# First-order approximation of m8_linear_labor.gcn for estimation.
+# First-order approximation of catdsge_v3.gcn for estimation.
 #
 # Simplifications vs the full model:
 #   1. Price/wage dispersion variables (nu_H, nu_M, nu_X, nu_w) dropped —
@@ -23,7 +23,7 @@ assumptions
     positive
     {
         # Quantities
-        C[], Y[], H[], H_H[], L[], K[], I[], M[], X[], G[], Y_star[],
+        C[], Y[], GDP[], H[], H_H[], L[], K[], I[], M[], X[], G[], Y_star[],
 
         # Prices and wages
         p_H[], p_M[], p_X[], p_M_star[], w[], r[],
@@ -41,10 +41,10 @@ assumptions
         Phi_B[], R_star_given[],
 
         # Time-varying shocks (level, SS = 1)
-        beta[], xi_I[], xi_H[], xi_w[],
+        beta[], xi_I[], xi_H[], xi_w[], xi_K[],
 
         # Structural parameters
-        alpha, beta, delta, sigma, Theta,
+        alpha, beta, delta, sigma, chi, Theta,
         alpha_Y, psi_Y, psi_H, psi_M, psi_X, psi_w,
         theta_H, theta_M, theta_X, theta_w,
         psi_B, phi_B,
@@ -107,8 +107,9 @@ block STEADY_STATE
         xi_I[ss] = 1;
         xi_H[ss] = 1;
         xi_w[ss] = 1;
+        xi_K[ss] = 1;
 
-        r[ss] = (1 + tau_C[ss]) / (1 - tau_K[ss]) * (1 / beta - (1 - delta));
+        r[ss] = (1 / beta - (1 - delta)) / (1 - tau_K[ss]);
         p_H[ss] = ((1 - (1 - alpha_Y) * p_M[ss] ^ (1 - psi_Y)) / alpha_Y) ^ (1 / (1 - psi_Y));
         mu_H[ss] = (psi_H - 1) / psi_H * p_H[ss];
 
@@ -123,10 +124,9 @@ block STEADY_STATE
         Gamma[ss] = (Omega[ss] - psi_G) * N[ss] ^ alpha / (alpha_Y * p_H[ss] ^ (-psi_Y) + omega_X[ss])
                     - delta * N[ss];
 
-        # Linear disutility: exponent is 1/sigma instead of 1/(chi+sigma)
         L[ss] = ((psi_w - 1) / psi_w * (1 - tau_L[ss]) / (1 + tau_C[ss])
                     * (1 - phi_H * beta) / (1 - phi_H) ^ sigma
-                    * w[ss] / Theta / Gamma[ss] ^ sigma) ^ (1 / sigma);
+                    * w[ss] / Theta / Gamma[ss] ^ sigma) ^ (1 / (chi + sigma));
 
         H[ss] = N[ss] ^ alpha * L[ss];
         Y[ss] = H[ss] / (alpha_Y * p_H[ss] ^ (-psi_Y) + omega_X[ss]);
@@ -134,6 +134,7 @@ block STEADY_STATE
         H_H[ss] = alpha_Y * p_H[ss] ^ (-psi_Y) * Y[ss];
         X[ss] = omega_X[ss] * Y[ss];
         M[ss] = (1 - alpha_Y) * p_M[ss] ^ (-psi_Y) * Y[ss];
+        GDP[ss] = Y[ss] + p_X[ss] * X[ss] - q[ss] * p_M_star[ss] * M[ss];
 
         K[ss] = N[ss] * L[ss];
         I[ss] = delta * K[ss];
@@ -141,14 +142,14 @@ block STEADY_STATE
         B_star[ss] = phi_B * Y[ss] / q[ss];
         C[ss] = Gamma[ss] * L[ss];
         lambda[ss] = (1 - phi_H * beta) / ((1 + tau_C[ss]) * ((1 - phi_H) * C[ss]) ^ sigma);
-        tobins_q[ss] = (1 + tau_C[ss]) * lambda[ss];
+        tobins_q[ss] = lambda[ss];
 
         TC_H[ss] = r[ss] * z[ss] * K[ss] + w[ss] * L[ss];
         Pi_H[ss] = p_H[ss] * H[ss] - TC_H[ss];
         # TB[ss] = p_X[ss] * X[ss] - (1 + tau_M[ss]) * q[ss] * p_M_star[ss] * M[ss];
 
         G[ss] = psi_G * Y[ss];
-        Tax_Revenue[ss] = tau_C[ss] * (C[ss] + I[ss])
+        Tax_Revenue[ss] = tau_C[ss] * C[ss]
                         + tau_K[ss] * r[ss] * z[ss] * K[ss]
                         + tau_L[ss] * w[ss] * L[ss]
                         + tau_M[ss] * q[ss] * p_M_star[ss] * M[ss]
@@ -160,7 +161,7 @@ block HOUSEHOLD
 {
 	definitions
 	{
-		u[] = ((C[] - phi_H * C[-1]) ^ (1 - sigma) / (1 - sigma) - Theta * L[]);
+		u[] = ((C[] - phi_H * C[-1]) ^ (1 - sigma) / (1 - sigma) - Theta * L[] ^ (1 + chi) / (1 + chi));
 		Psi_z[] = psi_z_1 * (z[] - 1) + psi_z / 2 * (z[] - 1) ^ 2;
 	};
 
@@ -176,13 +177,13 @@ block HOUSEHOLD
 
     constraints
     {
-		(1 + tau_C[]) * (C[] + I[]) + B[] + q[] * B_star[] + Psi_z[] * K[-1]
-		    = (1 - tau_K[]) * r[] * z[] * K[-1] + (1 - tau_L[]) * w[] * L[]
+		(1 + tau_C[]) * C[] + I[] + B[] + q[] * B_star[] + Psi_z[] * xi_K[] * K[-1]
+		    = (1 - tau_K[]) * r[] * z[] * xi_K[] * K[-1] + (1 - tau_L[]) * w[] * L[]
 		    + (1 + i[-1]) / pi[] * B[-1]
 		    + q[] * R_star_given[-1] / pi_star[] * B_star[-1]
 		    + Pi_H[] + Pi_X[] + Pi_M[]
 		    - T_lump : lambda[];
-		K[] = (1 - delta) * K[-1] + I[] * (1 - gamma_I / 2 * (xi_I[] * I[] / I[-1] - 1) ^ 2) : tobins_q[];
+		K[] = (1 - delta) * xi_K[] * K[-1] + I[] * (1 - gamma_I / 2 * (xi_I[] * I[] / I[-1] - 1) ^ 2) : tobins_q[];
     };
 
     identities
@@ -207,6 +208,7 @@ block HOUSEHOLD
     {
         beta ~ maxent(Beta(), lower=0.974, upper=0.992, mass=0.99) = 0.987;
         sigma ~ maxent(Gamma(), lower=1.0, upper=4.0, mass=0.99) = 2.0;
+        chi ~ maxent(Gamma(), lower=0.5, upper=4.0, mass=0.99) = 1.5;
         delta ~ maxent(Beta(), lower=0.006, upper=0.018, mass=0.99) = 0.010;
         Theta = 1.77;  # calibrated so L[ss] = 0.26 (Morocco employment-to-pop)
 
@@ -216,7 +218,7 @@ block HOUSEHOLD
         phi_H ~ maxent(Beta(), lower=0.3, upper=0.8, mass=0.99) = 0.60;
         gamma_I ~ maxent(Gamma(), lower=4.0, upper=15.0, mass=0.99) = 8.0;
         psi_z ~ maxent(Beta(), lower=0.05, upper=0.40) = 0.20;
-        psi_z_1 = (1 + tau_C) * (1 / beta - (1 - delta));
+        psi_z_1 = 1 / beta - (1 - delta);
 
         # Shock persistence (quarterly; rho_q = rho_a^(1/4))
         rho_beta ~ maxent(Beta(), lower=0.74, upper=0.974, mass=0.99) = 0.915;
@@ -233,9 +235,9 @@ block WAGE_SETTING
     identities
     {
         # Log-linear wage Phillips curve (replaces Calvo recursion at first order)
-        # Wage markup gap: Theta / (lambda * (1-tau_L) * w) relative to SS value (psi_w-1)/psi_w
-        log(pi_w[]) = beta * E[][log(pi_w[1])]
-            + kappa_w * log(psi_w * Theta / ((psi_w - 1) * lambda[] * (1 - tau_L[]) * w[]))
+        # Wage markup gap: Theta * L^chi / (lambda * (1-tau_L) * w) relative to SS value (psi_w-1)/psi_w
+        log(pi_w[]) - gamma_w * log(pi[-1]) = beta * (E[][log(pi_w[1])] - gamma_w * log(pi[]))
+            + kappa_w * log(psi_w * Theta * L[] ^ chi / ((psi_w - 1) * lambda[] * (1 - tau_L[]) * w[]))
             + log(xi_w[]);
 
         pi_w[] = w[] / w[-1] * pi[];
@@ -253,7 +255,8 @@ block WAGE_SETTING
     {
         psi_w   ~ maxent(Gamma(), lower=1.5, upper=15.0, mass=0.99) = 4.0;
         theta_w ~ maxent(Beta(), lower=0.775, upper=0.925, mass=0.99) = 0.875;
-        kappa_w = (1 - theta_w) * (1 - beta * theta_w) / theta_w;
+        gamma_w ~ maxent(Beta(), lower=0.05, upper=0.8, mass=0.99) = 0.5;
+        kappa_w = (1 - theta_w) * (1 - beta * theta_w) / (theta_w * (1 + psi_w * chi));
 
         rho_xi_w   ~ maxent(Beta(), lower=0.74, upper=0.974, mass=0.99) = 0.880;
         sigma_xi_w ~ maxent(InverseGamma(), lower=0.003, upper=0.018, mass=0.99) = 0.006;
@@ -302,12 +305,12 @@ block DOMESTIC_FIRM
     objective
     {
         @minimize
-        TC_H[] = r[] * z[] * K[-1] + w[] * L[];
+        TC_H[] = r[] * z[] * xi_K[] * K[-1] + w[] * L[];
     };
 
     constraints
     {
-        H[] = A[] * (z[] * K[-1]) ^ alpha * L[] ^ (1 - alpha) : mu_H[];
+        H[] = A[] * (z[] * xi_K[] * K[-1]) ^ alpha * L[] ^ (1 - alpha) : mu_H[];
     };
 
     identities
@@ -339,7 +342,7 @@ block DOMESTIC_PRICE_NKPC
         # Standard NKPC — derived from the writeup-consistent symmetric Calvo
         # (both x_1 and x_2 use lambda[1]/lambda[] without an extra 1/pi[1] in x_1),
         # which yields the textbook form with no inflation-correction term.
-        log(pi_H[]) = beta * E[][log(pi_H[1])]
+        log(pi_H[]) - gamma_H * log(pi_H[-1]) = beta * (E[][log(pi_H[1])] - gamma_H * log(pi_H[]))
             + kappa_H * log(mu_H[] / p_H[] * psi_H / (psi_H - 1))
             + log(xi_H[]);
 
@@ -356,11 +359,32 @@ block DOMESTIC_PRICE_NKPC
 	{
 		psi_H ~ maxent(Gamma(), lower=1.5, upper=15.0, mass=0.99) = 4.0;
         theta_H ~ maxent(Beta(), lower=0.775, upper=0.925, mass=0.99) = 0.875;
+        gamma_H ~ maxent(Beta(), lower=0.05, upper=0.8, mass=0.99) = 0.5;
         kappa_H = (1 - theta_H) * (1 - beta * theta_H) / theta_H;
 
         rho_xi_H   ~ maxent(Beta(), lower=0.74, upper=0.974, mass=0.99) = 0.880;
         sigma_xi_H ~ maxent(InverseGamma(), lower=0.003, upper=0.018, mass=0.99) = 0.006;
 	};
+};
+
+block CAPITAL_DESTRUCTION
+{
+    identities
+    {
+        # Share of the installed capital stock that survives the period. A disaster is a negative
+        # draw: it destroys capital in place, and the loss persists through accumulation.
+        log(xi_K[]) = epsilon_xi_K[];
+    };
+
+    shocks
+    {
+        epsilon_xi_K[] ~ Normal(mu=0, sigma=sigma_xi_K);
+    };
+
+    calibration
+    {
+        sigma_xi_K ~ maxent(InverseGamma(), lower=0.005, upper=0.10, mass=0.99) = 0.02;
+    };
 };
 
 block EXCHANGE_RATE
@@ -444,7 +468,7 @@ block IMPORT_FIRM
     {
         # Standard NKPC for imports (writeup-consistent Calvo).
         # Driving variable mc_M = (1+τ_M)·q·p_M⋆ / p_M (real MC in own-sector units).
-        log(pi_M[]) = beta * E[][log(pi_M[1])]
+        log(pi_M[]) - gamma_M * log(pi_M[-1]) = beta * (E[][log(pi_M[1])] - gamma_M * log(pi_M[]))
             + kappa_M * log((1 + tau_M[]) * q[] * p_M_star[] / p_M[] * psi_M / (psi_M - 1));
 
         p_M[] = p_M[-1] * pi_M[] / pi[];
@@ -462,6 +486,7 @@ block IMPORT_FIRM
     {
         psi_M ~ maxent(Gamma(), lower=1.5, upper=10.0, mass=0.99) = 4.0;
         theta_M ~ maxent(Beta(), lower=0.775, upper=0.925, mass=0.99) = 0.875;
+        gamma_M ~ maxent(Beta(), lower=0.05, upper=0.8, mass=0.99) = 0.5;
         kappa_M = (1 - theta_M) * (1 - beta * theta_M) / theta_M;
         rho_p_M_star ~ maxent(Beta(), lower=0.74, upper=0.997, mass=0.99) = 0.915;
         p_M_star_bar = 1.0;
@@ -477,7 +502,7 @@ block EXPORT_FIRM
     {
         # Standard NKPC for exports (writeup-consistent Calvo).
         # Driving variable mc_X = p_H / ((1-τ_X)·p_X) (real MC in own-sector units).
-        log(pi_X[]) = beta * E[][log(pi_X[1])]
+        log(pi_X[]) - gamma_X * log(pi_X[-1]) = beta * (E[][log(pi_X[1])] - gamma_X * log(pi_X[]))
             + kappa_X * log(p_H[] / ((1 - tau_X[]) * p_X[]) * psi_X / (psi_X - 1));
 
         p_X[] = p_X[-1] * pi_X[] / pi[];
@@ -489,6 +514,7 @@ block EXPORT_FIRM
     {
         psi_X ~ maxent(Gamma(), lower=1.5, upper=10.0, mass=0.99) = 4.0;
         theta_X ~ maxent(Beta(), lower=0.775, upper=0.925, mass=0.99) = 0.875;
+        gamma_X ~ maxent(Beta(), lower=0.05, upper=0.8, mass=0.99) = 0.5;
         kappa_X = (1 - theta_X) * (1 - beta * theta_X) / theta_X;
     };
 };
@@ -583,8 +609,8 @@ block FISCAL_AUTHORITY
         log(G[]) = (1 - rho_G) * log(G[ss]) + rho_G * log(G[-1]) + epsilon_G[];
 
         B[] = (1 + i[-1]) / pi[] * B[-1] + G[]
-            - tau_C[] * (C[] + I[])
-            - tau_K[] * r[] * z[] * K[-1]
+            - tau_C[] * C[]
+            - tau_K[] * r[] * z[] * xi_K[] * K[-1]
             - tau_L[] * w[] * L[]
             - tau_M[] * q[] * p_M_star[] * M[]
             - tau_X[] * p_X[] * X[]
@@ -612,7 +638,7 @@ block FISCAL_AUTHORITY
         b_target = 0.45;
 
         T_lump = i[ss] * b_target * Y[ss]
-               - (tau_C * (C[ss] + I[ss]) + tau_K * r[ss] * K[ss] + tau_L * w[ss] * L[ss]
+               - (tau_C * C[ss] + tau_K * r[ss] * K[ss] + tau_L * w[ss] * L[ss]
                 + tau_M * q[ss] * p_M_star[ss] * M[ss] + tau_X * p_X[ss] * X[ss]
                 - psi_G * Y[ss]);
 
@@ -663,6 +689,9 @@ block MARKET_CLEARING
     identities
     {
         H[] = H_H[] + X[];
+
+        # Value added: final sales net of imports at world prices, plus exports.
+        GDP[] = Y[] + p_X[] * X[] - q[] * p_M_star[] * M[];
         # TB[] = p_X[] * X[] - (1 + tau_M[]) * q[] * p_M_star[] * M[];
     };
 };
