@@ -113,8 +113,8 @@ seaborn = ">=0.13,<1"
 tqdm = ">=4.70,<5"
 anyascii = ">=0.3.3,<1"
 requests = ">=2.34.2,<3"
-polars = ">=1.43,<2"
-pyarrow = ">=25.0,<26"
+polars = ">=2.0,<3"
+pyarrow = ">=25.0,<27"
 fastexcel = ">=0.20,<1"
 
 # MLX runs on Apple silicon alone, so pytensor's MLX compile mode is reachable only here.
@@ -149,7 +149,7 @@ libpysal = ">=4.15.0,<5"
 [tool.pixi.feature.notebooks.pypi-dependencies]
 nbclassic-mcp-bridge = ">=1.1.0,<2"
 geconpy = ">=2.3,<3"
-pytensor-ml = ">=0.2.1,<0.3"
+pytensor-ml = ">=0.3.0,<0.4"
 
 [tool.pixi.feature.docs.dependencies]
 sphinx = ">=9.1,<10"
