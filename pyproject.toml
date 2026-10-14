@@ -32,7 +32,7 @@ dependencies = [
     "pytensor>=3.3,<4",
     "arviz>=1.2,<2",
     "nutpie>=0.16,<1",
-    "pymc-extras>=0.14.0,<1",
+    "pymc-extras>=0.15.1,<1",
     "ptgp>=0.1.2,<1",
     "preliz>=0.27.1,<1",
     "scikit-learn>=1.9,<2",
@@ -59,7 +59,7 @@ dev = [
     "types-seaborn>=0.13.2.20240417,<1",
     "types-requests>=2.33,<3",
 ]
-notebooks = ["notebook>=7.6,<8", "ipywidgets>=8.1,<9", "openai>=2.0", "nbclassic>=1.3.3,<2", "nbclassic-mcp-bridge>=1.1.0,<2", "gEconpy>=2.2,<3"]
+notebooks = ["ipywidgets>=8.1,<9", "openai>=2.0", "nbclassic>=1.3.3,<2", "nbclassic-mcp-bridge>=1.1.0,<2", "gEconpy>=2.3,<3"]
 
 [project.scripts]
 install-climate-risk-skills = "climate_risk.skills.cli:main"
@@ -84,11 +84,9 @@ exclude = ["/.github", "/notebooks", "/methodological_paper", "/Papers", "/data"
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
-platforms = ["osx-arm64", "linux-64"]
-
-# The floor mlx's conda build declares. Pixi assumes macOS 13.0 without this and finds no candidate.
-[tool.pixi.system-requirements]
-macos = "14.5"
+# mlx's wheels need macOS 14.0, and pixi assumes 13.0 without a floor. The floor sits at 14.5 rather
+# than 14.0 because at 14.0 the conda solve picks preliz 0.28, which pymc-extras 0.14 refuses.
+platforms = [{ name = "osx-arm64-macos-14-5", platform = "osx-arm64", macos = "14.5" }, "linux-64"]
 
 # geopandas needs GDAL, GEOS and PROJ built against a common ABI.
 [tool.pixi.dependencies]
@@ -120,8 +118,8 @@ pyarrow = ">=25.0,<26"
 fastexcel = ">=0.20,<1"
 
 # MLX runs on Apple silicon alone, so pytensor's MLX compile mode is reachable only here.
-[tool.pixi.target.osx-arm64.dependencies]
-mlx = ">=0.32,<1"
+[tool.pixi.target.osx-arm64.pypi-dependencies]
+mlx = ">=0.32.2,<1"
 
 [tool.pixi.feature.dev.dependencies]
 ruff = ">=0.16,<1"
@@ -140,6 +138,7 @@ types-seaborn = ">=0.13.2.20240417,<1"
 [tool.pixi.feature.notebooks.dependencies]
 ipywidgets = ">=8.1,<9"
 nbclassic = ">=1.3.3,<2"
+libpysal = ">=4.15.0,<5"
 
 # nbclassic-mcp-bridge is not on conda-forge. gEconpy is, but its conda build depends on
 # pymc-extras, which would put that back in the conda solve and re-impose its caps.
@@ -149,7 +148,7 @@ nbclassic = ">=1.3.3,<2"
 # between releases yet.
 [tool.pixi.feature.notebooks.pypi-dependencies]
 nbclassic-mcp-bridge = ">=1.1.0,<2"
-geconpy = ">=2.2,<3"
+geconpy = ">=2.3,<3"
 pytensor-ml = ">=0.2.1,<0.3"
 
 [tool.pixi.feature.docs.dependencies]
@@ -183,7 +182,7 @@ dependency-overrides = { pytensor = ">=3.3,<4", pymc = ">=6.3,<7" }
 
 [tool.pixi.pypi-dependencies]
 climate-risk = { path = ".", editable = true }
-pymc-extras = ">=0.14.0,<1"
+pymc-extras = ">=0.15.1,<1"
 ptgp = ">=0.1.2,<1"
 
 [tool.pixi.environments]
