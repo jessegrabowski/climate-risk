@@ -84,9 +84,8 @@ exclude = ["/.github", "/notebooks", "/methodological_paper", "/Papers", "/data"
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
-# mlx's wheels need macOS 14.0, and pixi assumes 13.0 without a floor. The floor sits at 14.5 rather
-# than 14.0 because at 14.0 the conda solve picks preliz 0.28, which pymc-extras 0.14 refuses.
-platforms = [{ name = "osx-arm64-macos-14-5", platform = "osx-arm64", macos = "14.5" }, "linux-64"]
+# mlx's wheels need macOS 14.0, and pixi assumes 13.0 without a floor.
+platforms = [{ name = "osx-arm64-macos-14-0", platform = "osx-arm64", macos = "14.0" }, "linux-64"]
 
 # geopandas needs GDAL, GEOS and PROJ built against a common ABI.
 [tool.pixi.dependencies]

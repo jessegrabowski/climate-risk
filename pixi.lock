@@ -6,10 +6,10 @@ platforms:
   - __linux=4.18
   - __glibc=2.28
   - __archspec=0=x86_64
-- name: osx-arm64-macos-14-5
+- name: osx-arm64-macos-14-0
   subdir: osx-arm64
   virtual-packages:
-  - __osx=14.5
+  - __osx=14.0
   - __unix=0=0
   - __archspec=0=m1
 environments:
@@ -416,7 +416,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/e1/be/cb8b5a47fa80cfc7ab98e32c46422d6f1269e2a3a2c1ca37e3f97ad4cb98/better_optimize-0.4.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e3/65/9b98a81ae91ff75387248dea3ffc3138ea2cc8a364b0fede8e331fb9f9dc/pymc_extras-0.15.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fc/46/0210a1180598af9045dd6593916468859452a8ab43f5ccf2229b3e5fa2eb/ptgp-0.2.0-py3-none-any.whl
-      osx-arm64-macos-14-5:
+      osx-arm64-macos-14-0:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/adwaita-icon-theme-51.0-unix_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/affine-3.0.1-pyhecae5ae_0.conda
@@ -1204,7 +1204,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/e1/be/cb8b5a47fa80cfc7ab98e32c46422d6f1269e2a3a2c1ca37e3f97ad4cb98/better_optimize-0.4.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e3/65/9b98a81ae91ff75387248dea3ffc3138ea2cc8a364b0fede8e331fb9f9dc/pymc_extras-0.15.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fc/46/0210a1180598af9045dd6593916468859452a8ab43f5ccf2229b3e5fa2eb/ptgp-0.2.0-py3-none-any.whl
-      osx-arm64-macos-14-5:
+      osx-arm64-macos-14-0:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/accessible-pygments-0.0.5-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/adwaita-icon-theme-51.0-unix_0.conda
@@ -2083,7 +2083,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/ef/9a/91285d01a9293d0b3d86167f9c7bd13f08c960d3fa365782751ce9bcbfb1/openai-3.29.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f1/b3/63ba5b38bdb604195c1a2117c92920c804f0b3060cefdce34b8fa6eb457b/nbclassic_mcp_bridge-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fc/46/0210a1180598af9045dd6593916468859452a8ab43f5ccf2229b3e5fa2eb/ptgp-0.2.0-py3-none-any.whl
-      osx-arm64-macos-14-5:
+      osx-arm64-macos-14-0:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/adwaita-icon-theme-51.0-unix_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/affine-3.0.1-pyhecae5ae_0.conda
@@ -9748,7 +9748,7 @@ packages:
   license: BSD-2-Clause
   license_family: BSD
   purls:
-  - pkg:pypi/python-json-logger?source=compressed-mapping
+  - pkg:pypi/python-json-logger?source=hash-mapping
   run_exports: {}
   size: 19367
   timestamp: 1786872772907
@@ -10590,7 +10590,7 @@ packages:
   license: Apache-2.0
   license_family: APACHE
   purls:
-  - pkg:pypi/websocket-client?source=hash-mapping
+  - pkg:pypi/websocket-client?source=compressed-mapping
   run_exports: {}
   size: 78254
   timestamp: 1788531123810
@@ -11300,7 +11300,7 @@ packages:
   license: MIT
   license_family: MIT
   purls:
-  - pkg:pypi/cffi?source=hash-mapping
+  - pkg:pypi/cffi?source=compressed-mapping
   run_exports: {}
   size: 289165
   timestamp: 1788485306633
