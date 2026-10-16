@@ -1,55 +1,228 @@
-assumptions
+symbols
 {
-    positive
-    {
-        # Quantities
-        C[], Y[], GDP[], H[], H_H[], L[], K[], I[], M[], X[], G[], Y_star[],
+    # Quantities
+    C[]      { name = "Consumption"; positive = True; };
+    Y[]      { name = "Final good"; positive = True; };
+    GDP[]    { name = "GDP"; positive = True; };
+    H[]      { name = "Domestic output"; positive = True; };
+    H_H[]    { name = "Domestic goods sold at home"; positive = True; };
+    L[]      { name = "Hours worked"; positive = True; };
+    K[]      { name = "Capital stock"; positive = True; };
+    I[]      { name = "Investment"; positive = True; };
+    M[]      { name = "Imports"; positive = True; };
+    X[]      { name = "Exports"; positive = True; };
+    G[]      { name = "Government spending"; positive = True; };
+    Y_star[] { name = "Foreign output"; positive = True; };
+    B[]      { name = "Government debt"; };
+    B_star[] { name = "Foreign bond holdings"; };
+    U[]      { name = "Lifetime utility"; };
+    u[]      { name = "Period utility"; };
 
-        # Prices and wages
-        p_H[], p_M[], p_X[], p_M_star[], w[], w_tilde[], r[],
-        p_H_tilde[], p_M_tilde[], p_X_tilde[],
+    # Prices and wages
+    p_H[]       { name = "Relative price of domestic goods"; positive = True; };
+    p_M[]       { name = "Relative price of imports"; positive = True; };
+    p_X[]       { name = "Relative price of exports"; positive = True; };
+    p_M_star[]  { name = "World price of imports"; positive = True; };
+    w[]         { name = "Real wage"; positive = True; };
+    w_tilde[]   { name = "Reset wage"; positive = True; };
+    r[]         { name = "Rental rate of capital"; positive = True; };
+    p_H_tilde[] { name = "Domestic reset price"; positive = True; };
+    p_M_tilde[] { name = "Import reset price"; positive = True; };
+    p_X_tilde[] { name = "Export reset price"; positive = True; };
+    q[]         { name = "Real exchange rate"; };
 
-        # Inflation rates
-        pi[], pi_H[], pi_M[], pi_X[], pi_star[], pi_w[],
+    # Inflation and interest rates
+    pi[]      { name = "CPI inflation"; positive = True; };
+    pi_H[]    { name = "Domestic price inflation"; positive = True; };
+    pi_M[]    { name = "Import price inflation"; positive = True; };
+    pi_X[]    { name = "Export price inflation"; positive = True; };
+    pi_star[] { name = "Foreign inflation"; positive = True; };
+    pi_w[]    { name = "Wage inflation"; positive = True; };
+    i[]       { name = "Policy rate"; };
+    i_star[]  { name = "Foreign interest rate"; };
 
-        # Marginal costs and multipliers
-        mu_H[], lambda[], tobins_q[],
+    # Marginal costs and multipliers
+    mu_H[]     { name = "Domestic real marginal cost"; positive = True; };
+    mu_Y[]     { name = "Final good marginal cost"; };
+    lambda[]   { name = "Marginal utility of wealth"; positive = True; };
+    tobins_q[] { name = "Shadow value of installed capital"; positive = True; };
 
-        # Capital utilization
-        z[],
+    # Capital utilization
+    z[]    { name = "Capital utilization"; positive = True; };
+    Psi_z[] { name = "Utilization cost"; };
 
-        # Dispersion and risk premium
-        nu_H[], nu_M[], nu_X[], nu_w[], Phi_B[],
-        R_star_given[],
+    # Dispersion and risk premium
+    nu_H[]         { name = "Domestic price dispersion"; positive = True; };
+    nu_M[]         { name = "Import price dispersion"; positive = True; };
+    nu_X[]         { name = "Export price dispersion"; positive = True; };
+    nu_w[]         { name = "Wage dispersion"; positive = True; };
+    Phi_B[]        { name = "Foreign borrowing premium"; positive = True; };
+    R_star_given[] { name = "Gross foreign bond return"; positive = True; };
 
-        # Calvo auxiliary variables
-        x_1[], x_2[], z_1_M[], z_2_M[], z_1_X[], z_2_X[],
-        x_1_w[], x_2_w[],
+    # Calvo auxiliary variables
+    x_1[]   { name = "Domestic reset price numerator"; positive = True; };
+    x_2[]   { name = "Domestic reset price denominator"; positive = True; };
+    z_1_M[] { name = "Import reset price numerator"; positive = True; };
+    z_2_M[] { name = "Import reset price denominator"; positive = True; };
+    z_1_X[] { name = "Export reset price numerator"; positive = True; };
+    z_2_X[] { name = "Export reset price denominator"; positive = True; };
+    x_1_w[] { name = "Reset wage numerator"; positive = True; };
+    x_2_w[] { name = "Reset wage denominator"; positive = True; };
 
-        # Time-varying shocks (level, SS = 1)
-        beta[], xi_I[], xi_H[], xi_w[], xi_K[],
+    # Time-varying shocks (level, SS = 1)
+    A[]    { name = "Total factor productivity"; };
+    beta[] { name = "Discount factor"; positive = True; };
+    xi_I[] { name = "Investment-specific technology"; positive = True; };
+    xi_H[] { name = "Domestic price markup shock"; positive = True; };
+    xi_w[] { name = "Wage markup shock"; positive = True; };
+    xi_K[] { name = "Surviving share of capital"; positive = True; };
 
-        # Structural parameters
-        alpha, beta, delta, sigma, chi, Theta,
-        alpha_Y, psi_Y, psi_H, psi_M, psi_X, psi_w,
-        theta_H, theta_M, theta_X, theta_w,
-        psi_B, phi_B,
-        alpha_Y_star, psi_Y_star, phi_Y_star,
-        phi_pi_star, phi_y_star, kappa_star, gamma_i_star, pi_bar,
-        psi_G,
-        phi_H, gamma_I, psi_z,
-        phi_pi, phi_y, phi_q,
+    # Tax rates
+    tau_C[] { name = "Consumption tax rate"; positive = True; };
+    tau_K[] { name = "Capital income tax rate"; positive = True; };
+    tau_L[] { name = "Labor income tax rate"; positive = True; };
+    tau_M[] { name = "Import tariff"; positive = True; };
+    tau_X[] { name = "Export tax rate"; positive = True; };
 
-        # Tax rates
-        tau_C[], tau_K[], tau_L[],
+    # Firm costs and profits
+    TC_H[] { name = "Domestic firm total cost"; positive = True; };
+    TC_Q[] { name = "Final bundler total cost"; positive = True; };
+    Pi_H[] { name = "Domestic firm profit"; };
+    Pi_M[] { name = "Importer profit"; };
+    Pi_X[] { name = "Exporter profit"; };
 
-        # Trade taxes
-        tau_M[], tau_X[],
+    # Shocks
+    epsilon_A[]        { name = "Productivity innovation"; };
+    epsilon_beta[]     { name = "Discount factor innovation"; };
+    epsilon_xi_I[]     { name = "Investment technology innovation"; };
+    epsilon_xi_H[]     { name = "Domestic markup innovation"; };
+    epsilon_xi_w[]     { name = "Wage markup innovation"; };
+    epsilon_xi_K[]     { name = "Capital destruction innovation"; };
+    epsilon_q[]        { name = "Real exchange rate innovation"; };
+    epsilon_i_star[]   { name = "Foreign interest rate innovation"; };
+    epsilon_pi_star[]  { name = "Foreign inflation innovation"; };
+    epsilon_Y_star[]   { name = "Foreign output innovation"; };
+    epsilon_p_M_star[] { name = "World import price innovation"; };
+    epsilon_i[]        { name = "Monetary policy innovation"; };
+    epsilon_tau_C[]    { name = "Consumption tax innovation"; };
+    epsilon_tau_K[]    { name = "Capital tax innovation"; };
+    epsilon_tau_L[]    { name = "Labor tax innovation"; };
+    epsilon_tau_M[]    { name = "Tariff innovation"; };
+    epsilon_tau_X[]    { name = "Export tax innovation"; };
+    epsilon_G[]        { name = "Government spending innovation"; };
 
-        # Firm total costs
-        TC_H[], TC_Q[];
+    # Preferences
+    beta    { name = "Discount factor"; positive = True; };
+    sigma   { name = "Relative risk aversion"; positive = True; };
+    chi     { name = "Inverse Frisch elasticity"; positive = True; };
+    Theta   { name = "Labor disutility weight"; positive = True; };
+    phi_H   { name = "Habit persistence"; positive = True; };
 
-    };
+    # Technology and capital
+    alpha   { name = "Capital share"; positive = True; };
+    delta   { name = "Depreciation rate"; positive = True; };
+    gamma_I { name = "Investment adjustment cost"; positive = True; };
+    psi_z   { name = "Utilization cost curvature"; positive = True; };
+    psi_z_1 { name = "Utilization cost slope"; };
+
+    # Final good and trade
+    alpha_Y      { name = "Home bias in the final good"; positive = True; };
+    psi_Y        { name = "Elasticity between domestic goods and imports"; positive = True; };
+    alpha_Y_star { name = "Foreign home bias"; positive = True; };
+    psi_Y_star   { name = "Price elasticity of export demand"; positive = True; };
+    phi_Y_star   { name = "Foreign to domestic output ratio"; positive = True; };
+    psi_B        { name = "Risk premium elasticity"; positive = True; };
+    phi_B        { name = "Net foreign asset target"; positive = True; };
+    q_bar        { name = "Steady-state real exchange rate"; };
+    p_M_star_bar { name = "Steady-state world import price"; };
+
+    # Price and wage setting
+    psi_H   { name = "Elasticity of substitution, domestic goods"; positive = True; };
+    psi_M   { name = "Elasticity of substitution, imports"; positive = True; };
+    psi_X   { name = "Elasticity of substitution, exports"; positive = True; };
+    psi_w   { name = "Elasticity of substitution, labor"; positive = True; };
+    theta_H { name = "Calvo probability, domestic prices"; positive = True; };
+    theta_M { name = "Calvo probability, import prices"; positive = True; };
+    theta_X { name = "Calvo probability, export prices"; positive = True; };
+    theta_w { name = "Calvo probability, wages"; positive = True; };
+    gamma_H { name = "Indexation, domestic prices"; };
+    gamma_M { name = "Indexation, import prices"; };
+    gamma_X { name = "Indexation, export prices"; };
+    gamma_w { name = "Indexation, wages"; };
+
+    # Monetary policy
+    pi_bar { name = "Inflation target"; positive = True; };
+    i_bar  { name = "Steady-state policy rate"; };
+    rho_i  { name = "Interest rate smoothing"; };
+    phi_pi { name = "Taylor rule, inflation"; positive = True; };
+    phi_y  { name = "Taylor rule, output"; positive = True; };
+    phi_q  { name = "Taylor rule, real exchange rate"; positive = True; };
+
+    # Rest of the world
+    i_star_bar   { name = "Steady-state foreign interest rate"; };
+    rho_i_star   { name = "Foreign interest rate smoothing"; };
+    rho_pi_star  { name = "Foreign inflation persistence"; };
+    rho_Y_star   { name = "Foreign output persistence"; };
+    phi_pi_star  { name = "Foreign Taylor rule, inflation"; positive = True; };
+    phi_y_star   { name = "Foreign Taylor rule, output"; positive = True; };
+    kappa_star   { name = "Foreign Phillips curve slope"; positive = True; };
+    gamma_i_star { name = "Foreign output response to the interest rate"; positive = True; };
+
+    # Fiscal policy
+    psi_G     { name = "Government spending share"; positive = True; };
+    b_target  { name = "Debt to output target"; };
+    T_lump    { name = "Lump-sum tax"; };
+    tau_C     { name = "Steady-state consumption tax rate"; };
+    tau_K     { name = "Steady-state capital income tax rate"; };
+    tau_L     { name = "Steady-state labor income tax rate"; };
+    tau_M     { name = "Steady-state import tariff"; };
+    tau_X     { name = "Steady-state export tax rate"; };
+    phi_tau_C { name = "Consumption tax response to output"; };
+    phi_tau_K { name = "Capital tax response to output"; };
+    phi_tau_L { name = "Labor tax response to output"; };
+    phi_tau_M { name = "Tariff response to output"; };
+    phi_tau_X { name = "Export tax response to output"; };
+    phi_debt  { name = "Labor tax response to debt on impact"; };
+    phi_b_C   { name = "Consumption tax response to debt"; };
+    phi_b_K   { name = "Capital tax response to debt"; };
+    phi_b_L   { name = "Labor tax response to debt"; };
+    phi_b_M   { name = "Tariff response to debt"; };
+    phi_b_X   { name = "Export tax response to debt"; };
+
+    # Shock persistence
+    rho_A        { name = "Productivity persistence"; };
+    rho_beta     { name = "Discount factor persistence"; };
+    rho_xi_I     { name = "Investment technology persistence"; };
+    rho_xi_H     { name = "Domestic markup persistence"; };
+    rho_xi_w     { name = "Wage markup persistence"; };
+    rho_q        { name = "Real exchange rate persistence"; };
+    rho_p_M_star { name = "World import price persistence"; };
+    rho_tau_C    { name = "Consumption tax persistence"; };
+    rho_tau_K    { name = "Capital tax persistence"; };
+    rho_tau_L    { name = "Labor tax persistence"; };
+    rho_tau_M    { name = "Tariff persistence"; };
+    rho_tau_X    { name = "Export tax persistence"; };
+    rho_G        { name = "Government spending persistence"; };
+
+    # Shock standard deviations
+    sigma_A        { name = "Productivity shock sd"; };
+    sigma_beta     { name = "Discount factor shock sd"; };
+    sigma_xi_I     { name = "Investment technology shock sd"; };
+    sigma_xi_H     { name = "Domestic markup shock sd"; };
+    sigma_xi_w     { name = "Wage markup shock sd"; };
+    sigma_xi_K     { name = "Capital destruction shock sd"; };
+    sigma_q        { name = "Real exchange rate shock sd"; };
+    sigma_i_star   { name = "Foreign interest rate shock sd"; };
+    sigma_pi_star  { name = "Foreign inflation shock sd"; };
+    sigma_Y_star   { name = "Foreign output shock sd"; };
+    sigma_p_M_star { name = "World import price shock sd"; };
+    sigma_i        { name = "Monetary policy shock sd"; };
+    sigma_tau_C    { name = "Consumption tax shock sd"; };
+    sigma_tau_K    { name = "Capital tax shock sd"; };
+    sigma_tau_L    { name = "Labor tax shock sd"; };
+    sigma_tau_M    { name = "Tariff shock sd"; };
+    sigma_tau_X    { name = "Export tax shock sd"; };
+    sigma_G        { name = "Government spending shock sd"; };
 };
 
 tryreduce
