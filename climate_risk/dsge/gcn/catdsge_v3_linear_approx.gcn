@@ -238,7 +238,7 @@ block WAGE_SETTING
         # Wage markup gap: Theta * L^chi / (lambda * (1-tau_L) * w) relative to SS value (psi_w-1)/psi_w
         log(pi_w[]) - gamma_w * log(pi[-1]) = beta * (E[][log(pi_w[1])] - gamma_w * log(pi[]))
             + kappa_w * log(psi_w * Theta * L[] ^ chi / ((psi_w - 1) * lambda[] * (1 - tau_L[]) * w[]))
-            + log(xi_w[]);
+            + kappa_xi_w * log(xi_w[]);
 
         pi_w[] = w[] / w[-1] * pi[];
 
@@ -260,6 +260,10 @@ block WAGE_SETTING
 
         rho_xi_w   ~ maxent(Beta(), lower=0.74, upper=0.974, mass=0.99) = 0.880;
         sigma_xi_w ~ maxent(InverseGamma(), lower=0.003, upper=0.018, mass=0.99) = 0.006;
+
+        # catdsge_v3 scales the reset wage itself by xi_w, so the shock also discounts through the
+        # Calvo sum: its first-order loading is kappa_w * (1 - beta theta_w rho) / (1 - beta theta_w).
+        kappa_xi_w = kappa_w * (1 - beta * theta_w * rho_xi_w) / (1 - beta * theta_w);
     };
 };
 
@@ -344,7 +348,7 @@ block DOMESTIC_PRICE_NKPC
         # which yields the textbook form with no inflation-correction term.
         log(pi_H[]) - gamma_H * log(pi_H[-1]) = beta * (E[][log(pi_H[1])] - gamma_H * log(pi_H[]))
             + kappa_H * log(mu_H[] / p_H[] * psi_H / (psi_H - 1))
-            + log(xi_H[]);
+            + kappa_xi_H * log(xi_H[]);
 
         # Domestic price markup shock (AR(1) in logs, SS = 1)
         log(xi_H[]) = rho_xi_H * log(xi_H[-1]) + epsilon_xi_H[];
@@ -364,6 +368,10 @@ block DOMESTIC_PRICE_NKPC
 
         rho_xi_H   ~ maxent(Beta(), lower=0.74, upper=0.974, mass=0.99) = 0.880;
         sigma_xi_H ~ maxent(InverseGamma(), lower=0.003, upper=0.018, mass=0.99) = 0.006;
+
+        # catdsge_v3 scales the reset price itself by xi_H, so the shock also discounts through the
+        # Calvo sum: its first-order loading is kappa_H * (1 - beta theta_H rho) / (1 - beta theta_H).
+        kappa_xi_H = kappa_H * (1 - beta * theta_H * rho_xi_H) / (1 - beta * theta_H);
 	};
 };
 
