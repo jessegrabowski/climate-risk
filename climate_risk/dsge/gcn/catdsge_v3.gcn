@@ -357,40 +357,65 @@ block HOUSEHOLD
 {
 	definitions
 	{
+		@name = "Period utility"
 		u[] = ((C[] - phi_H * C[-1]) ^ (1 - sigma) / (1 - sigma) - Theta * nu_w[] * L[] ^ (1 + chi) / (1 + chi));
+		@name = "Utilization cost"
 		Psi_z[] = psi_z_1 * (z[] - 1) + psi_z / 2 * (z[] - 1) ^ 2;
 	};
 
     objective
     {
+        @name = "Lifetime utility"
         U[] = u[] + beta[] * E[][U[1]];
     };
 
     controls
     {
-        C[], I[], K[], B[], B_star[], z[];
+        @foc_name = "Consumption Euler equation"
+        C[];
+
+        @foc_name = "Investment demand"
+        I[];
+
+        @foc_name = "Capital Euler equation"
+        K[];
+
+        @foc_name = "Bond Euler equation"
+        B[];
+
+        @foc_name = "Foreign bond Euler equation"
+        B_star[];
+
+        @foc_name = "Capital utilization"
+        z[];
     };
 
     constraints
     {
+		@name = "Household budget constraint"
 		(1 + tau_C[]) * C[] + I[] + B[] + q[] * B_star[] + Psi_z[] * xi_K[] * K[-1]
 		    = (1 - tau_K[]) * r[] * z[] * xi_K[] * K[-1] + (1 - tau_L[]) * w[] * L[]
 		    + (1 + i[-1]) / pi[] * B[-1]
 		    + q[] * R_star_given[-1] / pi_star[] * B_star[-1]
 		    + Pi_H[] + Pi_X[] + Pi_M[]
 		    - T_lump : lambda[];
+		@name = "Capital accumulation"
 		K[] = (1 - delta) * xi_K[] * K[-1] + I[] * (1 - gamma_I / 2 * (xi_I[] * I[] / I[-1] - 1) ^ 2) : tobins_q[];
     };
 
     identities
     {
+        @name = "Foreign borrowing premium"
         Phi_B[] = exp(-psi_B * (q[] * B_star[] / Y[] - phi_B));
+        @name = "Gross foreign bond return"
         R_star_given[] = (1 + i_star[]) * Phi_B[];
 
         # Discount factor shock (AR(1) in logs, mean-reverting to beta)
+        @name = "Discount factor shock"
         log(beta[]) = rho_beta * log(beta[-1]) + (1 - rho_beta) * log(beta) + epsilon_beta[];
 
         # Investment-specific technology shock (AR(1) in logs, SS = 1)
+        @name = "Investment technology shock"
         log(xi_I[]) = rho_xi_I * log(xi_I[-1]) + epsilon_xi_I[];
     };
 
@@ -431,21 +456,28 @@ block WAGE_SETTING
     identities
     {
         # xi_w[] enters as a multiplicative shock on the desired markup
+        @name = "Optimal reset wage"
         w_tilde[] ^ (1 + psi_w * chi) = xi_w[] * psi_w / (psi_w - 1) * x_1_w[] / x_2_w[];
 
+        @name = "Reset wage numerator"
         x_1_w[] = Theta * L[] ^ (1 + chi) * w[] ^ (psi_w * (1 + chi)) +
             theta_w * beta[] * E[][(pi[1] / pi[] ^ gamma_w) ^ (psi_w * (1 + chi)) * x_1_w[1]];
+        @name = "Reset wage denominator"
         x_2_w[] = lambda[] * (1 - tau_L[]) * w[] ^ psi_w * L[] +
             theta_w * beta[] * E[][(pi[1] / pi[] ^ gamma_w) ^ (psi_w - 1) * x_2_w[1]];
 
+        @name = "Wage index"
         w[] ^ (1 - psi_w) = (1 - theta_w) * w_tilde[] ^ (1 - psi_w) +
             theta_w * (pi[] / pi[-1] ^ gamma_w) ^ (psi_w - 1) * w[-1] ^ (1 - psi_w);
 
+        @name = "Wage dispersion"
         nu_w[] = (1 - theta_w) * (w_tilde[] / w[]) ^ (-psi_w * (1 + chi))
                + theta_w * (pi_w[] / pi[-1] ^ gamma_w) ^ (psi_w * (1 + chi)) * nu_w[-1];
+        @name = "Wage inflation"
         pi_w[] = w[] / w[-1] * pi[];
 
         # Wage markup shock (AR(1) in logs, SS = 1)
+        @name = "Wage markup shock"
         log(xi_w[]) = rho_xi_w * log(xi_w[-1]) + epsilon_xi_w[];
     };
 
@@ -469,24 +501,32 @@ block FINAL_BUNDLER
 {
     controls
     {
-        M[], H_H[];
+        @foc_name = "Import demand"
+        M[];
+
+        @foc_name = "Domestic goods demand"
+        H_H[];
     };
 
     objective
     {
+        @name = "Final bundler total cost"
         @minimize
         TC_Q[] = p_H[] * H_H[] + p_M[] * M[];
     };
 
     constraints
     {
+        @name = "Final good aggregator"
         Y[] = (alpha_Y ^ (1 / psi_Y) * H_H[] ^ ((psi_Y - 1) / psi_Y) +
               (1 - alpha_Y) ^ (1 / psi_Y) * M[] ^ ((psi_Y - 1) / psi_Y)) ^ (psi_Y / (psi_Y - 1)) : mu_Y[];
     };
 
     identities
     {
+        @name = "Final good price normalization"
         mu_Y[] = 1;
+        @name = "CPI inflation"
         pi[] = pi_H[] * p_H[-1] / p_H[];
     };
 
@@ -501,23 +541,31 @@ block DOMESTIC_FIRM
 {
     controls
     {
-        K[-1], L[];
+        @foc_name = "Capital demand"
+        K[-1];
+
+        @foc_name = "Labor demand"
+        L[];
     };
 
     objective
     {
+        @name = "Domestic firm total cost"
         @minimize
         TC_H[] = r[] * z[] * xi_K[] * K[-1] + w[] * L[];
     };
 
     constraints
     {
+        @name = "Production function"
         H[] = A[] * (z[] * xi_K[] * K[-1]) ^ alpha * L[] ^ (1 - alpha) : mu_H[];
     };
 
     identities
     {
+        @name = "Productivity shock"
         log(A[]) = rho_A * log(A[-1]) + epsilon_A[];
+        @name = "Domestic firm profit"
         Pi_H[] = p_H[] * (H_H[] + nu_X[] * X[]) - TC_H[];
     };
 
@@ -541,21 +589,27 @@ block DOMESTIC_FIRM_PRICE_SETTING_PROBLEM
  	identities
  	{
         # xi_H[] enters as a multiplicative shock on the desired markup
+		@name = "Optimal domestic reset price"
 		p_H_tilde[] = xi_H[] * psi_H / (psi_H - 1) * x_1[] / x_2[];
 
+        @name = "Domestic reset price numerator"
         x_1[] = mu_H[] * H_H[] + beta[] * theta_H * E[][
             lambda[1] / lambda[] * (pi_H[1] / pi_H[] ^ gamma_H) ^ psi_H * x_1[1]
         ];
+        @name = "Domestic reset price denominator"
         x_2[] = p_H[] * H_H[] + beta[] * theta_H * E[][
             lambda[1] / lambda[] * (pi_H[1] / pi_H[] ^ gamma_H) ^ (psi_H - 1) * x_2[1]
         ];
 
+        @name = "Domestic price index"
         1 = theta_H * (pi_H[] / pi_H[-1] ^ gamma_H) ^ (psi_H - 1) +
 				(1 - theta_H) * p_H_tilde[] ^ (1 - psi_H);
 
+        @name = "Domestic price dispersion"
         nu_H[] = (1 - theta_H) * p_H_tilde[] ^ (-psi_H) + theta_H * (pi_H[] / pi_H[-1] ^ gamma_H) ^ psi_H * nu_H[-1];
 
         # Domestic price markup shock (AR(1) in logs, SS = 1)
+        @name = "Domestic markup shock"
         log(xi_H[]) = rho_xi_H * log(xi_H[-1]) + epsilon_xi_H[];
 	};
 
@@ -581,6 +635,7 @@ block CAPITAL_DESTRUCTION
     {
         # Share of the installed capital stock that survives the period. A disaster is a negative
         # draw: it destroys capital in place, and the loss persists through accumulation.
+        @name = "Capital destruction shock"
         log(xi_K[]) = epsilon_xi_K[];
     };
 
@@ -599,6 +654,7 @@ block EXCHANGE_RATE
 {
     identities
     {
+        @name = "Real exchange rate"
         log(q[]) = (1 - rho_q) * log(q_bar) + rho_q * log(q[-1]) + epsilon_q[];
     };
 
@@ -621,21 +677,25 @@ block FOREIGN
 {
     identities
     {
+        @name = "Foreign monetary policy rule"
         log(1 + i_star[]) = (1 - rho_i_star) * log(1 + i_star_bar)
             + rho_i_star * log(1 + i_star[-1])
             + phi_pi_star * log(pi_star[-1])
             + phi_y_star * (log(Y_star[-1]) - log(Y_star[ss]))
             + epsilon_i_star[];
 
+        @name = "Foreign Phillips curve"
         log(pi_star[]) = rho_pi_star * log(pi_star[-1])
             + kappa_star * (log(Y_star[-1]) - log(Y_star[ss]))
             + epsilon_pi_star[];
 
+        @name = "Foreign output"
         log(Y_star[]) = (1 - rho_Y_star) * log(Y_star[ss])
             + rho_Y_star * log(Y_star[-1])
             - gamma_i_star * (log(1 + i_star[-1]) - log(1 + i_star_bar))
             + epsilon_Y_star[];
 
+        @name = "Export demand"
         X[] = (1 - alpha_Y_star) * (p_X[] / q[]) ^ (-psi_Y_star) * Y_star[];
     };
 
@@ -674,20 +734,28 @@ block IMPORT_FIRM
 {
     identities
     {
+        @name = "Optimal import reset price"
         p_M_tilde[] = psi_M / (psi_M - 1) * z_1_M[] / z_2_M[];
 
+        @name = "Import reset price numerator"
         z_1_M[] = (1 + tau_M[]) * q[] * p_M_star[] * M[] +
             beta[] * theta_M * E[][
                 lambda[1] / lambda[] * (pi_M[1] / pi_M[] ^ gamma_M) ^ psi_M * z_1_M[1]];
+        @name = "Import reset price denominator"
         z_2_M[] = p_M[] * M[] +
             beta[] * theta_M * E[][
                 lambda[1] / lambda[] * (pi_M[1] / pi_M[] ^ gamma_M) ^ (psi_M - 1) * z_2_M[1]];
 
+        @name = "Import price index"
         1 = theta_M * (pi_M[] / pi_M[-1] ^ gamma_M) ^ (psi_M - 1) + (1 - theta_M) * p_M_tilde[] ^ (1 - psi_M);
+        @name = "Import price dispersion"
         nu_M[] = (1 - theta_M) * p_M_tilde[] ^ (-psi_M) + theta_M * (pi_M[] / pi_M[-1] ^ gamma_M) ^ psi_M * nu_M[-1];
+        @name = "Import price inflation"
         p_M[] = p_M[-1] * pi_M[] / pi[];
 
+        @name = "World import price"
         log(p_M_star[]) = (1 - rho_p_M_star) * log(p_M_star_bar) + rho_p_M_star * log(p_M_star[-1]) + epsilon_p_M_star[];
+        @name = "Importer profit"
         Pi_M[] = p_M[] * M[] - (1 + tau_M[]) * q[] * p_M_star[] * nu_M[] * M[];
     };
 
@@ -713,19 +781,26 @@ block EXPORT_FIRM
 {
     identities
     {
+        @name = "Optimal export reset price"
         p_X_tilde[] = psi_X / (psi_X - 1) * z_1_X[] / z_2_X[];
 
+        @name = "Export reset price numerator"
         z_1_X[] = p_H[] * X[] +
             beta[] * theta_X * E[][
                 lambda[1] / lambda[] * (pi_X[1] / pi_X[] ^ gamma_X) ^ psi_X * z_1_X[1]];
+        @name = "Export reset price denominator"
         z_2_X[] = (1 - tau_X[]) * p_X[] * X[] +
             beta[] * theta_X * E[][
                 lambda[1] / lambda[] * (pi_X[1] / pi_X[] ^ gamma_X) ^ (psi_X - 1) * z_2_X[1]];
 
+        @name = "Export price index"
         1 = theta_X * (pi_X[] / pi_X[-1] ^ gamma_X) ^ (psi_X - 1) + (1 - theta_X) * p_X_tilde[] ^ (1 - psi_X);
+        @name = "Export price dispersion"
         nu_X[] = (1 - theta_X) * p_X_tilde[] ^ (-psi_X) + theta_X * (pi_X[] / pi_X[-1] ^ gamma_X) ^ psi_X * nu_X[-1];
+        @name = "Export price inflation"
         p_X[] = p_X[-1] * pi_X[] / pi[];
 
+        @name = "Exporter profit"
         Pi_X[] = (1 - tau_X[]) * p_X[] * X[] - p_H[] * nu_X[] * X[];
     };
 
@@ -743,6 +818,7 @@ block MONETARY_POLICY
     {
         # Developing-economy Taylor rule with exchange rate response
         # Responds to real exchange rate depreciation (q/q_bar > 1)
+        @name = "Taylor rule"
         log(1 + i[]) = rho_i * log(1 + i[-1])
             + (1 - rho_i) * (log(1 + i_bar)
                 + phi_pi * log(pi[] / pi_bar)
@@ -782,6 +858,7 @@ block FISCAL_AUTHORITY
 {
     identities
     {
+        @name = "Consumption tax rule"
         tau_C[] = (1 - rho_tau_C) * (
                 tau_C
                 + phi_tau_C * (Y[] / Y[ss] - 1)
@@ -790,6 +867,7 @@ block FISCAL_AUTHORITY
             + rho_tau_C * tau_C[-1]
             + epsilon_tau_C[];
 
+        @name = "Capital tax rule"
         tau_K[] = (1 - rho_tau_K) * (
                 tau_K
                 + phi_tau_K * (Y[] / Y[ss] - 1)
@@ -798,6 +876,7 @@ block FISCAL_AUTHORITY
             + rho_tau_K * tau_K[-1]
             + epsilon_tau_K[];
 
+        @name = "Labor tax rule"
         tau_L[] = (1 - rho_tau_L) * (
                 tau_L
                 + phi_tau_L * (Y[] / Y[ss] - 1)
@@ -806,6 +885,7 @@ block FISCAL_AUTHORITY
             + rho_tau_L * tau_L[-1]
             + epsilon_tau_L[];
 
+        @name = "Tariff rule"
         tau_M[] = (1 - rho_tau_M) * (
                 tau_M
                 + phi_tau_M * (Y[] / Y[ss] - 1)
@@ -814,6 +894,7 @@ block FISCAL_AUTHORITY
             + rho_tau_M * tau_M[-1]
             + epsilon_tau_M[];
 
+        @name = "Export tax rule"
         tau_X[] = (1 - rho_tau_X) * (
                 tau_X
                 + phi_tau_X * (Y[] / Y[ss] - 1)
@@ -822,8 +903,10 @@ block FISCAL_AUTHORITY
             + rho_tau_X * tau_X[-1]
             + epsilon_tau_X[];
 
+        @name = "Government spending"
         log(G[]) = (1 - rho_G) * log(G[ss]) + rho_G * log(G[-1]) + epsilon_G[];
 
+        @name = "Government budget constraint"
         B[] = (1 + i[-1]) / pi[] * B[-1] + G[]
             - tau_C[] * C[]
             - tau_K[] * r[] * z[] * xi_K[] * K[-1]
@@ -904,9 +987,11 @@ block MARKET_CLEARING
 {
     identities
     {
+        @name = "Domestic goods market clearing"
         H[] = nu_H[] * H_H[] + nu_X[] * X[];
 
         # Value added: final sales net of imports at world prices, plus exports.
+        @name = "GDP"
         GDP[] = Y[] + p_X[] * X[] - q[] * p_M_star[] * nu_M[] * M[];
         # TB[] = p_X[] * X[] - (1 + tau_M[]) * q[] * p_M_star[] * nu_M[] * M[];
     };

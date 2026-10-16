@@ -328,40 +328,65 @@ block HOUSEHOLD
 {
 	definitions
 	{
+		@name = "Period utility"
 		u[] = ((C[] - phi_H * C[-1]) ^ (1 - sigma) / (1 - sigma) - Theta * L[] ^ (1 + chi) / (1 + chi));
+		@name = "Utilization cost"
 		Psi_z[] = psi_z_1 * (z[] - 1) + psi_z / 2 * (z[] - 1) ^ 2;
 	};
 
     objective
     {
+        @name = "Lifetime utility"
         U[] = u[] + beta[] * E[][U[1]];
     };
 
     controls
     {
-        C[], I[], K[], B[], B_star[], z[];
+        @foc_name = "Consumption Euler equation"
+        C[];
+
+        @foc_name = "Investment demand"
+        I[];
+
+        @foc_name = "Capital Euler equation"
+        K[];
+
+        @foc_name = "Bond Euler equation"
+        B[];
+
+        @foc_name = "Foreign bond Euler equation"
+        B_star[];
+
+        @foc_name = "Capital utilization"
+        z[];
     };
 
     constraints
     {
+		@name = "Household budget constraint"
 		(1 + tau_C[]) * C[] + I[] + B[] + q[] * B_star[] + Psi_z[] * xi_K[] * K[-1]
 		    = (1 - tau_K[]) * r[] * z[] * xi_K[] * K[-1] + (1 - tau_L[]) * w[] * L[]
 		    + (1 + i[-1]) / pi[] * B[-1]
 		    + q[] * R_star_given[-1] / pi_star[] * B_star[-1]
 		    + Pi_H[] + Pi_X[] + Pi_M[]
 		    - T_lump : lambda[];
+		@name = "Capital accumulation"
 		K[] = (1 - delta) * xi_K[] * K[-1] + I[] * (1 - gamma_I / 2 * (xi_I[] * I[] / I[-1] - 1) ^ 2) : tobins_q[];
     };
 
     identities
     {
+        @name = "Foreign borrowing premium"
         Phi_B[] = exp(-psi_B * (q[] * B_star[] / Y[] - phi_B));
+        @name = "Gross foreign bond return"
         R_star_given[] = (1 + i_star[]) * Phi_B[];
 
         # Discount factor shock (AR(1) in logs, mean-reverting to beta)
+        @name = "Discount factor shock"
         log(beta[]) = rho_beta * log(beta[-1]) + (1 - rho_beta) * log(beta) + epsilon_beta[];
 
         # Investment-specific technology shock (AR(1) in logs, SS = 1)
+        @name = "Investment technology shock"
         log(xi_I[]) = rho_xi_I * log(xi_I[-1]) + epsilon_xi_I[];
     };
 
@@ -403,13 +428,16 @@ block WAGE_SETTING
     {
         # Log-linear wage Phillips curve (replaces Calvo recursion at first order)
         # Wage markup gap: Theta * L^chi / (lambda * (1-tau_L) * w) relative to SS value (psi_w-1)/psi_w
+        @name = "Wage Phillips curve"
         log(pi_w[]) - gamma_w * log(pi[-1]) = beta * (E[][log(pi_w[1])] - gamma_w * log(pi[]))
             + kappa_w * log(psi_w * Theta * L[] ^ chi / ((psi_w - 1) * lambda[] * (1 - tau_L[]) * w[]))
             + kappa_xi_w * log(xi_w[]);
 
+        @name = "Wage inflation"
         pi_w[] = w[] / w[-1] * pi[];
 
         # Wage markup shock (AR(1) in logs, SS = 1)
+        @name = "Wage markup shock"
         log(xi_w[]) = rho_xi_w * log(xi_w[-1]) + epsilon_xi_w[];
     };
 
@@ -438,24 +466,32 @@ block FINAL_BUNDLER
 {
     controls
     {
-        M[], H_H[];
+        @foc_name = "Import demand"
+        M[];
+
+        @foc_name = "Domestic goods demand"
+        H_H[];
     };
 
     objective
     {
+        @name = "Final bundler total cost"
         @minimize
         TC_Q[] = p_H[] * H_H[] + p_M[] * M[];
     };
 
     constraints
     {
+        @name = "Final good aggregator"
         Y[] = (alpha_Y ^ (1 / psi_Y) * H_H[] ^ ((psi_Y - 1) / psi_Y) +
               (1 - alpha_Y) ^ (1 / psi_Y) * M[] ^ ((psi_Y - 1) / psi_Y)) ^ (psi_Y / (psi_Y - 1)) : mu_Y[];
     };
 
     identities
     {
+        @name = "Final good price normalization"
         mu_Y[] = 1;
+        @name = "CPI inflation"
         pi[] = pi_H[] * p_H[-1] / p_H[];
     };
 
@@ -470,23 +506,31 @@ block DOMESTIC_FIRM
 {
     controls
     {
-        K[-1], L[];
+        @foc_name = "Capital demand"
+        K[-1];
+
+        @foc_name = "Labor demand"
+        L[];
     };
 
     objective
     {
+        @name = "Domestic firm total cost"
         @minimize
         TC_H[] = r[] * z[] * xi_K[] * K[-1] + w[] * L[];
     };
 
     constraints
     {
+        @name = "Production function"
         H[] = A[] * (z[] * xi_K[] * K[-1]) ^ alpha * L[] ^ (1 - alpha) : mu_H[];
     };
 
     identities
     {
+        @name = "Productivity shock"
         log(A[]) = rho_A * log(A[-1]) + epsilon_A[];
+        @name = "Domestic firm profit"
         Pi_H[] = p_H[] * (H_H[] + X[]) - TC_H[];
     };
 
@@ -513,11 +557,13 @@ block DOMESTIC_PRICE_NKPC
         # Standard NKPC — derived from the writeup-consistent symmetric Calvo
         # (both x_1 and x_2 use lambda[1]/lambda[] without an extra 1/pi[1] in x_1),
         # which yields the textbook form with no inflation-correction term.
+        @name = "Domestic price Phillips curve"
         log(pi_H[]) - gamma_H * log(pi_H[-1]) = beta * (E[][log(pi_H[1])] - gamma_H * log(pi_H[]))
             + kappa_H * log(mu_H[] / p_H[] * psi_H / (psi_H - 1))
             + kappa_xi_H * log(xi_H[]);
 
         # Domestic price markup shock (AR(1) in logs, SS = 1)
+        @name = "Domestic markup shock"
         log(xi_H[]) = rho_xi_H * log(xi_H[-1]) + epsilon_xi_H[];
 	};
 
@@ -548,6 +594,7 @@ block CAPITAL_DESTRUCTION
     {
         # Share of the installed capital stock that survives the period. A disaster is a negative
         # draw: it destroys capital in place, and the loss persists through accumulation.
+        @name = "Capital destruction shock"
         log(xi_K[]) = epsilon_xi_K[];
     };
 
@@ -566,6 +613,7 @@ block EXCHANGE_RATE
 {
     identities
     {
+        @name = "Real exchange rate"
         log(q[]) = (1 - rho_q) * log(q_bar) + rho_q * log(q[-1]) + epsilon_q[];
     };
 
@@ -588,21 +636,25 @@ block FOREIGN
 {
     identities
     {
+        @name = "Foreign monetary policy rule"
         log(1 + i_star[]) = (1 - rho_i_star) * log(1 + i_star_bar)
             + rho_i_star * log(1 + i_star[-1])
             + phi_pi_star * log(pi_star[-1])
             + phi_y_star * (log(Y_star[-1]) - log(Y_star[ss]))
             + epsilon_i_star[];
 
+        @name = "Foreign Phillips curve"
         log(pi_star[]) = rho_pi_star * log(pi_star[-1])
             + kappa_star * (log(Y_star[-1]) - log(Y_star[ss]))
             + epsilon_pi_star[];
 
+        @name = "Foreign output"
         log(Y_star[]) = (1 - rho_Y_star) * log(Y_star[ss])
             + rho_Y_star * log(Y_star[-1])
             - gamma_i_star * (log(1 + i_star[-1]) - log(1 + i_star_bar))
             + epsilon_Y_star[];
 
+        @name = "Export demand"
         X[] = (1 - alpha_Y_star) * (p_X[] / q[]) ^ (-psi_Y_star) * Y_star[];
     };
 
@@ -643,12 +695,16 @@ block IMPORT_FIRM
     {
         # Standard NKPC for imports (writeup-consistent Calvo).
         # Driving variable mc_M = (1+τ_M)·q·p_M⋆ / p_M (real MC in own-sector units).
+        @name = "Import price Phillips curve"
         log(pi_M[]) - gamma_M * log(pi_M[-1]) = beta * (E[][log(pi_M[1])] - gamma_M * log(pi_M[]))
             + kappa_M * log((1 + tau_M[]) * q[] * p_M_star[] / p_M[] * psi_M / (psi_M - 1));
 
+        @name = "Import price inflation"
         p_M[] = p_M[-1] * pi_M[] / pi[];
 
+        @name = "World import price"
         log(p_M_star[]) = (1 - rho_p_M_star) * log(p_M_star_bar) + rho_p_M_star * log(p_M_star[-1]) + epsilon_p_M_star[];
+        @name = "Importer profit"
         Pi_M[] = p_M[] * M[] - (1 + tau_M[]) * q[] * p_M_star[] * M[];
     };
 
@@ -677,11 +733,14 @@ block EXPORT_FIRM
     {
         # Standard NKPC for exports (writeup-consistent Calvo).
         # Driving variable mc_X = p_H / ((1-τ_X)·p_X) (real MC in own-sector units).
+        @name = "Export price Phillips curve"
         log(pi_X[]) - gamma_X * log(pi_X[-1]) = beta * (E[][log(pi_X[1])] - gamma_X * log(pi_X[]))
             + kappa_X * log(p_H[] / ((1 - tau_X[]) * p_X[]) * psi_X / (psi_X - 1));
 
+        @name = "Export price inflation"
         p_X[] = p_X[-1] * pi_X[] / pi[];
 
+        @name = "Exporter profit"
         Pi_X[] = (1 - tau_X[]) * p_X[] * X[] - p_H[] * X[];
     };
 
@@ -700,6 +759,7 @@ block MONETARY_POLICY
     {
         # Developing-economy Taylor rule with exchange rate response
         # Responds to real exchange rate depreciation (q/q_bar > 1)
+        @name = "Taylor rule"
         log(1 + i[]) = rho_i * log(1 + i[-1])
             + (1 - rho_i) * (log(1 + i_bar)
                 + phi_pi * log(pi[])
@@ -741,6 +801,7 @@ block FISCAL_AUTHORITY
         # Reverted to the m8 rule shape (parens around inner gap responses)
         # so that, with the scale-fix calibration below, phi_tau_X and phi_b_X
         # both have a clean immediate-impulse interpretation per unit gap.
+        @name = "Consumption tax rule"
         tau_C[] = (1 - rho_tau_C) * (
                 tau_C
                 + phi_tau_C * (Y[] / Y[ss] - 1)
@@ -749,6 +810,7 @@ block FISCAL_AUTHORITY
             + rho_tau_C * tau_C[-1]
             + epsilon_tau_C[];
 
+        @name = "Capital tax rule"
         tau_K[] = (1 - rho_tau_K) * (
                 tau_K
                 + phi_tau_K * (Y[] / Y[ss] - 1)
@@ -757,6 +819,7 @@ block FISCAL_AUTHORITY
             + rho_tau_K * tau_K[-1]
             + epsilon_tau_K[];
 
+        @name = "Labor tax rule"
         tau_L[] = (1 - rho_tau_L) * (
                 tau_L
                 + phi_tau_L * (Y[] / Y[ss] - 1)
@@ -765,6 +828,7 @@ block FISCAL_AUTHORITY
             + rho_tau_L * tau_L[-1]
             + epsilon_tau_L[];
 
+        @name = "Tariff rule"
         tau_M[] = (1 - rho_tau_M) * (
                 tau_M
                 + phi_tau_M * (Y[] / Y[ss] - 1)
@@ -773,6 +837,7 @@ block FISCAL_AUTHORITY
             + rho_tau_M * tau_M[-1]
             + epsilon_tau_M[];
 
+        @name = "Export tax rule"
         tau_X[] = (1 - rho_tau_X) * (
                 tau_X
                 + phi_tau_X * (Y[] / Y[ss] - 1)
@@ -781,8 +846,10 @@ block FISCAL_AUTHORITY
             + rho_tau_X * tau_X[-1]
             + epsilon_tau_X[];
 
+        @name = "Government spending"
         log(G[]) = (1 - rho_G) * log(G[ss]) + rho_G * log(G[-1]) + epsilon_G[];
 
+        @name = "Government budget constraint"
         B[] = (1 + i[-1]) / pi[] * B[-1] + G[]
             - tau_C[] * C[]
             - tau_K[] * r[] * z[] * xi_K[] * K[-1]
@@ -863,9 +930,11 @@ block MARKET_CLEARING
 {
     identities
     {
+        @name = "Domestic goods market clearing"
         H[] = H_H[] + X[];
 
         # Value added: final sales net of imports at world prices, plus exports.
+        @name = "GDP"
         GDP[] = Y[] + p_X[] * X[] - q[] * p_M_star[] * M[];
         # TB[] = p_X[] * X[] - (1 + tau_M[]) * q[] * p_M_star[] * M[];
     };
