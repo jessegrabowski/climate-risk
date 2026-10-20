@@ -28,6 +28,7 @@ These fetch on a cold cache, read from disk on a warm one, and re-fetch under ``
     ~ilo.load_labour_income_share
     ~deflate.load_price_level
     ~partner_activity.load_partner_activity
+    ~weo.load_government_debt
     ~ghsl.population_on_cells
 
 Loaders for manually obtained sources
@@ -66,6 +67,7 @@ returns the frame the loader caches.
     ~fred.transform_fred
     ~ilo.transform_labour_share
     ~partner_activity.transform_partner_activity
+    ~weo.transform_government_debt
     ~pwt.transform_pwt
 
 Aggregating over time
