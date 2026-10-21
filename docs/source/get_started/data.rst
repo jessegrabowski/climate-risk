@@ -120,7 +120,7 @@ GHS-POP, so a cache can stay small as long as the geospatial models are not bein
 Services queried live
 ---------------------
 
-Five sources answer a query instead of serving a file, and are declared as
+Six sources answer a query instead of serving a file, and are declared as
 :class:`~climate_risk.data.source.ApiSource`. The response is cached like anything else, so a warm
 run does not call them again.
 
@@ -151,6 +151,10 @@ run does not call them again.
      - Bilateral merchandise trade, used to build partner activity.
      - (c) International Monetary Fund
      - :func:`~climate_risk.data.partner_activity.load_partner_activity`
+   * - IMF World Economic Outlook
+     - General government gross debt as a share of GDP. The most recent years are projections.
+     - (c) International Monetary Fund
+     - :func:`~climate_risk.data.weo.load_government_debt`
    * - Nominatim
      - OpenStreetMap geocoding, as a fallback when the gazetteer cannot place a name.
      - ODbL 1.0
