@@ -1,6 +1,8 @@
 import logging
 import warnings
 
+from typing import Literal
+
 import arviz as az
 import matplotlib.pyplot as plt
 import numpy as np
@@ -431,10 +433,9 @@ def error_scale(fit_data: pd.DataFrame, name: str) -> float:
 
 def fixed_parameters(statespace: DSGEStateSpace, model_parameters: dict[str, float]) -> dict[str, float]:
     """Values of the statespace parameters that are neither estimated nor part of the error or shock covariance."""
-    estimated = {*ESTIMATED_STRUCTURAL}
     return {name: model_parameters[name]
             for name in statespace.param_names
-            if not name.startswith("error_") and name != "state_cov" and name not in estimated}
+            if not name.startswith("error_") and name != "state_cov" and name not in ESTIMATED_STRUCTURAL}
 
 
 def build_pymc_model(statespace: DSGEStateSpace,
@@ -573,7 +574,9 @@ def plot_response_band(ax: plt.Axes, quantiles: xr.DataArray, reference: xr.Data
                 ls="--",
                 lw=1.2,
                 label="India calibration")
-    ax.axhline(0.0, color="0.6", lw=0.75)
+    ax.axhline(0.0,
+               color="0.6",
+               lw=0.75)
 
 
 def add_response_legend(fig: plt.Figure, ax: plt.Axes) -> None:
@@ -748,7 +751,8 @@ def plot_moment_grid(predictive_moments: xr.Dataset, data_moments: xr.Dataset, l
     Parameters
     ----------
     predictive_moments, data_moments : Dataset
-        Output of `sample_moments` for the simulated observables and for the data.
+        Moments of the simulated observables and of the data: ``std`` over ``variable``, and ``acf`` over ``lag``,
+        ``variable`` and ``variable_aux``. The predictive moments also carry a ``sample`` dimension.
     label : str
         Name of the predictive distribution in the legend, such as "prior predictive".
 
@@ -799,7 +803,11 @@ def plot_moment_grid(predictive_moments: xr.Dataset, data_moments: xr.Dataset, l
                                  markeredgecolor="white",
                                  lw=INNER_INTERVAL_WIDTH,
                                  label=f"{label} median and 50%"),
-                      plt.Line2D([], [], color=PALETTE["primary"], lw=OUTER_INTERVAL_WIDTH, label=f"{label} 94%"),
+                      plt.Line2D([],
+                                 [],
+                                 color=PALETTE["primary"],
+                                 lw=OUTER_INTERVAL_WIDTH,
+                                 label=f"{label} 94%"),
                       plt.Line2D([],
                                  [],
                                  color="k",
@@ -807,7 +815,12 @@ def plot_moment_grid(predictive_moments: xr.Dataset, data_moments: xr.Dataset, l
                                  markerfacecolor="none",
                                  lw=0.0,
                                  label="data correlation"),
-                      plt.Line2D([], [], color="k", ls="--", lw=1.5, label="data standard deviation")]
+                      plt.Line2D([],
+                                 [],
+                                 color="k",
+                                 ls="--",
+                                 lw=1.5,
+                                 label="data standard deviation")]
     fig.legend(handles=legend_handles,
                loc="upper center",
                bbox_to_anchor=(0.5, 0.0),
@@ -841,7 +854,9 @@ def plot_correlation_interval(ax: plt.Axes, interval: xr.DataArray, data_value: 
                s=45,
                linewidths=1.2,
                zorder=4)
-    ax.axvline(0.0, color="0.6", lw=0.8)
+    ax.axvline(0.0,
+               color="0.6",
+               lw=0.8)
     ax.set(xlim=(-1, 1),
            ylim=(-1, 1),
            yticks=[])
@@ -912,7 +927,7 @@ def plot_clipped_densities(samples: xr.Dataset,
                            colors: list[str],
                            xlabel: str,
                            title: str,
-                           mean_labels: str = "curve") -> plt.Axes:
+                           mean_labels: Literal["curve", "legend"] = "curve") -> plt.Axes:
     """Overlay the density of each variable in `samples` over its HDI, with each posterior mean marked and labeled.
 
     Parameters
@@ -988,7 +1003,9 @@ def plot_clipped_densities(samples: xr.Dataset,
                     va="bottom",
                     color=color,
                     fontsize=9)
-    ax.axvline(0.0, color="0.6", lw=0.8)
+    ax.axvline(0.0,
+               color="0.6",
+               lw=0.8)
     ax.set_xlabel(xlabel)
     ax.set_title(title, loc="left")
     return ax
