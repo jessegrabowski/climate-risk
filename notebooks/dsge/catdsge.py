@@ -99,10 +99,7 @@ def calibrate(model: Model, quarterly_base: dict[str, float], data_targets: pd.S
 
     def target_gap(values):
         updates = dict(zip(CALIBRATED_PARAMETERS, values, strict=True))
-        try:
-            ratios = model_ratios(model, **quarterly_base, **updates)
-        except Exception:
-            return np.full(len(targets), MISSING_STEADY_STATE_PENALTY)
+        ratios = model_ratios(model, **quarterly_base, **updates)
         gaps = (ratios[targets.index] - targets).to_numpy()
         return np.where(np.isfinite(gaps), gaps, MISSING_STEADY_STATE_PENALTY)
 
