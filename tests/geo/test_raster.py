@@ -322,7 +322,7 @@ def test_the_lattice_rows_run_north_to_south():
     grid = build_cell_grid(boundary, resolution_km=20.0)
 
     assert grid.latitudes[0] > grid.latitudes[-1]
-    northernmost = grid.cells.loc[grid.cells["cell_id"].idxmin(), "lat"]
+    northernmost = grid.cells["lat"].iloc[grid.cells["cell_id"].argmin()]
     assert northernmost == pytest.approx(grid.latitudes[0])
 
 
