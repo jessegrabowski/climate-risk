@@ -9,13 +9,15 @@ from shapely.geometry import box
 
 from climate_risk.data.hadcrut import HADCRUT, load_hadcrut_data, temperature_on_cells, transform_hadcrut
 from climate_risk.geo.raster import build_cell_grid, dissolve_place_boundary
-from tests.conftest import toy_world
+from tests.conftest import toy_world, toy_world_with_places
 
 # The panel starts in 1960; the gridded record reaches back much further.
 FIRST_PANEL_YEAR = 1959
 
-# The cache key is stated literally, so a wrong one fails rather than agreeing with itself.
-REPAIRED_CACHE = "hadcrut__repaired_iso=True.parquet"
+# Every parameter but the reading digest is spelled out, so a key that lost one fails rather than
+# agreeing with whatever the loader happened to write.
+REPAIRED_CACHE = "hadcrut__reading=*__repaired_iso=True.parquet"
+UNREPAIRED_CACHE = "hadcrut__reading=*__repaired_iso=False.parquet"
 
 
 def gridded(rows) -> pd.DataFrame:
@@ -69,15 +71,16 @@ def test_the_boundary_year_is_excluded_but_the_next_is_kept():
     assert pd.DatetimeIndex(annual.index.get_level_values("year")).year.tolist() == [FIRST_PANEL_YEAR + 1]
 
 
-def test_repairing_iso_codes_gets_its_own_cache_entry(tmp_path):
+def test_repairing_iso_codes_gets_its_own_cache_entry(tmp_path, write_shapefile_cache):
     """Repairing changes which countries appear, so one entry cannot serve both settings."""
-    pd.DataFrame(
-        {"tas_mean": [0.5]},
-        index=pd.MultiIndex.from_arrays([["LAO"], pd.to_datetime(["1960-01-01"])], names=["ISO", "year"]),
-    ).to_parquet(tmp_path / REPAIRED_CACHE)
+    write_gridded(tmp_path, west=np.ones(24), east=np.ones(24))
+    write_shapefile_cache("world", toy_world_with_places())
 
-    assert load_hadcrut_data(tmp_path).index.get_level_values("ISO").tolist() == ["LAO"]
-    assert not (tmp_path / "hadcrut__repaired_iso=False.parquet").exists()
+    load_hadcrut_data(tmp_path, repair_ISO_codes=True)
+    load_hadcrut_data(tmp_path, repair_ISO_codes=False)
+
+    assert len(list(tmp_path.glob(REPAIRED_CACHE))) == 1
+    assert len(list(tmp_path.glob(UNREPAIRED_CACHE))) == 1
 
 
 def write_gridded(cache_dir, *, west, east):

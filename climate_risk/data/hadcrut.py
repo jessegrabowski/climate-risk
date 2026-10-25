@@ -115,12 +115,14 @@ def load_hadcrut_data(cache_dir: Path, *, force_reload: bool = False, repair_ISO
 
         return transform_hadcrut(gridded, world)
 
+    reading = builder_fingerprint(build, transform_hadcrut, WORLD_COLUMNS, FIRST_PANEL_YEAR)
+
     return cached(
         cache_dir,
         "hadcrut",
         build,
         pandas_parquet(),
-        params={"repaired_iso": repair_ISO_codes},
+        params={"repaired_iso": repair_ISO_codes, "reading": reading},
         force=force_reload,
     )
 
