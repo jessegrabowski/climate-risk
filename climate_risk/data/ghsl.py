@@ -2,7 +2,9 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import numpy as np
+import pandas as pd
 
+from climate_risk.data.cache import builder_fingerprint, cached, pandas_parquet
 from climate_risk.data.fetch import fetch
 from climate_risk.data.source import DataSource
 from climate_risk.exceptions import DataValidationError
@@ -94,7 +96,7 @@ def population_raster(epoch: int, cache_dir: Path) -> str:
 
 def population_on_cells(grid: CellGrid, epoch: int, cache_dir: Path) -> np.ndarray:
     """
-    Count the people in each grid cell.
+    Count the people in each grid cell, cached against the grid and the epoch.
 
     Parameters
     ----------
@@ -120,4 +122,24 @@ def population_on_cells(grid: CellGrid, epoch: int, cache_dir: Path) -> np.ndarr
 
         people = population_on_cells(grid, 2020, Path("data"))
     """
-    return sample_onto_cells(grid, population_raster(epoch, cache_dir), statistic="sum")
+
+    def build() -> pd.DataFrame:
+        # Fetching inside the builder keeps a warm cache from reaching the network.
+        raster = population_raster(epoch, cache_dir)
+
+        return pd.DataFrame({"population": sample_onto_cells(grid, raster, statistic="sum")})
+
+    counted = cached(
+        ghsl_dir(cache_dir),
+        "population_on_cells",
+        build,
+        pandas_parquet(),
+        params={
+            "epoch": epoch,
+            "grid": grid.fingerprint,
+            "resolution": RESOLUTION,
+            "reading": builder_fingerprint(build, sample_onto_cells),
+        },
+    )
+
+    return counted["population"].to_numpy()
