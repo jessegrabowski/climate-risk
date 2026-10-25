@@ -67,7 +67,6 @@ def transform_hadcrut(temperatures: pd.DataFrame, world: gpd.GeoDataFrame) -> pd
 
     return (
         annual.pivot_table(values="tas_mean", index=["country_code", "year"], aggfunc="mean")
-        .rename(columns={"tas_mean": "surface_temperature_dev"})
         .reset_index()
         .rename(columns={"country_code": "ISO"})
         .query(f"year > {FIRST_PANEL_YEAR}")

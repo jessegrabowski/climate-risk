@@ -37,8 +37,8 @@ def test_cells_are_averaged_per_country_and_year():
 
     annual = transform_hadcrut(temperatures, toy_world())
 
-    assert annual.loc[("AAA", pd.Timestamp("1990-01-01")), "surface_temperature_dev"] == pytest.approx(2.0)
-    assert annual.loc[("BBB", pd.Timestamp("1990-01-01")), "surface_temperature_dev"] == pytest.approx(10.0)
+    assert annual.loc[("AAA", pd.Timestamp("1990-01-01")), "tas_mean"] == pytest.approx(2.0)
+    assert annual.loc[("BBB", pd.Timestamp("1990-01-01")), "tas_mean"] == pytest.approx(10.0)
 
 
 def test_cells_outside_every_country_are_dropped():
@@ -47,7 +47,7 @@ def test_cells_outside_every_country_are_dropped():
 
     annual = transform_hadcrut(temperatures, toy_world())
 
-    assert annual["surface_temperature_dev"].tolist() == [1.0]
+    assert annual["tas_mean"].tolist() == [1.0]
 
 
 def test_years_before_the_panel_are_dropped():
@@ -72,7 +72,7 @@ def test_the_boundary_year_is_excluded_but_the_next_is_kept():
 def test_repairing_iso_codes_gets_its_own_cache_entry(tmp_path):
     """Repairing changes which countries appear, so one entry cannot serve both settings."""
     pd.DataFrame(
-        {"surface_temperature_dev": [0.5]},
+        {"tas_mean": [0.5]},
         index=pd.MultiIndex.from_arrays([["LAO"], pd.to_datetime(["1960-01-01"])], names=["ISO", "year"]),
     ).to_parquet(tmp_path / REPAIRED_CACHE)
 
