@@ -3,14 +3,17 @@ import logging
 from pathlib import Path
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import xarray as xr
 
-from climate_risk.data.cache import cached, pandas_parquet
+from climate_risk.data.cache import builder_fingerprint, cached, pandas_parquet
 from climate_risk.data.fetch import fetch
+from climate_risk.data.frequency import MONTHS_PER_PERIOD
 from climate_risk.data.source import DataSource
 from climate_risk.data_functions.shapefiles_data_loader import load_shapefile
 from climate_risk.geo.crs import GEOGRAPHIC_CRS
+from climate_risk.geo.raster import CellGrid
 
 _log = logging.getLogger(__name__)
 
@@ -64,7 +67,6 @@ def transform_hadcrut(temperatures: pd.DataFrame, world: gpd.GeoDataFrame) -> pd
 
     return (
         annual.pivot_table(values="tas_mean", index=["country_code", "year"], aggfunc="mean")
-        .rename(columns={"tas_mean": "surface_temperature_dev"})
         .reset_index()
         .rename(columns={"country_code": "ISO"})
         .query(f"year > {FIRST_PANEL_YEAR}")
@@ -113,11 +115,92 @@ def load_hadcrut_data(cache_dir: Path, *, force_reload: bool = False, repair_ISO
 
         return transform_hadcrut(gridded, world)
 
+    reading = builder_fingerprint(build, transform_hadcrut, WORLD_COLUMNS, FIRST_PANEL_YEAR)
+
     return cached(
         cache_dir,
         "hadcrut",
         build,
         pandas_parquet(),
-        params={"repaired_iso": repair_ISO_codes},
+        params={"repaired_iso": repair_ISO_codes, "reading": reading},
         force=force_reload,
+    )
+
+
+def annual_anomalies(monthly: xr.DataArray) -> xr.DataArray:
+    """
+    Average monthly anomalies over each calendar year, keeping a year only where all twelve months are reported.
+
+    Parameters
+    ----------
+    monthly : DataArray
+        Anomalies along a ``time`` dimension of monthly timestamps, over any other dimensions.
+
+    Returns
+    -------
+    annual : DataArray
+        The same anomalies along ``year``, missing wherever a month of the year is.
+    """
+    by_year = monthly.groupby("time.year")
+
+    return by_year.mean().where(by_year.count() == MONTHS_PER_PERIOD["annual"])
+
+
+def temperature_on_cells(grid: CellGrid, cache_dir: Path) -> pd.DataFrame:
+    """
+    Read HadCRUT5's annual temperature anomaly at every grid cell, cached against the grid.
+
+    Each cell takes the 5-degree box holding its center, a center on an edge going to the box above it.
+
+    Parameters
+    ----------
+    grid : CellGrid
+        The lattice to read onto.
+    cache_dir : Path
+        Directory the source caches live under.
+
+    Returns
+    -------
+    anomalies : DataFrame
+        One row per cell and year, with ``cell_id``, ``year`` and ``tas_mean`` in degrees relative to
+        1961 to 1990, missing in a year where the box lacks a month.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.hadcrut import temperature_on_cells
+
+        anomalies = temperature_on_cells(grid, Path("data"))
+    """
+
+    def build() -> pd.DataFrame:
+        # Fetching inside the builder keeps a warm cache from reaching the network.
+        raw = fetch(HADCRUT, cache_dir)
+        with xr.open_dataset(raw) as gridded:
+            box_rows, box_columns = (
+                np.searchsorted(gridded[bounds][:, 0].to_numpy(), grid.cells[coordinate].to_numpy(), side="right") - 1
+                for bounds, coordinate in (("latitude_bnds", "lat"), ("longitude_bnds", "lon"))
+            )
+            at_cells = annual_anomalies(gridded["tas_mean"]).isel(
+                latitude=xr.DataArray(box_rows, dims="cell"),
+                longitude=xr.DataArray(box_columns, dims="cell"),
+            )
+
+            return (
+                at_cells.assign_coords(cell_id=("cell", grid.cells["cell_id"].to_numpy()))
+                .swap_dims(cell="cell_id")
+                .drop_vars(["latitude", "longitude", "realization"], errors="ignore")
+                .to_dataframe()
+                .reset_index()[["cell_id", "year", "tas_mean"]]
+            )
+
+    return cached(
+        cache_dir,
+        "temperature_on_cells",
+        build,
+        pandas_parquet(),
+        params={"grid": grid.fingerprint, "reading": builder_fingerprint(build, annual_anomalies)},
     )
