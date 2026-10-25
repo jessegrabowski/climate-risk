@@ -32,13 +32,14 @@ def features_fingerprint(features: gpd.GeoDataFrame | gpd.GeoSeries, columns: Se
 
     Returns
     -------
-    digest : str
+    fingerprint : str
         A short hex digest, the same for the same features in any process.
     """
     digest = hashlib.sha256(str(features.crs).encode())
     digest.update(b"".join(shapely.to_wkb(features.geometry.to_numpy())))
+    carried = pd.DataFrame(features)
     for column in columns:
-        digest.update(pd.util.hash_pandas_object(features[column], index=False).to_numpy().tobytes())
+        digest.update(pd.util.hash_pandas_object(carried[column], index=False).to_numpy().tobytes())
 
     return digest.hexdigest()[:12]
 
