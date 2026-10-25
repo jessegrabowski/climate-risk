@@ -23,6 +23,7 @@ These fetch on a cold cache, read from disk on a warm one, and re-fetch under ``
     ~hadcrut.load_hadcrut_data
     ~gpcc.load_gpcc_data
     ~ipcc.process_ipcc_scenarios
+    ~forcing.load_effective_radiative_forcing
     ~world_bank.load_wb_data
     ~fred.load_fred_data
     ~ilo.load_labour_income_share
@@ -139,6 +140,7 @@ Where each source lives inside the cache directory.
 .. autosummary::
     :toctree: generated/
 
+    ~forcing.forcing_dir
     ~gadm.gadm_dir
     ~gadm.gadm_path
     ~geo_disasters.geo_disasters_dir
@@ -205,6 +207,7 @@ Administrative units and event footprints
     :toctree: generated/
 
     ~gadm.administered_territories
+    ~forcing.forcing_source
     ~geo_disasters.resolve_to_gadm
     ~geo_disasters.compare_event_units
     ~geo_disasters.event_unit_ids
