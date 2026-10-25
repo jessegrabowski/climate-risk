@@ -1,3 +1,5 @@
+import hashlib
+
 from dataclasses import dataclass
 
 import geopandas as gpd
@@ -287,6 +289,16 @@ class CellGrid:
             float(self.longitudes[-1]) + half_width,
             float(self.latitudes[0]) + half_height,
         )
+
+    @property
+    def fingerprint(self) -> str:
+        """A short digest of the lattice, its kept cells and the place, which fix anything sampled onto the grid."""
+        digest = hashlib.sha256()
+        for identifying in (self.longitudes, self.latitudes, self.cells["cell_id"].to_numpy()):
+            digest.update(np.ascontiguousarray(identifying).tobytes())
+        digest.update(shapely.to_wkb(self.place))
+
+        return digest.hexdigest()[:12]
 
 
 def cell_coverage(

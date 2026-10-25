@@ -326,6 +326,17 @@ def test_the_lattice_rows_run_north_to_south():
     assert northernmost == pytest.approx(grid.latitudes[0])
 
 
+def test_the_fingerprint_names_the_grid_and_nothing_else():
+    """It keys cached samples, so a rebuild of the same grid has to find them, and a grid on other
+    ground or at another resolution must not."""
+    boundary = dissolve_place_boundary(tiles([(0, 0, 2, 1), (0, 1, 1, 2)], ISO_A3=["LAO", "LAO"]))
+    grid = build_cell_grid(boundary, resolution_km=40.0)
+
+    assert build_cell_grid(boundary, resolution_km=40.0).fingerprint == grid.fingerprint
+    assert build_cell_grid(boundary, resolution_km=20.0).fingerprint != grid.fingerprint
+    assert dataclasses.replace(grid, place=shapely.box(0.0, 0.0, 2.0, 2.0)).fingerprint != grid.fingerprint
+
+
 def test_a_cell_on_a_border_is_shared_between_units():
     """The reason for area weighting. A column of cells straddling the border belongs half to each
     unit, and the operator carries both rows. Assigning by center would give one unit the lot.
