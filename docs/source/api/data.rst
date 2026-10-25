@@ -30,6 +30,8 @@ These fetch on a cold cache, read from disk on a warm one, and re-fetch under ``
     ~partner_activity.load_partner_activity
     ~weo.load_government_debt
     ~ghsl.population_on_cells
+    ~cell_samples.load_cell_unit_overlaps
+    ~cell_samples.load_cell_distances_to
 
 Loaders for manually obtained sources
 -------------------------------------
@@ -130,6 +132,7 @@ Caching
     ~cache.geo_parquet
     ~cache.cache_key
     ~cache.builder_fingerprint
+    ~cell_samples.features_fingerprint
 
 Cache layout
 ------------
@@ -139,6 +142,7 @@ Where each source lives inside the cache directory.
 .. autosummary::
     :toctree: generated/
 
+    ~cell_samples.cell_samples_dir
     ~gadm.gadm_dir
     ~gadm.gadm_path
     ~geo_disasters.geo_disasters_dir
