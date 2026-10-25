@@ -31,6 +31,7 @@ These fetch on a cold cache, read from disk on a warm one, and re-fetch under ``
     ~partner_activity.load_partner_activity
     ~weo.load_government_debt
     ~ghsl.population_on_cells
+    ~hadcrut.temperature_on_cells
 
 Loaders for manually obtained sources
 -------------------------------------
@@ -81,6 +82,7 @@ shared with the panel builders, so a monthly panel and a monthly CO2 series land
     :toctree: generated/
 
     ~frequency.mean_by_period
+    ~hadcrut.annual_anomalies
 
 Constant dollars
 ----------------

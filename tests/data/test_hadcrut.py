@@ -1,7 +1,14 @@
+import geopandas as gpd
+import numpy as np
 import pandas as pd
 import pytest
+import requests
+import xarray as xr
 
-from climate_risk.data.hadcrut import load_hadcrut_data, transform_hadcrut
+from shapely.geometry import box
+
+from climate_risk.data.hadcrut import HADCRUT, load_hadcrut_data, temperature_on_cells, transform_hadcrut
+from climate_risk.geo.raster import build_cell_grid, dissolve_place_boundary
 from tests.conftest import toy_world
 
 # The panel starts in 1960; the gridded record reaches back much further.
@@ -71,3 +78,66 @@ def test_repairing_iso_codes_gets_its_own_cache_entry(tmp_path):
 
     assert load_hadcrut_data(tmp_path).index.get_level_values("ISO").tolist() == ["LAO"]
     assert not (tmp_path / "hadcrut__repaired_iso=False.parquet").exists()
+
+
+def write_gridded(cache_dir, *, west, east):
+    """Write a two-box HadCRUT file, monthly over 2000 and 2001, holding ``west`` and ``east`` per month."""
+    time = pd.date_range("2000-01-01", periods=24, freq="MS") + pd.Timedelta(days=15)
+    values = np.stack([west, east], axis=-1)[:, None, :]
+    xr.Dataset(
+        {
+            "tas_mean": (("time", "latitude", "longitude"), values),
+            "latitude_bnds": (("latitude", "bnds"), [[0.0, 5.0]]),
+            "longitude_bnds": (("longitude", "bnds"), [[0.0, 5.0], [5.0, 10.0]]),
+        },
+        coords={"time": time, "latitude": [2.5], "longitude": [2.5, 7.5]},
+    ).to_netcdf(cache_dir / HADCRUT.filename)
+
+
+@pytest.fixture
+def grid():
+    """Cells over two 5-degree boxes side by side."""
+    boundary = dissolve_place_boundary(
+        gpd.GeoDataFrame({"ISO_A3": ["AAA"], "geometry": [box(0, 0, 10, 5)]}, crs="EPSG:4326")
+    )
+
+    return build_cell_grid(boundary, resolution_km=100.0)
+
+
+def test_each_cell_takes_the_annual_mean_of_the_box_its_center_falls_in(tmp_path, grid):
+    """Box 2.5 east holds 1 through 2000 and 3 through 2001; box 7.5 east holds 5 through both. The
+    grid puts a column of centers on the shared edge at 5 east, which belongs to the eastern box."""
+    write_gridded(tmp_path, west=np.repeat([1.0, 3.0], 12), east=np.full(24, 5.0))
+
+    anomalies = temperature_on_cells(grid, tmp_path).merge(grid.cells[["cell_id", "lon"]], on="cell_id")
+    western = anomalies["lon"] < 5.0
+
+    assert anomalies.loc[western & (anomalies["year"] == 2000), "tas_mean"].unique().tolist() == [1.0]
+    assert anomalies.loc[western & (anomalies["year"] == 2001), "tas_mean"].unique().tolist() == [3.0]
+    assert anomalies.loc[~western, "tas_mean"].unique().tolist() == [5.0]
+    assert len(anomalies) == 2 * len(grid.cells)
+
+
+def test_a_year_missing_a_month_is_missing(tmp_path, grid):
+    """An average over eleven months is not the year's, so the year is missing rather than wrong."""
+    east = np.full(24, 5.0)
+    east[13] = np.nan
+    write_gridded(tmp_path, west=np.ones(24), east=east)
+
+    anomalies = temperature_on_cells(grid, tmp_path).merge(grid.cells[["cell_id", "lon"]], on="cell_id")
+    eastern_2001 = (anomalies["lon"] >= 5.0) & (anomalies["year"] == 2001)
+
+    assert anomalies.loc[eastern_2001, "tas_mean"].isna().all()
+    assert anomalies.loc[~eastern_2001, "tas_mean"].notna().all()
+
+
+def test_a_warm_read_needs_neither_the_file_nor_the_network(tmp_path, grid, monkeypatch):
+    write_gridded(tmp_path, west=np.ones(24), east=np.ones(24))
+    first = temperature_on_cells(grid, tmp_path)
+    (tmp_path / HADCRUT.filename).unlink()
+
+    def offline(*args, **kwargs):
+        raise AssertionError("reached the network on a warm cache")
+
+    monkeypatch.setattr(requests, "get", offline)
+    pd.testing.assert_frame_equal(temperature_on_cells(grid, tmp_path), first)
