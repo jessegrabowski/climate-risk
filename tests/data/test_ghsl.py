@@ -236,7 +236,7 @@ def test_force_reload_downloads_the_epoch_again_and_recounts_it(tmp_path, serve_
     counted = population_on_cells(grid, 2020, tmp_path)
 
     upstream = write_archive(tmp_path / "upstream", 2020, {"GHS_POP_E2020.tif": raster_of(2.0)})
-    requested = serve_downloads(population_source(2020).url, upstream.read_bytes())
+    requested = serve_downloads({population_source(2020).url: upstream.read_bytes()})
     recounted = population_on_cells(grid, 2020, tmp_path, force_reload=True)
 
     np.testing.assert_allclose(recounted, 2 * counted)

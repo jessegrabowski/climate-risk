@@ -415,12 +415,12 @@ def grid_points():
 
 @pytest.fixture
 def serve_downloads(monkeypatch):
-    """Return a callable that publishes bytes at a URL, answering every download without a socket.
+    """Return a callable that publishes bytes at URLs, answering every download without a socket.
 
-    The callable returns the URLs requested so far, so a refetch is observable.
+    The callable takes a mapping of URL to payload and returns the URLs requested so far, so a refetch is observable.
     """
-    published = {}
-    requested = []
+    published: dict[str, bytes] = {}
+    requested: list[str] = []
 
     class Response:
         status_code = 200
@@ -447,8 +447,8 @@ def serve_downloads(monkeypatch):
 
     monkeypatch.setattr(requests, "get", fake_get)
 
-    def serve(url, payload):
-        published[url] = payload
+    def serve(downloads):
+        published.update(downloads)
         return requested
 
     return serve

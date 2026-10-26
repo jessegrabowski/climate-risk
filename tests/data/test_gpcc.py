@@ -471,11 +471,10 @@ def test_force_reload_downloads_every_archive_again_and_rereads_them(tmp_path, g
 
     upstream = tmp_path / "upstream"
     write_two_boxes(upstream, west=np.full(24, 2.0), east=np.full(24, 2.0))
-    for product in two_box_products():
-        for source in product.sources:
-            requested = serve_downloads(source.url, (upstream / "gpcc" / source.filename).read_bytes())
+    sources = [source for product in two_box_products() for source in product.sources]
+    requested = serve_downloads({source.url: (upstream / "gpcc" / source.filename).read_bytes() for source in sources})
 
     reloaded = precipitation_on_cells(grid, tmp_path, products=two_box_products(), force_reload=True)
 
     assert reloaded.loc[reloaded["year"] == 2000, "precip"].unique().tolist() == [24.0]
-    assert sorted(requested) == sorted(source.url for product in two_box_products() for source in product.sources)
+    assert sorted(requested) == sorted(source.url for source in sources)

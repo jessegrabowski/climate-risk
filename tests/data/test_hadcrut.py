@@ -197,7 +197,7 @@ def test_force_reload_downloads_the_record_again_and_rereads_it(tmp_path, grid, 
     upstream = tmp_path / "upstream"
     upstream.mkdir()
     write_gridded(upstream, west=np.full(24, 2.0), east=np.full(24, 2.0))
-    requested = serve_downloads(HADCRUT.url, (upstream / HADCRUT.filename).read_bytes())
+    requested = serve_downloads({HADCRUT.url: (upstream / HADCRUT.filename).read_bytes()})
 
     assert temperature_on_cells(grid, tmp_path, force_reload=True)["tas_mean"].unique().tolist() == [2.0]
     assert requested == [HADCRUT.url]
