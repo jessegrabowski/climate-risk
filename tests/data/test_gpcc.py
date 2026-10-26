@@ -2,13 +2,27 @@ import gzip
 import shutil
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import pytest
+import requests
 import xarray as xr
 
 from shapely.geometry import box
 
-from climate_risk.data.gpcc import GPCC_PRODUCTS, PRECIPITATION, _as_timestamps, load_gpcc_data, transform_gpcc
+from climate_risk.data import gpcc
+from climate_risk.data.gpcc import (
+    GPCC_PRODUCTS,
+    PRECIPITATION,
+    GriddedProduct,
+    _as_timestamps,
+    _boxes_holding,
+    load_gpcc_data,
+    precipitation_on_cells,
+    transform_gpcc,
+)
+from climate_risk.data.source import DataSource
+from climate_risk.geo.raster import build_cell_grid, dissolve_place_boundary
 from tests.conftest import TOY_ARCHIVES, toy_gpcc_products, toy_world
 
 # Every parameter but the reading digest is spelled out, so a key that lost one fails rather than
@@ -303,3 +317,157 @@ def test_the_world_boundaries_decide_the_countries():
     monthly = transform_gpcc([grid], one_country)
 
     assert monthly.index.get_level_values("country_code").tolist() == ["AAA"]
+
+
+# Two 5-degree boxes side by side, monthly over 2000 and 2001 in the full product and over 2002 in the monitoring one.
+FULL_ARCHIVE = "full_data_monthly_v2022_2000_2001_10.nc.gz"
+MONITORING_ARCHIVE = "monitoring_v2022_10_2002.nc.gz"
+
+
+def two_box_products() -> tuple[GriddedProduct, ...]:
+    """One archive from each product, spelling its grids and dating its rows as that product does."""
+
+    def source(filename: str) -> DataSource:
+        return DataSource(
+            url=f"https://opendata.dwd.de/climate_environment/GPCC/{filename}",
+            filename=filename,
+            license="CC BY 4.0",
+            citation="GPCC",
+            retrieved="2026-08-07",
+        )
+
+    return (
+        GriddedProduct(
+            variable="precip", gauges="numgauge", first_year=2000, last_year=2001, sources=(source(FULL_ARCHIVE),)
+        ),
+        GriddedProduct(
+            variable="p", gauges="s", first_year=2002, last_year=2002, sources=(source(MONITORING_ARCHIVE),)
+        ),
+    )
+
+
+def write_two_boxes(cache_dir, *, west, east, west_gauges=None, monitored=None):
+    """Write both archives, holding ``west`` and ``east`` per month of the full product, then ``monitored`` in both
+    boxes through 2002."""
+    gpcc_dir = cache_dir / "gpcc"
+    gpcc_dir.mkdir(parents=True, exist_ok=True)
+    gauges = np.ones(24) if west_gauges is None else west_gauges
+    full = xr.Dataset(
+        {
+            "precip": (("time", "lat", "lon"), np.stack([west, east], axis=-1)[:, None, :].astype("float32")),
+            "numgauge": (
+                ("time", "lat", "lon"),
+                np.stack([gauges, np.ones(24)], axis=-1)[:, None, :].astype("float32"),
+            ),
+        },
+        coords={"time": pd.date_range("2000-01-01", periods=24, freq="MS"), "lat": [2.5], "lon": [2.5, 7.5]},
+    )
+    monitored = np.full(12, 9.0) if monitored is None else monitored
+    monitoring = xr.Dataset(
+        {
+            "p": (("time", "lat", "lon"), np.repeat(monitored[:, None, None], 2, axis=-1).astype("float32")),
+            "s": (("time", "lat", "lon"), np.ones((12, 1, 2), dtype="float32")),
+        },
+        coords={
+            "time": ("time", [float(f"2002{month:02d}01") for month in range(1, 13)], {"units": "day as %Y%m%d.%f"}),
+            "lat": [2.5],
+            "lon": [2.5, 7.5],
+        },
+    )
+    for name, dataset in ((FULL_ARCHIVE, full), (MONITORING_ARCHIVE, monitoring)):
+        (gpcc_dir / name).write_bytes(gzip.compress(bytes(dataset.to_netcdf())))
+
+
+@pytest.fixture
+def grid():
+    """Cells over the two boxes, with a column of centers on their shared edge at 5 east."""
+    boundary = dissolve_place_boundary(
+        gpd.GeoDataFrame({"ISO_A3": ["AAA"], "geometry": [box(0, 0, 10, 5)]}, crs="EPSG:4326")
+    )
+
+    return build_cell_grid(boundary, resolution_km=100.0)
+
+
+def read_with_longitudes(grid, cache_dir):
+    return precipitation_on_cells(grid, cache_dir, products=two_box_products()).merge(
+        grid.cells[["cell_id", "lon"]], on="cell_id"
+    )
+
+
+def test_each_cell_takes_the_annual_total_of_the_box_its_center_falls_in(tmp_path, grid):
+    """The western box rains 1 a month through 2000 and 3 through 2001, the eastern 5 throughout. A center on the
+    shared edge belongs to the eastern box."""
+    write_two_boxes(tmp_path, west=np.repeat([1.0, 3.0], 12), east=np.full(24, 5.0))
+
+    precipitation = read_with_longitudes(grid, tmp_path)
+    western = precipitation["lon"] < 5.0
+
+    assert precipitation.loc[western & (precipitation["year"] == 2000), "precip"].unique().tolist() == [12.0]
+    assert precipitation.loc[western & (precipitation["year"] == 2001), "precip"].unique().tolist() == [36.0]
+    assert precipitation.loc[~western & (precipitation["year"] < 2002), "precip"].unique().tolist() == [60.0]
+    assert len(precipitation) == 3 * len(grid.cells)
+
+
+def test_the_station_count_is_the_mean_over_the_year(tmp_path, grid):
+    """A total of station counts would read twelve months of one gauge as twelve gauges."""
+    write_two_boxes(tmp_path, west=np.ones(24), east=np.ones(24), west_gauges=np.repeat([2.0, 4.0], [6, 18]))
+
+    precipitation = read_with_longitudes(grid, tmp_path)
+    western = precipitation["lon"] < 5.0
+
+    assert precipitation.loc[western & (precipitation["year"] == 2000), "gauges"].unique().tolist() == [3.0]
+    assert precipitation.loc[western & (precipitation["year"] == 2001), "gauges"].unique().tolist() == [4.0]
+
+
+def test_a_year_missing_a_month_is_missing(tmp_path, grid):
+    """Eleven months summed read as a drier year than it was, so the year is missing instead."""
+    east = np.full(24, 5.0)
+    east[13] = np.nan
+    write_two_boxes(tmp_path, west=np.ones(24), east=east)
+
+    precipitation = read_with_longitudes(grid, tmp_path)
+    eastern_2001 = (precipitation["lon"] >= 5.0) & (precipitation["year"] == 2001)
+
+    assert precipitation.loc[eastern_2001, ["precip", "gauges"]].isna().all().all()
+    assert precipitation.loc[~eastern_2001, ["precip", "gauges"]].notna().all().all()
+
+
+def test_the_monitoring_product_continues_the_record(tmp_path, grid):
+    """The monitoring archive names its grids differently and dates its rows as YYYYMMDD floats."""
+    write_two_boxes(tmp_path, west=np.ones(24), east=np.ones(24), monitored=np.arange(1.0, 13.0))
+
+    precipitation = read_with_longitudes(grid, tmp_path)
+
+    assert precipitation.loc[precipitation["year"] == 2002, "precip"].unique().tolist() == [78.0]
+
+
+def test_a_warm_read_needs_neither_the_archives_nor_the_network(tmp_path, grid, monkeypatch):
+    write_two_boxes(tmp_path, west=np.ones(24), east=np.ones(24))
+    first = precipitation_on_cells(grid, tmp_path, products=two_box_products())
+    shutil.rmtree(tmp_path / "gpcc")
+
+    def offline(*args, **kwargs):
+        raise AssertionError("reached the network on a warm cache")
+
+    monkeypatch.setattr(requests, "get", offline)
+    pd.testing.assert_frame_equal(precipitation_on_cells(grid, tmp_path, products=two_box_products()), first)
+
+
+def test_changing_how_box_spacing_is_read_turns_the_cached_cells_over(tmp_path, grid, monkeypatch):
+    """The spacing decides which box a cell reads, so a cache that cannot see it change keeps serving cells read
+    from the wrong boxes."""
+    write_two_boxes(tmp_path, west=np.ones(24), east=np.full(24, 5.0))
+    five_degrees = read_with_longitudes(grid, tmp_path)
+
+    read_steps = gpcc._axis_steps
+    monkeypatch.setattr(gpcc, "_axis_steps", lambda *axes: tuple(2 * step for step in read_steps(*axes)))
+    ten_degrees = read_with_longitudes(grid, tmp_path)
+
+    assert not five_degrees.equals(ten_degrees)
+
+
+def test_boxes_are_found_on_a_descending_axis():
+    """GPCC lists latitude north to south. A center on the edge at 1 north belongs to the box above it, at 1.5."""
+    boxes = _boxes_holding(np.array([1.0, -1.0, 0.2]), np.array([1.5, 0.5, -0.5, -1.5]), 1.0)
+
+    assert boxes.tolist() == [0, 2, 1]

@@ -14,9 +14,10 @@ import xarray as xr
 
 from climate_risk.data.cache import builder_fingerprint, cached, pandas_parquet
 from climate_risk.data.fetch import fetch
+from climate_risk.data.frequency import MONTHS_PER_PERIOD
 from climate_risk.data.source import DataSource
 from climate_risk.data_functions.shapefiles_data_loader import load_shapefile
-from climate_risk.geo.raster import cell_areas_km2, cell_coverage
+from climate_risk.geo.raster import CellGrid, cell_areas_km2, cell_coverage
 
 _log = logging.getLogger(__name__)
 
@@ -443,4 +444,136 @@ def load_gpcc_data(
             "reading": _reading_fingerprint(),
         },
         force=force_reload,
+    )
+
+
+def _boxes_holding(centers: np.ndarray, axis: np.ndarray, step: float) -> np.ndarray:
+    """
+    Return the index along ``axis`` of the box holding each center, a center on an edge going to the higher box.
+
+    Parameters
+    ----------
+    centers : ndarray
+        Coordinates to place, in degrees.
+    axis : ndarray
+        The grid's box centers along one axis, in either order.
+    step : float
+        The spacing of ``axis``, in degrees.
+
+    Returns
+    -------
+    boxes : ndarray of int
+        Positions in ``axis``.
+    """
+    ascending = np.argsort(axis)
+    lower_edges = axis[ascending] - step / 2
+
+    return ascending[np.searchsorted(lower_edges, centers, side="right") - 1]
+
+
+def annual_precipitation(monthly: xr.Dataset) -> xr.Dataset:
+    """
+    Total monthly precipitation over each calendar year, keeping a year only where all twelve months are reported.
+
+    Parameters
+    ----------
+    monthly : Dataset
+        ``precip`` and ``gauges`` along a ``time`` dimension of monthly timestamps, over any other dimensions.
+
+    Returns
+    -------
+    annual : Dataset
+        ``precip`` summed and ``gauges`` averaged along ``year``, both missing wherever a month of ``precip`` is.
+    """
+    precipitation = monthly[PRECIPITATION].groupby("time.year")
+    complete = precipitation.count() == MONTHS_PER_PERIOD["annual"]
+
+    return xr.Dataset(
+        {
+            PRECIPITATION: precipitation.sum().where(complete),
+            GAUGES: monthly[GAUGES].groupby("time.year").mean().where(complete),
+        }
+    )
+
+
+def precipitation_on_cells(
+    grid: CellGrid, cache_dir: Path, *, products: tuple[GriddedProduct, ...] = GPCC_PRODUCTS
+) -> pd.DataFrame:
+    """
+    Read GPCC's annual precipitation at every grid cell, cached against the grid.
+
+    Each cell takes the box holding its center, a center on an edge going to the box north and east of it.
+
+    Parameters
+    ----------
+    grid : CellGrid
+        The lattice to read onto.
+    cache_dir : Path
+        Directory the source caches live under.
+    products : tuple of GriddedProduct, optional
+        Which published products to read. Defaults to the full and monitoring pair.
+
+    Returns
+    -------
+    precipitation : DataFrame
+        One row per cell and year, with ``cell_id``, ``year``, ``precip``, the annual total in millimeters, and
+        ``gauges``, the stations behind the box in an average month. Both are missing in a year where the box lacks
+        a month, and in every year for a coastal cell whose center lies over a sea box.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.gpcc import precipitation_on_cells
+
+        precipitation = precipitation_on_cells(grid, Path("data"))
+    """
+    latitudes = grid.cells["lat"].to_numpy()
+    longitudes = grid.cells["lon"].to_numpy()
+
+    def at_cells(archive: Path, variable: str, gauges: str) -> xr.Dataset:
+        with xr.open_dataset(_extract(archive)) as dataset:
+            box_latitudes, box_longitudes = dataset["lat"].to_numpy(), dataset["lon"].to_numpy()
+            latitude_step, longitude_step = _axis_steps(box_latitudes, box_longitudes)
+            boxes = dataset[[variable, gauges]].isel(
+                lat=xr.DataArray(_boxes_holding(latitudes, box_latitudes, latitude_step), dims="cell"),
+                lon=xr.DataArray(_boxes_holding(longitudes, box_longitudes, longitude_step), dims="cell"),
+            )
+            renamed = boxes.rename({variable: PRECIPITATION, gauges: GAUGES}).drop_vars(["lat", "lon"])
+
+            return renamed.assign_coords(time=_as_timestamps(renamed["time"])).load()
+
+    def build() -> pd.DataFrame:
+        # Fetching inside the builder keeps a warm cache from reaching the network.
+        monthly = xr.concat(
+            [
+                at_cells(fetch(source, cache_dir / GPCC_SUBDIRECTORY), product.variable, product.gauges)
+                for product in products
+                for source in product.sources
+            ],
+            dim="time",
+        )
+
+        return (
+            annual_precipitation(monthly.astype("float64"))
+            .assign_coords(cell_id=("cell", grid.cells["cell_id"].to_numpy()))
+            .swap_dims(cell="cell_id")
+            .to_dataframe()
+            .reset_index()[["cell_id", "year", PRECIPITATION, GAUGES]]
+        )
+
+    return cached(
+        cache_dir,
+        "precipitation_on_cells",
+        build,
+        pandas_parquet(),
+        params={
+            "grid": grid.fingerprint,
+            "coverage": coverage_of(products),
+            "reading": builder_fingerprint(
+                build, at_cells, annual_precipitation, _boxes_holding, _axis_steps, _as_timestamps
+            ),
+        },
     )
