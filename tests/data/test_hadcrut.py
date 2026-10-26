@@ -1,3 +1,5 @@
+import dataclasses
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -7,6 +9,7 @@ import xarray as xr
 
 from shapely.geometry import box
 
+from climate_risk.data import hadcrut
 from climate_risk.data.hadcrut import HADCRUT, load_hadcrut_data, temperature_on_cells, transform_hadcrut
 from climate_risk.geo.raster import build_cell_grid, dissolve_place_boundary
 from tests.conftest import toy_world, toy_world_with_places
@@ -144,3 +147,20 @@ def test_a_warm_read_needs_neither_the_file_nor_the_network(tmp_path, grid, monk
 
     monkeypatch.setattr(requests, "get", offline)
     pd.testing.assert_frame_equal(temperature_on_cells(grid, tmp_path), first)
+
+
+def test_a_new_release_of_the_record_turns_the_cached_cells_over(tmp_path, grid, monkeypatch):
+    """A new release downloads to a new file, and cells read from the old release must not be served for it."""
+    write_gridded(tmp_path, west=np.ones(24), east=np.ones(24))
+    temperature_on_cells(grid, tmp_path)
+
+    release = dataclasses.replace(
+        HADCRUT,
+        url=HADCRUT.url.replace("5.0.2.0", "5.1.0.0"),
+        filename=HADCRUT.filename.replace("5.0.2.0", "5.1.0.0"),
+    )
+    write_gridded(tmp_path, west=np.full(24, 2.0), east=np.full(24, 2.0))
+    (tmp_path / HADCRUT.filename).rename(tmp_path / release.filename)
+    monkeypatch.setattr(hadcrut, "HADCRUT", release)
+
+    assert temperature_on_cells(grid, tmp_path)["tas_mean"].unique().tolist() == [2.0]

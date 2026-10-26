@@ -573,7 +573,7 @@ def precipitation_on_cells(
             "grid": grid.fingerprint,
             "coverage": coverage_of(products),
             "reading": builder_fingerprint(
-                build, at_cells, annual_precipitation, _boxes_holding, _axis_steps, _as_timestamps
+                build, at_cells, annual_precipitation, _boxes_holding, _axis_steps, _as_timestamps, products
             ),
         },
     )

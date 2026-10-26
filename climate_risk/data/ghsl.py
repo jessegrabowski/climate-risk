@@ -139,7 +139,7 @@ def population_on_cells(grid: CellGrid, epoch: int, cache_dir: Path) -> np.ndarr
             "grid": grid.fingerprint,
             "resolution": RESOLUTION,
             "reading": builder_fingerprint(
-                build, sample_onto_cells, vars(CellGrid)["footprints"].fget, population_raster
+                build, sample_onto_cells, vars(CellGrid)["footprints"].fget, population_raster, GHSL_RELEASE
             ),
         },
     )

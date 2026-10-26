@@ -202,5 +202,5 @@ def temperature_on_cells(grid: CellGrid, cache_dir: Path) -> pd.DataFrame:
         "temperature_on_cells",
         build,
         pandas_parquet(),
-        params={"grid": grid.fingerprint, "reading": builder_fingerprint(build, annual_anomalies)},
+        params={"grid": grid.fingerprint, "reading": builder_fingerprint(build, annual_anomalies, HADCRUT)},
     )
