@@ -5,7 +5,9 @@ import pytest
 
 from shapely.geometry import LineString, box
 
+from climate_risk.data import cell_samples
 from climate_risk.data.cell_samples import features_fingerprint, load_cell_distances_to, load_cell_unit_overlaps
+from climate_risk.geo import raster
 from climate_risk.geo.raster import build_cell_grid, dissolve_place_boundary
 
 
@@ -78,3 +80,20 @@ def test_a_unit_column_under_another_name_is_its_own_entry(grid, tmp_path):
     relabeled = load_cell_unit_overlaps(grid, units, tmp_path, unit_column="GID_2")
 
     assert "GID_2" in relabeled.columns
+
+
+def test_changing_how_coverage_is_measured_turns_the_cached_overlaps_over(grid, tmp_path, monkeypatch):
+    """The overlaps are measured by `cell_coverage`, under the wrapper the builder calls, so a cache that sees only
+    the wrapper keeps serving overlaps measured under the old rule."""
+    measured = load_cell_unit_overlaps(grid, halves(0.5), tmp_path)
+
+    def halved(*args, **kwargs):
+        overlaps = measure(*args, **kwargs)
+        return overlaps.assign(coverage=overlaps["coverage"] / 2)
+
+    measure = raster.cell_coverage
+    monkeypatch.setattr(raster, "cell_coverage", halved)
+    monkeypatch.setattr(cell_samples, "cell_coverage", halved)
+    remeasured = load_cell_unit_overlaps(grid, halves(0.5), tmp_path)
+
+    assert remeasured["coverage"].sum() == pytest.approx(measured["coverage"].sum() / 2)
