@@ -164,3 +164,27 @@ def test_a_new_release_of_the_record_turns_the_cached_cells_over(tmp_path, grid,
     monkeypatch.setattr(hadcrut, "HADCRUT", release)
 
     assert temperature_on_cells(grid, tmp_path)["tas_mean"].unique().tolist() == [2.0]
+
+
+def test_each_cell_reads_its_own_latitude_band(tmp_path):
+    """Two boxes stacked north over south, so a lookup that read latitude by longitude, or by the wrong edge,
+    would put both bands in one box."""
+    time = pd.date_range("2000-01-01", periods=12, freq="MS") + pd.Timedelta(days=15)
+    xr.Dataset(
+        {
+            "tas_mean": (("time", "latitude", "longitude"), np.tile([[[1.0], [5.0]]], (12, 1, 1))),
+            "latitude_bnds": (("latitude", "bnds"), [[0.0, 5.0], [5.0, 10.0]]),
+            "longitude_bnds": (("longitude", "bnds"), [[0.0, 5.0]]),
+        },
+        coords={"time": time, "latitude": [2.5, 7.5], "longitude": [2.5]},
+    ).to_netcdf(tmp_path / HADCRUT.filename)
+    boundary = dissolve_place_boundary(
+        gpd.GeoDataFrame({"ISO_A3": ["AAA"], "geometry": [box(0, 0, 5, 10)]}, crs="EPSG:4326")
+    )
+    stacked = build_cell_grid(boundary, resolution_km=100.0)
+
+    anomalies = temperature_on_cells(stacked, tmp_path).merge(stacked.cells[["cell_id", "lat"]], on="cell_id")
+    southern = anomalies["lat"] < 5.0
+
+    assert anomalies.loc[southern, "tas_mean"].unique().tolist() == [1.0]
+    assert anomalies.loc[~southern, "tas_mean"].unique().tolist() == [5.0]

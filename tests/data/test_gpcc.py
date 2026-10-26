@@ -16,7 +16,6 @@ from climate_risk.data.gpcc import (
     PRECIPITATION,
     GriddedProduct,
     _as_timestamps,
-    _boxes_holding,
     load_gpcc_data,
     precipitation_on_cells,
     transform_gpcc,
@@ -464,10 +463,3 @@ def test_changing_how_box_spacing_is_read_turns_the_cached_cells_over(tmp_path, 
     ten_degrees = read_with_longitudes(grid, tmp_path)
 
     assert not five_degrees.equals(ten_degrees)
-
-
-def test_boxes_are_found_on_a_descending_axis():
-    """GPCC lists latitude north to south. A center on the edge at 1 north belongs to the box above it, at 1.5."""
-    boxes = _boxes_holding(np.array([1.0, -1.0, 0.2]), np.array([1.5, 0.5, -0.5, -1.5]), 1.0)
-
-    assert boxes.tolist() == [0, 2, 1]

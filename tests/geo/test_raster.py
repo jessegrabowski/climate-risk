@@ -19,6 +19,7 @@ from climate_risk.geo.raster import (
     build_cell_grid,
     dissolve_place_boundary,
     grid_axes,
+    locate_boxes,
     sample_onto_cells,
 )
 
@@ -622,3 +623,22 @@ def test_a_cell_that_misses_the_place_is_an_error(tmp_path):
 
     with pytest.raises(DataValidationError, match="do not intersect it"):
         sample_onto_cells(detached, raster, statistic="sum")
+
+
+def test_boxes_are_found_on_a_descending_axis():
+    """GPCC lists latitude north to south. A center on the edge at 1 north belongs to the box above it, at 1.5."""
+    boxes = locate_boxes(np.array([1.0, -1.0, 0.2]), np.array([1.5, 0.5, -0.5, -1.5]), 1.0)
+
+    assert boxes.tolist() == [0, 2, 1]
+
+
+@pytest.mark.parametrize("center", [-3.0, 10.0], ids=["below the first box", "on the last box's upper edge"])
+def test_a_center_outside_the_boxes_is_refused(center):
+    """An index of -1 would read the last box, so a cell west of the product would take its easternmost value."""
+    with pytest.raises(DataValidationError, match="outside the boxes"):
+        locate_boxes(np.array([center]), np.array([2.5, 7.5]), 5.0)
+
+
+def test_a_center_on_the_first_box_lower_edge_is_inside():
+    """The boxes are closed below, so a cell on the product's western edge reads the westernmost box."""
+    assert locate_boxes(np.array([0.0]), np.array([2.5, 7.5]), 5.0).tolist() == [0]

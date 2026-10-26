@@ -17,7 +17,7 @@ from climate_risk.data.fetch import fetch
 from climate_risk.data.frequency import MONTHS_PER_PERIOD
 from climate_risk.data.source import DataSource
 from climate_risk.data_functions.shapefiles_data_loader import load_shapefile
-from climate_risk.geo.raster import CellGrid, cell_areas_km2, cell_coverage
+from climate_risk.geo.raster import CellGrid, cell_areas_km2, cell_coverage, locate_boxes
 
 _log = logging.getLogger(__name__)
 
@@ -447,30 +447,6 @@ def load_gpcc_data(
     )
 
 
-def _boxes_holding(centers: np.ndarray, axis: np.ndarray, step: float) -> np.ndarray:
-    """
-    Return the index along ``axis`` of the box holding each center, a center on an edge going to the higher box.
-
-    Parameters
-    ----------
-    centers : ndarray
-        Coordinates to place, in degrees.
-    axis : ndarray
-        The grid's box centers along one axis, in either order.
-    step : float
-        The spacing of ``axis``, in degrees.
-
-    Returns
-    -------
-    boxes : ndarray of int
-        Positions in ``axis``.
-    """
-    ascending = np.argsort(axis)
-    lower_edges = axis[ascending] - step / 2
-
-    return ascending[np.searchsorted(lower_edges, centers, side="right") - 1]
-
-
 def annual_precipitation(monthly: xr.Dataset) -> xr.Dataset:
     """
     Total monthly precipitation over each calendar year, keeping a year only where all twelve months are reported.
@@ -538,8 +514,8 @@ def precipitation_on_cells(
             box_latitudes, box_longitudes = dataset["lat"].to_numpy(), dataset["lon"].to_numpy()
             latitude_step, longitude_step = _axis_steps(box_latitudes, box_longitudes)
             boxes = dataset[[variable, gauges]].isel(
-                lat=xr.DataArray(_boxes_holding(latitudes, box_latitudes, latitude_step), dims="cell"),
-                lon=xr.DataArray(_boxes_holding(longitudes, box_longitudes, longitude_step), dims="cell"),
+                lat=xr.DataArray(locate_boxes(latitudes, box_latitudes, latitude_step), dims="cell"),
+                lon=xr.DataArray(locate_boxes(longitudes, box_longitudes, longitude_step), dims="cell"),
             )
             renamed = boxes.rename({variable: PRECIPITATION, gauges: GAUGES}).drop_vars(["lat", "lon"])
 
@@ -573,7 +549,7 @@ def precipitation_on_cells(
             "grid": grid.fingerprint,
             "coverage": coverage_of(products),
             "reading": builder_fingerprint(
-                build, at_cells, annual_precipitation, _boxes_holding, _axis_steps, _as_timestamps, products
+                build, at_cells, annual_precipitation, locate_boxes, _axis_steps, _as_timestamps, products
             ),
         },
     )
