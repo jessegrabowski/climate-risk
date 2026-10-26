@@ -1,3 +1,4 @@
+import polars as pl
 import pytest
 import requests
 
@@ -95,3 +96,19 @@ def test_each_scenario_and_estimate_is_its_own_cache_entry(tmp_path, published):
     load_effective_radiative_forcing("ssp245", "95th_percentile", tmp_path)
 
     assert len(published) == 3
+
+
+def test_the_table_comes_back_one_row_per_year_with_every_agent(tmp_path, published):
+    forcing = load_effective_radiative_forcing("ssp245", "best_estimate", tmp_path)
+
+    assert forcing["year"].dtype == pl.Int64
+    assert forcing["year"].to_list() == [1750, 1751, 1752]
+    assert forcing.columns[-3:] == ["total_anthropogenic", "total_natural", "total"]
+    assert forcing["total"].to_list() == [0.29, 0.28, 0.27]
+
+
+def test_force_reload_goes_back_to_the_source(tmp_path, published):
+    load_effective_radiative_forcing("ssp245", "best_estimate", tmp_path)
+    load_effective_radiative_forcing("ssp245", "best_estimate", tmp_path, force_reload=True)
+
+    assert len(published) == 2
