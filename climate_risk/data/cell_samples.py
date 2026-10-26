@@ -21,7 +21,8 @@ def cell_samples_dir(cache_dir: Path) -> Path:
 
 def features_fingerprint(features: gpd.GeoDataFrame | gpd.GeoSeries, columns: Sequence[str] = ()) -> str:
     """
-    Fingerprint a set of features by their CRS, their geometries and the columns a result carries from them.
+    Fingerprint a set of features by their CRS, their geometries and the names and values of the columns a result
+    carries from them.
 
     Parameters
     ----------
@@ -39,6 +40,7 @@ def features_fingerprint(features: gpd.GeoDataFrame | gpd.GeoSeries, columns: Se
     digest.update(b"".join(shapely.to_wkb(features.geometry.to_numpy())))
     carried = pd.DataFrame(features)
     for column in columns:
+        digest.update(str(column).encode())
         digest.update(pd.util.hash_pandas_object(carried[column], index=False).to_numpy().tobytes())
 
     return digest.hexdigest()[:12]

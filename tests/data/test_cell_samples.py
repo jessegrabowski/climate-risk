@@ -67,3 +67,14 @@ def test_the_digest_ignores_columns_the_result_does_not_carry():
 
     assert features_fingerprint(units.assign(note="anything"), ["gid"]) == features_fingerprint(units, ["gid"])
     assert features_fingerprint(units.assign(gid=["a", "b"]), ["gid"]) != features_fingerprint(units, ["gid"])
+
+
+def test_a_unit_column_under_another_name_is_its_own_entry(grid, tmp_path):
+    """The result is labeled with the column it was asked for, so two columns holding the same values are two
+    entries, or the second caller is handed the first one's label."""
+    units = halves(0.5).assign(GID_2=lambda frame: frame["gid"])
+
+    load_cell_unit_overlaps(grid, units, tmp_path)
+    relabeled = load_cell_unit_overlaps(grid, units, tmp_path, unit_column="GID_2")
+
+    assert "GID_2" in relabeled.columns
