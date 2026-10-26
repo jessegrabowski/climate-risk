@@ -2,7 +2,7 @@ from pathlib import Path
 
 import polars as pl
 
-from climate_risk.data.cache import cached, polars_parquet
+from climate_risk.data.cache import builder_fingerprint, cached, polars_parquet
 from climate_risk.data.fetch import fetch
 from climate_risk.data.source import DataSource
 from climate_risk.exceptions import DataValidationError
@@ -117,6 +117,6 @@ def load_effective_radiative_forcing(
         "effective_radiative_forcing",
         build,
         polars_parquet(),
-        params={"scenario": scenario, "estimate": estimate},
+        params={"scenario": scenario, "estimate": estimate, "reading": builder_fingerprint(build, source)},
         force=force_reload,
     )

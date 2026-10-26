@@ -32,6 +32,7 @@ These fetch on a cold cache, read from disk on a warm one, and re-fetch under ``
     ~weo.load_government_debt
     ~ghsl.population_on_cells
     ~hadcrut.temperature_on_cells
+    ~gpcc.precipitation_on_cells
     ~cell_samples.load_cell_unit_overlaps
     ~cell_samples.load_cell_distances_to
 
@@ -85,6 +86,7 @@ shared with the panel builders, so a monthly panel and a monthly CO2 series land
 
     ~frequency.mean_by_period
     ~hadcrut.annual_anomalies
+    ~gpcc.annual_precipitation
 
 Constant dollars
 ----------------

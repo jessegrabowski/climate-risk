@@ -3,7 +3,6 @@ import logging
 from pathlib import Path
 
 import geopandas as gpd
-import numpy as np
 import pandas as pd
 import xarray as xr
 
@@ -13,7 +12,7 @@ from climate_risk.data.frequency import MONTHS_PER_PERIOD
 from climate_risk.data.source import DataSource
 from climate_risk.data_functions.shapefiles_data_loader import load_shapefile
 from climate_risk.geo.crs import GEOGRAPHIC_CRS
-from climate_risk.geo.raster import CellGrid
+from climate_risk.geo.raster import CellGrid, locate_boxes
 
 _log = logging.getLogger(__name__)
 
@@ -146,7 +145,7 @@ def annual_anomalies(monthly: xr.DataArray) -> xr.DataArray:
     return by_year.mean().where(by_year.count() == MONTHS_PER_PERIOD["annual"])
 
 
-def temperature_on_cells(grid: CellGrid, cache_dir: Path) -> pd.DataFrame:
+def temperature_on_cells(grid: CellGrid, cache_dir: Path, *, force_reload: bool = False) -> pd.DataFrame:
     """
     Read HadCRUT5's annual temperature anomaly at every grid cell, cached against the grid.
 
@@ -158,6 +157,8 @@ def temperature_on_cells(grid: CellGrid, cache_dir: Path) -> pd.DataFrame:
         The lattice to read onto.
     cache_dir : Path
         Directory the source caches live under.
+    force_reload : bool, optional
+        Download again and rebuild the cache rather than reading it. Default False.
 
     Returns
     -------
@@ -178,11 +179,15 @@ def temperature_on_cells(grid: CellGrid, cache_dir: Path) -> pd.DataFrame:
 
     def build() -> pd.DataFrame:
         # Fetching inside the builder keeps a warm cache from reaching the network.
-        raw = fetch(HADCRUT, cache_dir)
+        raw = fetch(HADCRUT, cache_dir, force=force_reload)
         with xr.open_dataset(raw) as gridded:
             box_rows, box_columns = (
-                np.searchsorted(gridded[bounds][:, 0].to_numpy(), grid.cells[coordinate].to_numpy(), side="right") - 1
-                for bounds, coordinate in (("latitude_bnds", "lat"), ("longitude_bnds", "lon"))
+                locate_boxes(
+                    grid.cells[coordinate].to_numpy(),
+                    gridded[axis].to_numpy(),
+                    float(gridded[f"{axis}_bnds"][0, 1] - gridded[f"{axis}_bnds"][0, 0]),
+                )
+                for axis, coordinate in (("latitude", "lat"), ("longitude", "lon"))
             )
             at_cells = annual_anomalies(gridded["tas_mean"]).isel(
                 latitude=xr.DataArray(box_rows, dims="cell"),
@@ -202,5 +207,9 @@ def temperature_on_cells(grid: CellGrid, cache_dir: Path) -> pd.DataFrame:
         "temperature_on_cells",
         build,
         pandas_parquet(),
-        params={"grid": grid.fingerprint, "reading": builder_fingerprint(build, annual_anomalies)},
+        params={
+            "grid": grid.fingerprint,
+            "reading": builder_fingerprint(build, annual_anomalies, locate_boxes, HADCRUT),
+        },
+        force=force_reload,
     )

@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
+import requests
 import xarray as xr
 
 from shapely.geometry import LineString, Point, box
@@ -410,6 +411,47 @@ def coastline():
 @pytest.fixture
 def grid_points():
     return gpd.GeoDataFrame({"geometry": [Point(0.5, 0.5), Point(2.5, 0.5)]}, crs="EPSG:4326")
+
+
+@pytest.fixture
+def serve_downloads(monkeypatch):
+    """Return a callable that publishes bytes at URLs, answering every download without a socket.
+
+    The callable takes a mapping of URL to payload and returns the URLs requested so far, so a refetch is observable.
+    """
+    published: dict[str, bytes] = {}
+    requested: list[str] = []
+
+    class Response:
+        status_code = 200
+
+        def __init__(self, payload):
+            self.payload = payload
+            self.headers = {"Content-Length": str(len(payload))}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_info):
+            return False
+
+        def raise_for_status(self):
+            return None
+
+        def iter_content(self, chunk_size):
+            yield self.payload
+
+    def fake_get(url, **kwargs):
+        requested.append(url)
+        return Response(published[url])
+
+    monkeypatch.setattr(requests, "get", fake_get)
+
+    def serve(downloads):
+        published.update(downloads)
+        return requested
+
+    return serve
 
 
 @pytest.fixture

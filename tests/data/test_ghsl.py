@@ -209,3 +209,35 @@ def test_gridded_population_holds_the_country_total_at_any_resolution():
 
     assert totals[0] == pytest.approx(totals[1], rel=0.001)
     assert totals[0] == pytest.approx(7.4e6, rel=0.05)
+
+
+def test_force_reload_downloads_the_epoch_again_and_recounts_it(tmp_path, serve_downloads):
+    def raster_of(people_per_pixel):
+        raster_path = tmp_path / "people.tif"
+        with rasterio.open(
+            raster_path,
+            "w",
+            driver="GTiff",
+            height=8,
+            width=8,
+            count=1,
+            dtype="float64",
+            crs="EPSG:4326",
+            transform=from_bounds(0.0, 0.0, 1.0, 1.0, 8, 8),
+        ) as writing:
+            writing.write(np.full((8, 8), people_per_pixel), 1)
+        return raster_path.read_bytes()
+
+    write_archive(tmp_path, 2020, {"GHS_POP_E2020.tif": raster_of(1.0)})
+    boundary = dissolve_place_boundary(
+        gpd.GeoDataFrame({"ISO_A3": ["AAA"], "geometry": [box(0, 0, 1, 1)]}, crs="EPSG:4326")
+    )
+    grid = build_cell_grid(boundary, resolution_km=30.0)
+    counted = population_on_cells(grid, 2020, tmp_path)
+
+    upstream = write_archive(tmp_path / "upstream", 2020, {"GHS_POP_E2020.tif": raster_of(2.0)})
+    requested = serve_downloads({population_source(2020).url: upstream.read_bytes()})
+    recounted = population_on_cells(grid, 2020, tmp_path, force_reload=True)
+
+    np.testing.assert_allclose(recounted, 2 * counted)
+    assert requested == [population_source(2020).url]

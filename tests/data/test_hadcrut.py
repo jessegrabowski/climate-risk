@@ -1,3 +1,5 @@
+import dataclasses
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -7,6 +9,7 @@ import xarray as xr
 
 from shapely.geometry import box
 
+from climate_risk.data import hadcrut
 from climate_risk.data.hadcrut import HADCRUT, load_hadcrut_data, temperature_on_cells, transform_hadcrut
 from climate_risk.geo.raster import build_cell_grid, dissolve_place_boundary
 from tests.conftest import toy_world, toy_world_with_places
@@ -144,3 +147,57 @@ def test_a_warm_read_needs_neither_the_file_nor_the_network(tmp_path, grid, monk
 
     monkeypatch.setattr(requests, "get", offline)
     pd.testing.assert_frame_equal(temperature_on_cells(grid, tmp_path), first)
+
+
+def test_a_new_release_of_the_record_turns_the_cached_cells_over(tmp_path, grid, monkeypatch):
+    """A new release downloads to a new file, and cells read from the old release must not be served for it."""
+    write_gridded(tmp_path, west=np.ones(24), east=np.ones(24))
+    temperature_on_cells(grid, tmp_path)
+
+    release = dataclasses.replace(
+        HADCRUT,
+        url=HADCRUT.url.replace("5.0.2.0", "5.1.0.0"),
+        filename=HADCRUT.filename.replace("5.0.2.0", "5.1.0.0"),
+    )
+    write_gridded(tmp_path, west=np.full(24, 2.0), east=np.full(24, 2.0))
+    (tmp_path / HADCRUT.filename).rename(tmp_path / release.filename)
+    monkeypatch.setattr(hadcrut, "HADCRUT", release)
+
+    assert temperature_on_cells(grid, tmp_path)["tas_mean"].unique().tolist() == [2.0]
+
+
+def test_each_cell_reads_its_own_latitude_band(tmp_path):
+    """Two boxes stacked north over south, so a lookup that read latitude by longitude, or by the wrong edge,
+    would put both bands in one box."""
+    time = pd.date_range("2000-01-01", periods=12, freq="MS") + pd.Timedelta(days=15)
+    xr.Dataset(
+        {
+            "tas_mean": (("time", "latitude", "longitude"), np.tile([[[1.0], [5.0]]], (12, 1, 1))),
+            "latitude_bnds": (("latitude", "bnds"), [[0.0, 5.0], [5.0, 10.0]]),
+            "longitude_bnds": (("longitude", "bnds"), [[0.0, 5.0]]),
+        },
+        coords={"time": time, "latitude": [2.5, 7.5], "longitude": [2.5]},
+    ).to_netcdf(tmp_path / HADCRUT.filename)
+    boundary = dissolve_place_boundary(
+        gpd.GeoDataFrame({"ISO_A3": ["AAA"], "geometry": [box(0, 0, 5, 10)]}, crs="EPSG:4326")
+    )
+    stacked = build_cell_grid(boundary, resolution_km=100.0)
+
+    anomalies = temperature_on_cells(stacked, tmp_path).merge(stacked.cells[["cell_id", "lat"]], on="cell_id")
+    southern = anomalies["lat"] < 5.0
+
+    assert anomalies.loc[southern, "tas_mean"].unique().tolist() == [1.0]
+    assert anomalies.loc[~southern, "tas_mean"].unique().tolist() == [5.0]
+
+
+def test_force_reload_downloads_the_record_again_and_rereads_it(tmp_path, grid, serve_downloads):
+    write_gridded(tmp_path, west=np.ones(24), east=np.ones(24))
+    temperature_on_cells(grid, tmp_path)
+
+    upstream = tmp_path / "upstream"
+    upstream.mkdir()
+    write_gridded(upstream, west=np.full(24, 2.0), east=np.full(24, 2.0))
+    requested = serve_downloads({HADCRUT.url: (upstream / HADCRUT.filename).read_bytes()})
+
+    assert temperature_on_cells(grid, tmp_path, force_reload=True)["tas_mean"].unique().tolist() == [2.0]
+    assert requested == [HADCRUT.url]

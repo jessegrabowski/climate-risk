@@ -8,8 +8,9 @@ import pandas as pd
 import shapely
 
 from climate_risk.data.cache import builder_fingerprint, cached, pandas_parquet
-from climate_risk.geo.distance import get_distance_to
-from climate_risk.geo.raster import CellGrid, assign_cells_to_units
+from climate_risk.geo.crs import PROJECTED_CRS
+from climate_risk.geo.distance import MIN_DISTANCE_METRES, get_distance_to
+from climate_risk.geo.raster import CellGrid, assign_cells_to_units, cell_coverage
 
 CELL_SAMPLES_SUBDIRECTORY = "cell_samples"
 
@@ -21,7 +22,8 @@ def cell_samples_dir(cache_dir: Path) -> Path:
 
 def features_fingerprint(features: gpd.GeoDataFrame | gpd.GeoSeries, columns: Sequence[str] = ()) -> str:
     """
-    Fingerprint a set of features by their CRS, their geometries and the columns a result carries from them.
+    Fingerprint a set of features by their CRS, their geometries and the names and values of the columns a result
+    carries from them.
 
     Parameters
     ----------
@@ -39,6 +41,7 @@ def features_fingerprint(features: gpd.GeoDataFrame | gpd.GeoSeries, columns: Se
     digest.update(b"".join(shapely.to_wkb(features.geometry.to_numpy())))
     carried = pd.DataFrame(features)
     for column in columns:
+        digest.update(str(column).encode())
         digest.update(pd.util.hash_pandas_object(carried[column], index=False).to_numpy().tobytes())
 
     return digest.hexdigest()[:12]
@@ -90,7 +93,7 @@ def load_cell_unit_overlaps(
         params={
             "grid": grid.fingerprint,
             "units": features_fingerprint(units, [unit_column]),
-            "reading": builder_fingerprint(build, assign_cells_to_units),
+            "reading": builder_fingerprint(build, assign_cells_to_units, cell_coverage),
         },
     )
 
@@ -142,6 +145,6 @@ def load_cell_distances_to(
         params={
             "grid": grid.fingerprint,
             "features": features_fingerprint(features, carried),
-            "reading": builder_fingerprint(build, get_distance_to),
+            "reading": builder_fingerprint(build, get_distance_to, PROJECTED_CRS, MIN_DISTANCE_METRES),
         },
     )
