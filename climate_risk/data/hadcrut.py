@@ -145,7 +145,7 @@ def annual_anomalies(monthly: xr.DataArray) -> xr.DataArray:
     return by_year.mean().where(by_year.count() == MONTHS_PER_PERIOD["annual"])
 
 
-def temperature_on_cells(grid: CellGrid, cache_dir: Path) -> pd.DataFrame:
+def temperature_on_cells(grid: CellGrid, cache_dir: Path, *, force_reload: bool = False) -> pd.DataFrame:
     """
     Read HadCRUT5's annual temperature anomaly at every grid cell, cached against the grid.
 
@@ -157,6 +157,8 @@ def temperature_on_cells(grid: CellGrid, cache_dir: Path) -> pd.DataFrame:
         The lattice to read onto.
     cache_dir : Path
         Directory the source caches live under.
+    force_reload : bool, optional
+        Download again and rebuild the cache rather than reading it. Default False.
 
     Returns
     -------
@@ -177,7 +179,7 @@ def temperature_on_cells(grid: CellGrid, cache_dir: Path) -> pd.DataFrame:
 
     def build() -> pd.DataFrame:
         # Fetching inside the builder keeps a warm cache from reaching the network.
-        raw = fetch(HADCRUT, cache_dir)
+        raw = fetch(HADCRUT, cache_dir, force=force_reload)
         with xr.open_dataset(raw) as gridded:
             box_rows, box_columns = (
                 locate_boxes(
@@ -209,4 +211,5 @@ def temperature_on_cells(grid: CellGrid, cache_dir: Path) -> pd.DataFrame:
             "grid": grid.fingerprint,
             "reading": builder_fingerprint(build, annual_anomalies, locate_boxes, HADCRUT),
         },
+        force=force_reload,
     )

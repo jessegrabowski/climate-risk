@@ -188,3 +188,16 @@ def test_each_cell_reads_its_own_latitude_band(tmp_path):
 
     assert anomalies.loc[southern, "tas_mean"].unique().tolist() == [1.0]
     assert anomalies.loc[~southern, "tas_mean"].unique().tolist() == [5.0]
+
+
+def test_force_reload_downloads_the_record_again_and_rereads_it(tmp_path, grid, serve_downloads):
+    write_gridded(tmp_path, west=np.ones(24), east=np.ones(24))
+    temperature_on_cells(grid, tmp_path)
+
+    upstream = tmp_path / "upstream"
+    upstream.mkdir()
+    write_gridded(upstream, west=np.full(24, 2.0), east=np.full(24, 2.0))
+    requested = serve_downloads(HADCRUT.url, (upstream / HADCRUT.filename).read_bytes())
+
+    assert temperature_on_cells(grid, tmp_path, force_reload=True)["tas_mean"].unique().tolist() == [2.0]
+    assert requested == [HADCRUT.url]

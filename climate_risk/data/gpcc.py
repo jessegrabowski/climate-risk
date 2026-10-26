@@ -352,10 +352,10 @@ def _as_timestamps(time: xr.DataArray) -> np.ndarray:
 
 
 def _extract(archive: Path) -> Path:
-    """Decompress the archive beside itself if needed, and return the plain file."""
+    """Decompress the archive beside itself unless an extraction at least as new is there, and return the plain file."""
     extracted = archive.with_suffix("")
 
-    if not extracted.exists():
+    if not extracted.exists() or extracted.stat().st_mtime < archive.stat().st_mtime:
         _log.info(f"Extracting {archive.name}")
         # Decompress beside the target and move, so an interrupted run leaves no truncated archive.
         partial = extracted.with_suffix(extracted.suffix + ".part")
@@ -473,7 +473,11 @@ def annual_precipitation(monthly: xr.Dataset) -> xr.Dataset:
 
 
 def precipitation_on_cells(
-    grid: CellGrid, cache_dir: Path, *, products: tuple[GriddedProduct, ...] = GPCC_PRODUCTS
+    grid: CellGrid,
+    cache_dir: Path,
+    *,
+    products: tuple[GriddedProduct, ...] = GPCC_PRODUCTS,
+    force_reload: bool = False,
 ) -> pd.DataFrame:
     """
     Read GPCC's annual precipitation at every grid cell, cached against the grid.
@@ -488,6 +492,8 @@ def precipitation_on_cells(
         Directory the source caches live under.
     products : tuple of GriddedProduct, optional
         Which published products to read. Defaults to the full and monitoring pair.
+    force_reload : bool, optional
+        Download again and rebuild the cache rather than reading it. Default False.
 
     Returns
     -------
@@ -523,14 +529,12 @@ def precipitation_on_cells(
 
     def build() -> pd.DataFrame:
         # Fetching inside the builder keeps a warm cache from reaching the network.
-        monthly = xr.concat(
-            [
-                at_cells(fetch(source, cache_dir / GPCC_SUBDIRECTORY), product.variable, product.gauges)
-                for product in products
-                for source in product.sources
-            ],
-            dim="time",
-        )
+        archives = [
+            (fetch(source, cache_dir / GPCC_SUBDIRECTORY, force=force_reload), product.variable, product.gauges)
+            for product in products
+            for source in product.sources
+        ]
+        monthly = xr.concat([at_cells(archive, variable, gauges) for archive, variable, gauges in archives], dim="time")
 
         return (
             annual_precipitation(monthly.astype("float64"))
@@ -552,4 +556,5 @@ def precipitation_on_cells(
                 build, at_cells, annual_precipitation, locate_boxes, _axis_steps, _as_timestamps, products
             ),
         },
+        force=force_reload,
     )

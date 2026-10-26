@@ -463,3 +463,19 @@ def test_changing_how_box_spacing_is_read_turns_the_cached_cells_over(tmp_path, 
     ten_degrees = read_with_longitudes(grid, tmp_path)
 
     assert not five_degrees.equals(ten_degrees)
+
+
+def test_force_reload_downloads_every_archive_again_and_rereads_them(tmp_path, grid, serve_downloads):
+    write_two_boxes(tmp_path, west=np.ones(24), east=np.ones(24))
+    precipitation_on_cells(grid, tmp_path, products=two_box_products())
+
+    upstream = tmp_path / "upstream"
+    write_two_boxes(upstream, west=np.full(24, 2.0), east=np.full(24, 2.0))
+    for product in two_box_products():
+        for source in product.sources:
+            requested = serve_downloads(source.url, (upstream / "gpcc" / source.filename).read_bytes())
+
+    reloaded = precipitation_on_cells(grid, tmp_path, products=two_box_products(), force_reload=True)
+
+    assert reloaded.loc[reloaded["year"] == 2000, "precip"].unique().tolist() == [24.0]
+    assert sorted(requested) == sorted(source.url for product in two_box_products() for source in product.sources)
