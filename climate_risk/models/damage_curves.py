@@ -240,13 +240,22 @@ def _future_mu(
     idata: xr.DataTree,
     iso: str,
 ) -> np.ndarray:
-    """softplus(country_effect + X @ beta) at future covariate rows, dims (chain, draw, year)."""
+    """
+    softplus(country_effect [+ year_effect[-1]] + X @ beta) at future covariate rows, dims (chain, draw, year).
+
+    EXPERIMENTAL branch: when the posterior carries ``year_effect`` (from
+    :func:`~climate_risk.models.frequency.build_year_effect_frequency_model`), its last value is held
+    flat across every future year, since a reporting-quality effect is not extrapolated as drift.
+    Posteriors without it, which is every published Stage 2 trace, take the unchanged path.
+    """
     x = _standardized_features(
         future_covariates=future_covariates, historical_panel=historical_panel, features=features, target=target
     )
     posterior = idata.posterior
     x_da = xr.DataArray(x, dims=["year", "feature"], coords={"feature": features})
     latent_rate = posterior["country_effect"].sel(ISO=iso) + (x_da * posterior["beta"]).sum(dim="feature", skipna=False)
+    if "year_effect" in posterior:
+        latent_rate = latent_rate + posterior["year_effect"].isel(year=-1)
     result: np.ndarray = np.logaddexp(0.0, latent_rate.transpose("chain", "draw", "year").values)
 
     return result

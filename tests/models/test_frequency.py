@@ -3,7 +3,13 @@ import polars as pl
 import pymc as pm
 import pytest
 
-from climate_risk.models.frequency import FEATURES, TARGET, build_frequency_model, build_hierarchical_frequency_model
+from climate_risk.models.frequency import (
+    FEATURES,
+    TARGET,
+    build_frequency_model,
+    build_hierarchical_frequency_model,
+    build_year_effect_frequency_model,
+)
 
 
 def synthetic_panel(rng: np.random.Generator, n: int = 40, isos: tuple[str, ...] | None = None) -> pl.DataFrame:
@@ -136,3 +142,45 @@ def test_the_zero_sum_offset_still_sums_to_zero_here():
 
     totals = prior["country_effect_offset"].sum(dim="ISO").values
     np.testing.assert_allclose(totals, 0.0, atol=1e-10)
+
+
+def _dated_panel(n: int = 30) -> pl.DataFrame:
+    """A synthetic panel with a `date` column cycling through 2000-2004, as the real panel carries."""
+    panel = synthetic_panel(np.random.default_rng(11), n=n, isos=("AAA", "BBB", "CCC"))
+    years = [2000 + i % 5 for i in range(n)]
+
+    return panel.with_columns(pl.Series("date", [f"{year}-01-01" for year in years]).str.to_date())
+
+
+def test_the_experimental_year_effect_model_adds_exactly_the_walk_to_stage_2():
+    model = build_year_effect_frequency_model(_dated_panel())
+
+    stage_2 = {rv.name for rv in build_hierarchical_frequency_model(_dated_panel()).free_RVs}
+    assert {rv.name for rv in model.free_RVs} == stage_2 | {"year_effect_sd", "year_effect_step"}
+    assert list(model.coords["year"]) == [2000, 2001, 2002, 2003, 2004]
+    assert model.named_vars_to_dims["year_effect"] == ("year",)
+    assert model["year_effect_step"].eval().shape == (4,)
+
+
+def test_the_experimental_year_effect_walk_starts_at_zero():
+    model = build_year_effect_frequency_model(_dated_panel())
+
+    with model:
+        prior = pm.sample_prior_predictive(draws=50, random_seed=0).prior
+
+    assert (prior["year_effect"].isel(year=0) == 0.0).all()
+    assert prior["year_effect"].isel(year=-1).std().item() > 0.0
+
+
+def test_the_year_effect_sd_prior_scale_is_configurable():
+    default = build_year_effect_frequency_model(_dated_panel())
+    wide = build_year_effect_frequency_model(_dated_panel(), year_effect_sd_prior=1.0)
+
+    def draws(model: pm.Model) -> np.ndarray:
+        with model:
+            sd: np.ndarray = (
+                pm.sample_prior_predictive(draws=2000, random_seed=0).prior["year_effect_sd"].values.ravel()
+            )
+        return sd
+
+    assert draws(wide).std() > 2.0 * draws(default).std()

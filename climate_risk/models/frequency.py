@@ -180,3 +180,81 @@ def build_hierarchical_frequency_model(panel: pl.DataFrame) -> pm.Model:
         pm.ZeroInflatedNegativeBinomial(TARGET, psi=psi, mu=mu, alpha=alpha, observed=y, dims="obs_id")
 
     return model
+
+
+def build_year_effect_frequency_model(panel: pl.DataFrame, *, year_effect_sd_prior: float = 0.3) -> pm.Model:
+    """
+    EXPERIMENTAL: Stage 2 plus a year effect shared by every country.
+
+    .. warning::
+
+        Experimental, on the ``experiment/frequency-year-effect`` branch. It sits beside
+        :func:`build_hierarchical_frequency_model`, which is unchanged, so dropping this function
+        and its callers' ``year_effect`` branch (see ``damage_curves._future_mu``) restores the
+        published Stage 2 exactly.
+
+    Everything from :func:`build_hierarchical_frequency_model` carries over. The addition is one
+    effect per calendar year, common to all countries, built as a random walk fixed at zero in the
+    panel's first year: ``year_effect[0] = 0`` and ``year_effect[t] = year_effect[t-1] + year_effect_sd * z[t]``
+    with ``z`` standard normal. It is meant to absorb changes in EM-DAT reporting that would
+    otherwise load onto ``co2``, the other covariate that rises steadily with time. It follows
+    notebook 04 of PR #217 (``notebooks/global_emdat/04_year_effect.ipynb``).
+
+    On the global panel (7,710 rows, 1981-2023) it improves PSIS-LOO by about 99 (se 13) over Stage 2
+    for roughly 17 extra effective parameters, and widens the ``co2`` coefficient from 0.32 +/- 0.04
+    to 0.52 +/- 0.34. The old width was too narrow, not the new one too wide: ``co2`` and calendar time
+    are collinear, and the plain model did not say so.
+
+    The walk is not defined past the last panel year. Forecasts that use this model should hold the
+    effect at its final value, which ``damage_curves.simulate_future_damage`` does when the posterior
+    carries ``year_effect``. Reporting quality is not something to extrapolate as drift.
+
+    Parameters
+    ----------
+    panel : DataFrame
+        As for :func:`build_hierarchical_frequency_model`, with a ``date`` column.
+    year_effect_sd_prior : float, optional
+        Scale of the ``HalfNormal`` prior on ``year_effect_sd``, i.e. how fast the walk may move per year.
+        Default 0.3, the published experiment's value; varied to test how much the ``co2`` coefficient
+        depends on it.
+
+    Returns
+    -------
+    Model
+        The variables of :func:`build_hierarchical_frequency_model` plus ``year_effect_sd``,
+        ``year_effect_step`` (one fewer than the number of years) and the deterministic
+        ``year_effect`` (dims ``year``).
+    """
+    standardized = _prepare_panel(panel)
+    standardized_features = [f"{feature}__standardized" for feature in FEATURES]
+    iso_idx, isos = pd.factorize(standardized["ISO"], sort=True)
+
+    row_years = pd.to_datetime(standardized["date"]).dt.year.to_numpy()
+    years = np.arange(row_years.min(), row_years.max() + 1)
+    year_idx = row_years - row_years.min()
+
+    coords = {"feature": FEATURES, "obs_id": np.arange(len(standardized)), "ISO": isos, "year": years}
+
+    with pm.Model(coords=coords) as model:
+        X, y = add_data(standardized_features, standardized, target=TARGET, dims=["obs_id", "feature"])
+        iso_idx_data = pm.Data("iso_idx", iso_idx, dims="obs_id")
+        year_idx_data = pm.Data("year_idx", year_idx, dims="obs_id")
+
+        country_effect, _, _, _ = add_hierarchical_effect(name="country", group_dim="ISO", use_zerosum_offset=True)
+        beta = pm.Normal("beta", mu=0.0, sigma=1.0, dims="feature")
+
+        year_effect_sd = pm.HalfNormal("year_effect_sd", sigma=year_effect_sd_prior)
+        year_effect_step = pm.Normal("year_effect_step", mu=0.0, sigma=1.0, shape=len(years) - 1)
+        year_effect = pm.Deterministic(
+            "year_effect", pt.concatenate([pt.zeros(1), pt.cumsum(year_effect_sd * year_effect_step)]), dims="year"
+        )
+
+        latent_rate = country_effect[iso_idx_data] + year_effect[year_idx_data] + X @ beta
+        mu = pt.clip(pt.softplus(latent_rate), MIN_MU, MAX_MU)
+
+        psi = pm.Beta("psi", alpha=1.0, beta=1.0)
+        alpha = pm.Gamma("alpha", alpha=2.0, beta=1.0)
+
+        pm.ZeroInflatedNegativeBinomial(TARGET, psi=psi, mu=mu, alpha=alpha, observed=y, dims="obs_id")
+
+    return model

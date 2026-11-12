@@ -116,6 +116,39 @@ def test_future_mu_combines_country_effect_and_standardized_features():
     assert mu[0, 0, 0] == pytest.approx(np.logaddexp(0.0, expected_latent_rate))
 
 
+def test_future_mu_holds_the_last_year_effect_flat_when_the_posterior_has_one():
+    """EXPERIMENTAL branch: the year effect is not extrapolated as drift past the panel."""
+    historical_panel = pl.DataFrame(
+        {"ISO": ["AAA", "AAA"], "date": [2000, 2001], "f1": [-1.0, 1.0], "target": [0.0, 0.0]}
+    )
+    future_covariates = pl.DataFrame({"ISO": ["AAA", "AAA"], "year": [2030, 2040], "f1": [0.0, 0.0]})
+
+    def posterior(**extra):
+        data = {
+            "country_effect": (["chain", "draw", "ISO"], [[[0.5]]]),
+            "beta": (["chain", "draw", "feature"], [[[0.1]]]),
+            **extra,
+        }
+        return xr.DataTree.from_dict({"posterior": xr.Dataset(data, coords={"ISO": ["AAA"], "feature": ["f1"]})})
+
+    def mu_for(idata: xr.DataTree) -> np.ndarray:
+        return _future_mu(
+            future_covariates=future_covariates,
+            historical_panel=historical_panel,
+            features=["f1"],
+            target="target",
+            idata=idata,
+            iso="AAA",
+        )
+
+    plain = mu_for(posterior())
+    with_year = mu_for(posterior(year_effect=(["chain", "draw", "year"], [[[0.0, 0.3, 0.7]]])))
+
+    assert plain[0, 0, 0] == pytest.approx(np.logaddexp(0.0, 0.5))
+    assert with_year[0, 0, 0] == pytest.approx(np.logaddexp(0.0, 0.5 + 0.7))
+    assert with_year[0, 0, 0] == with_year[0, 0, 1]
+
+
 def _future_country_idata(*, beta_len, country_effect, psi, **extra):
     """A posterior with one chain, one draw, and one country ("AAA"), over frequency.FEATURES."""
     data_vars = {
