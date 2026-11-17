@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           # Seeds the pre-commit hook environments; matches requires-python and the pixi env.
-          python-version: "3.12"
+          python-version: "3.14"
       # pixi-lock-check is a language: system hook, so it needs the binary on PATH.
       # The environment itself is not used by this job.
       - uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
@@ -41,7 +41,7 @@ jobs:
       - run: pixi run typecheck
 
   test:
-    name: ubuntu / py3.12
+    name: ubuntu / py3.14
     needs: style
     runs-on: ubuntu-latest
     steps:

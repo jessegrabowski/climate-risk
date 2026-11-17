@@ -175,7 +175,7 @@ the conventional stand-in.
 Modern Python
 -------------
 
-The supported floor is Python 3.12, so write for it:
+The supported floor is Python 3.14, so write for it:
 
 * PEP 604 unions (``int | None``) and PEP 585 generics (``list[int]``), not ``Optional`` or
   ``typing.List``.

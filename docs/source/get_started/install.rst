@@ -1,7 +1,7 @@
 Installation
 ============
 
-``climate_risk`` requires Python 3.12 or newer. It depends on the geospatial stack: GDAL, GEOS and
+``climate_risk`` requires Python 3.14 or newer. It depends on the geospatial stack: GDAL, GEOS and
 PROJ, reached by way of ``geopandas``, ``rasterio`` and ``exactextract``. Those libraries have to be
 built against a common ABI. Installing from conda-forge is therefore the supported path, and
 ``pixi`` is how this project does it.
