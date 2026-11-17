@@ -5,6 +5,7 @@ import sqlite3
 
 from collections import defaultdict
 from collections.abc import Iterable, Iterator, Mapping
+from contextlib import closing
 from itertools import batched
 from pathlib import Path
 from typing import NamedTuple
@@ -419,7 +420,7 @@ def read_gazetteer(
 
     def build() -> pl.DataFrame:
         indexed: list[tuple[str, str, int, str | None]] = []
-        with sqlite3.connect(gadm_path(cache_dir)) as connection:
+        with closing(sqlite3.connect(gadm_path(cache_dir))) as connection:
             available = {row[1] for row in connection.execute(f'PRAGMA table_info("{layer}")')}
             # A variant-name column is optional; an identifier and a name are what make a level readable.
             levels = [level for level in INDEXABLE_LEVELS if {f"GID_{level}", f"NAME_{level}"} <= available]
