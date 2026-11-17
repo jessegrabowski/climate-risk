@@ -49,7 +49,7 @@ def available_geocoders(iso: str, cache_dir: Path) -> Iterator[Geocoder]:
     """
     try:
         yield geonames_geocoder(iso, cache_dir)
-    except (KeyError, OSError):
+    except KeyError, OSError:
         pass
 
     yield osm_geocoder(iso, cache_dir)

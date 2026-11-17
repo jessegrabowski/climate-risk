@@ -340,7 +340,7 @@ def repair_mojibake(text: str) -> str:
     while True:
         try:
             once = text.encode("cp1252").decode("utf-8")
-        except (UnicodeEncodeError, UnicodeDecodeError):
+        except UnicodeEncodeError, UnicodeDecodeError:
             return text
         if once == text:
             return text
@@ -437,7 +437,8 @@ def read_gazetteer(
 
             for row in connection.execute(query, held):
                 parent = None
-                for level, (gid, name, variants) in zip(levels, batched(row, len(_NAME_FIELDS)), strict=True):
+                fields = batched(row, len(_NAME_FIELDS), strict=True)
+                for level, (gid, name, variants) in zip(levels, fields, strict=True):
                     # GADM writes an unnamed unit as `?` at every level it spans, and a unit cannot
                     # contain itself: the chain ends where the identifier stops changing.
                     if not gid or gid == parent:
