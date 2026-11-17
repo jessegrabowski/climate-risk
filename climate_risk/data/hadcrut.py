@@ -62,7 +62,7 @@ def transform_hadcrut(temperatures: pd.DataFrame, world: gpd.GeoDataFrame) -> pd
     )
     within_a_country = located.sjoin(world.rename(columns=WORLD_COLUMNS), how="inner", predicate="intersects")
 
-    annual = within_a_country.assign(year=lambda x: pd.to_datetime(x["time"].dt.year, format="%Y"))
+    annual = within_a_country.assign(year=lambda x: pd.to_datetime(x["time"].dt.year.astype(str), format="%Y"))
 
     return (
         annual.pivot_table(values="tas_mean", index=["country_code", "year"], aggfunc="mean")
