@@ -32,7 +32,7 @@ dependencies = [
     "pytensor>=3.3.8,<4",
     "arviz>=1.3,<2",
     "nutpie>=0.16,<1",
-    "pymc-extras>=0.16,<1",
+    "pymc-extras>=0.17,<1",
     "ptgp>=0.3,<1",
     "preliz>=0.28,<1",
     "scikit-learn>=1.9,<2",
@@ -181,7 +181,7 @@ dependency-overrides = { pytensor = ">=3.3.8,<4", pymc = ">=6.4,<7" }
 
 [tool.pixi.pypi-dependencies]
 climate-risk = { path = ".", editable = true }
-pymc-extras = { git = "https://github.com/pymc-devs/pymc-extras.git", rev = "d3e71d72bc631d8f5aa852fabddfa3c6a73cab7e" }
+pymc-extras = ">=0.17,<1"
 ptgp = ">=0.3,<1"
 
 [tool.pixi.environments]
