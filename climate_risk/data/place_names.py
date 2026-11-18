@@ -5,6 +5,7 @@ import sqlite3
 
 from collections import defaultdict
 from collections.abc import Iterable, Iterator, Mapping
+from contextlib import closing
 from itertools import batched
 from pathlib import Path
 from typing import NamedTuple
@@ -339,7 +340,7 @@ def repair_mojibake(text: str) -> str:
     while True:
         try:
             once = text.encode("cp1252").decode("utf-8")
-        except (UnicodeEncodeError, UnicodeDecodeError):
+        except UnicodeEncodeError, UnicodeDecodeError:
             return text
         if once == text:
             return text
@@ -419,7 +420,7 @@ def read_gazetteer(
 
     def build() -> pl.DataFrame:
         indexed: list[tuple[str, str, int, str | None]] = []
-        with sqlite3.connect(gadm_path(cache_dir)) as connection:
+        with closing(sqlite3.connect(gadm_path(cache_dir))) as connection:
             available = {row[1] for row in connection.execute(f'PRAGMA table_info("{layer}")')}
             # A variant-name column is optional; an identifier and a name are what make a level readable.
             levels = [level for level in INDEXABLE_LEVELS if {f"GID_{level}", f"NAME_{level}"} <= available]
@@ -436,7 +437,8 @@ def read_gazetteer(
 
             for row in connection.execute(query, held):
                 parent = None
-                for level, (gid, name, variants) in zip(levels, batched(row, len(_NAME_FIELDS)), strict=True):
+                fields = batched(row, len(_NAME_FIELDS), strict=True)
+                for level, (gid, name, variants) in zip(levels, fields, strict=True):
                     # GADM writes an unnamed unit as `?` at every level it spans, and a unit cannot
                     # contain itself: the chain ends where the identifier stops changing.
                     if not gid or gid == parent:

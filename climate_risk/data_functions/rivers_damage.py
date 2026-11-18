@@ -76,7 +76,7 @@ def _create_rivers_damage(
                 .dropna(how="any", subset=["Latitude", "Longitude"])
                 .assign(
                     geometry=lambda x: gpd.points_from_xy(x.Longitude, x.Latitude),
-                    year=lambda x: pd.to_datetime(x["End Year"], format="%Y"),
+                    year=lambda x: pd.to_datetime(x["End Year"].astype(str), format="%Y"),
                 )
                 .drop(columns=["End Year"])
                 .replace({0.0: np.nan})

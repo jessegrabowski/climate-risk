@@ -1,6 +1,7 @@
 import sqlite3
 
 from collections.abc import Collection, Iterator
+from contextlib import closing
 from pathlib import Path
 
 import geopandas as gpd
@@ -82,7 +83,7 @@ def administered_territories(iso: str, cache_dir: Path, *, layer: str = GADM_LAY
     territories : tuple of str
         The territory codes, empty for a country administering none.
     """
-    with sqlite3.connect(gadm_path(cache_dir)) as connection:
+    with closing(sqlite3.connect(gadm_path(cache_dir))) as connection:
         named = connection.execute(f'SELECT COUNTRY FROM "{layer}" WHERE GID_0 = ? LIMIT 1', (iso,)).fetchone()
         if named is None:
             return ()
