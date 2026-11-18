@@ -175,10 +175,6 @@ docs-serve = { cmd = """\
     --ignore '*/source/_thumbnails/*'\
 """, cwd = "docs" }
 
-# Relaxes the minor-version caps ptgp and pymc-extras put on pymc and pytensor.
-[tool.pixi.pypi-options]
-dependency-overrides = { pytensor = ">=3.3.8,<4", pymc = ">=6.4,<7" }
-
 [tool.pixi.pypi-dependencies]
 climate-risk = { path = ".", editable = true }
 pymc-extras = ">=0.17,<1"
