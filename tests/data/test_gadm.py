@@ -2,6 +2,7 @@ import json
 import re
 import sqlite3
 
+from contextlib import closing
 from pathlib import Path
 
 import geopandas as gpd
@@ -202,7 +203,7 @@ def test_every_gid_em_dat_references_resolves_against_gadm():
 
     # Set membership, not geometry: the claim is that the ids exist, and assembling twelve thousand
     # polygons to answer it turns a two-second check into a four-minute one.
-    with sqlite3.connect(REAL_CACHE_DIR / "gadm" / "gadm_410.gpkg") as gadm:
+    with closing(sqlite3.connect(REAL_CACHE_DIR / "gadm" / "gadm_410.gpkg")) as gadm:
         held = {
             (gid, level)
             for level, column in ((1, "GID_1"), (2, "GID_2"))

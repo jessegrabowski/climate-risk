@@ -7,6 +7,7 @@ from climate_risk.config.registry import CONFIG_ROOT, read_place
 from climate_risk.config.schema import CountryConfig
 from climate_risk.data.co2 import CO2
 from climate_risk.data.fetch import USER_AGENT
+from climate_risk.data.forcing import FORCING_TABLES, forcing_source
 from climate_risk.data.gadm import GADM
 from climate_risk.data.geonames import COUNTRY_INFO, country_dump
 from climate_risk.data.gpcc import FULL_DATA, MONITORING
@@ -181,6 +182,8 @@ SOURCES = (
     }
     | {archive.filename: archive for archive in FULL_DATA.sources}
     | {archive.filename: archive for archive in (MONITORING.sources[0], MONITORING.sources[-1])}
+    # The estimates share each table's URL pattern, so the best estimate stands for all three.
+    | {f"FORCING_{scenario}": forcing_source(scenario, "best_estimate") for scenario in FORCING_TABLES}
     | place_boundaries()
 )
 

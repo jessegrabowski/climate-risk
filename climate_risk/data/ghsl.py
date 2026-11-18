@@ -2,7 +2,9 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import numpy as np
+import pandas as pd
 
+from climate_risk.data.cache import builder_fingerprint, cached, pandas_parquet
 from climate_risk.data.fetch import fetch
 from climate_risk.data.source import DataSource
 from climate_risk.exceptions import DataValidationError
@@ -60,7 +62,7 @@ def population_source(epoch: int) -> DataSource:
     )
 
 
-def population_raster(epoch: int, cache_dir: Path) -> str:
+def population_raster(epoch: int, cache_dir: Path, *, force_reload: bool = False) -> str:
     """
     Name the population raster for one epoch, fetching the archive if it is not there.
 
@@ -73,6 +75,8 @@ def population_raster(epoch: int, cache_dir: Path) -> str:
         Year the grid describes, one of ``POPULATION_EPOCHS``.
     cache_dir : Path
         Directory the caches live under.
+    force_reload : bool, optional
+        Download the archive again rather than reading it. Default False.
 
     Returns
     -------
@@ -81,7 +85,7 @@ def population_raster(epoch: int, cache_dir: Path) -> str:
         holds people per cell.
     """
     source = population_source(epoch)
-    archive = fetch(source, ghsl_dir(cache_dir))
+    archive = fetch(source, ghsl_dir(cache_dir), force=force_reload)
 
     with ZipFile(archive) as unpacked:
         members = [name for name in unpacked.namelist() if name.lower().endswith(".tif")]
@@ -92,9 +96,9 @@ def population_raster(epoch: int, cache_dir: Path) -> str:
     return f"zip://{archive}!/{members[0]}"
 
 
-def population_on_cells(grid: CellGrid, epoch: int, cache_dir: Path) -> np.ndarray:
+def population_on_cells(grid: CellGrid, epoch: int, cache_dir: Path, *, force_reload: bool = False) -> np.ndarray:
     """
-    Count the people in each grid cell.
+    Count the people in each grid cell, cached against the grid and the epoch.
 
     Parameters
     ----------
@@ -104,6 +108,8 @@ def population_on_cells(grid: CellGrid, epoch: int, cache_dir: Path) -> np.ndarr
         Year the grid describes, one of ``POPULATION_EPOCHS``.
     cache_dir : Path
         Directory the caches live under.
+    force_reload : bool, optional
+        Download again and rebuild the cache rather than reading it. Default False.
 
     Returns
     -------
@@ -120,4 +126,27 @@ def population_on_cells(grid: CellGrid, epoch: int, cache_dir: Path) -> np.ndarr
 
         people = population_on_cells(grid, 2020, Path("data"))
     """
-    return sample_onto_cells(grid, population_raster(epoch, cache_dir), statistic="sum")
+
+    def build() -> pd.DataFrame:
+        # Fetching inside the builder keeps a warm cache from reaching the network.
+        raster = population_raster(epoch, cache_dir, force_reload=force_reload)
+
+        return pd.DataFrame({"population": sample_onto_cells(grid, raster, statistic="sum")})
+
+    counted = cached(
+        ghsl_dir(cache_dir),
+        "population_on_cells",
+        build,
+        pandas_parquet(),
+        params={
+            "epoch": epoch,
+            "grid": grid.fingerprint,
+            "resolution": RESOLUTION,
+            "reading": builder_fingerprint(
+                build, sample_onto_cells, vars(CellGrid)["footprints"].fget, population_raster, GHSL_RELEASE
+            ),
+        },
+        force=force_reload,
+    )
+
+    return counted["population"].to_numpy()

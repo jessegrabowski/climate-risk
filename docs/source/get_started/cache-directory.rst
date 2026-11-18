@@ -55,9 +55,10 @@ Raw downloads keep the filename their publisher uses, at the top of the cache:
     HadCRUT.5.0.2.0.analysis.anomalies.ensemble_mean.nc
     emdat.xlsx
 
-Sources that unpack into many files, or that are fetched per country or per epoch, get a
-subdirectory of their own: ``gadm/``, ``geo_disasters/``, ``geonames/``, ``ghsl/``, ``gpcc/``,
-``osm/``, ``rivers/`` and ``shapefiles/``.
+Sources that unpack into many files, or that are fetched per country, per epoch or per scenario,
+get a subdirectory of their own: ``forcing/``, ``gadm/``, ``geo_disasters/``, ``geonames/``,
+``ghsl/``, ``gpcc/``, ``osm/``, ``rivers/`` and ``shapefiles/``. Overlaps and distances measured
+on a grid's cells are kept under ``cell_samples/``.
 
 Derived frames, meaning anything a loader computed rather than downloaded, are stored as parquet
 under a name built from what was asked for. :func:`~climate_risk.data.cache.cache_key` builds the

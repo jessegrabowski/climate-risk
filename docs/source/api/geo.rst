@@ -21,6 +21,7 @@ measure it, and map cells onto the units that observe them.
     ~raster.cell_coverage
     ~raster.assign_cells_to_units
     ~raster.sample_onto_cells
+    ~raster.locate_boxes
     ~raster.dissolve_place_boundary
     ~grid.create_grid_from_shape
 

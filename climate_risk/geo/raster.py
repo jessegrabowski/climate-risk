@@ -1,3 +1,5 @@
+import hashlib
+
 from dataclasses import dataclass
 
 import geopandas as gpd
@@ -184,6 +186,36 @@ def cell_areas_km2(latitudes: np.ndarray, longitude_step: float, latitude_step: 
     return areas[band_of_cell] / SQUARE_METRES_PER_SQUARE_KM
 
 
+def locate_boxes(centers: np.ndarray, box_centers: np.ndarray, step: float) -> np.ndarray:
+    """
+    Find the box of a regular gridded product holding each center, a center on an edge going to the higher box.
+
+    Parameters
+    ----------
+    centers : ndarray
+        Coordinates to place, in degrees.
+    box_centers : ndarray
+        The product's box centers along one axis, in either order.
+    step : float
+        The spacing of ``box_centers``, in degrees.
+
+    Returns
+    -------
+    boxes : ndarray of int
+        Positions in ``box_centers``.
+    """
+    ascending = np.argsort(box_centers)
+    lower_edges = box_centers[ascending] - step / 2
+    upper_edge = lower_edges[-1] + step
+    outside = (centers < lower_edges[0]) | (centers >= upper_edge)
+    if outside.any():
+        raise DataValidationError(
+            f"{int(outside.sum())} centers lie outside the boxes, which span {lower_edges[0]} to {upper_edge} degrees"
+        )
+
+    return ascending[np.searchsorted(lower_edges, centers, side="right") - 1]
+
+
 @dataclass(frozen=True, slots=True)
 class CellGrid:
     """
@@ -287,6 +319,16 @@ class CellGrid:
             float(self.longitudes[-1]) + half_width,
             float(self.latitudes[0]) + half_height,
         )
+
+    @property
+    def fingerprint(self) -> str:
+        """A short digest of the lattice, its kept cells and the place, which fix anything sampled onto the grid."""
+        digest = hashlib.sha256()
+        for identifying in (self.longitudes, self.latitudes, self.cells["cell_id"].to_numpy()):
+            digest.update(np.ascontiguousarray(identifying).tobytes())
+        digest.update(shapely.to_wkb(self.place))
+
+        return digest.hexdigest()[:12]
 
 
 def cell_coverage(

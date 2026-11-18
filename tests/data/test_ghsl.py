@@ -2,11 +2,16 @@ import zipfile
 
 from pathlib import Path
 
+import geopandas as gpd
+import numpy as np
 import pytest
 import rasterio
+import requests
 
 from exactextract import exact_extract
 from exactextract.raster import RasterioRasterSource
+from rasterio.transform import from_bounds
+from shapely.geometry import box
 
 from climate_risk.data.gadm import load_units_in_country
 from climate_risk.data.ghsl import (
@@ -67,6 +72,73 @@ def test_an_archive_holding_no_single_raster_is_an_error(tmp_path):
 
     with pytest.raises(DataValidationError, match="2 rasters"):
         population_raster(2020, tmp_path)
+
+
+def test_population_is_counted_once_per_grid(tmp_path, monkeypatch):
+    """Clipping every cell to a detailed coastline takes minutes over a region, so a second call
+    reads the first one's count, and a grid at another resolution is counted afresh."""
+    raster_path = tmp_path / "people.tif"
+    with rasterio.open(
+        raster_path,
+        "w",
+        driver="GTiff",
+        height=8,
+        width=8,
+        count=1,
+        dtype="float64",
+        crs="EPSG:4326",
+        transform=from_bounds(0.0, 0.0, 1.0, 1.0, 8, 8),
+    ) as writing:
+        writing.write(np.ones((8, 8)), 1)
+    write_archive(tmp_path, 2020, {"GHS_POP_E2020.tif": raster_path.read_bytes()})
+    boundary = dissolve_place_boundary(
+        gpd.GeoDataFrame({"ISO_A3": ["AAA"], "geometry": [box(0, 0, 1, 1)]}, crs="EPSG:4326")
+    )
+    grid = build_cell_grid(boundary, resolution_km=30.0)
+    coarser = build_cell_grid(boundary, resolution_km=50.0)
+
+    counted = population_on_cells(grid, 2020, tmp_path)
+
+    def uncounted(*args, **kwargs):
+        raise AssertionError("the population was counted again")
+
+    # The count itself is patched out, since the sampler's own source is part of the cache key.
+    monkeypatch.setattr("climate_risk.geo.raster.exact_extract", uncounted)
+    np.testing.assert_array_equal(population_on_cells(grid, 2020, tmp_path), counted)
+    with pytest.raises(AssertionError, match="counted again"):
+        population_on_cells(coarser, 2020, tmp_path)
+
+
+def test_a_warm_count_does_not_reach_the_network(tmp_path, monkeypatch):
+    """The archive is half a gigabyte per epoch, so a cached count must be read without it, even
+    once the archive has been deleted."""
+    raster_path = tmp_path / "people.tif"
+    with rasterio.open(
+        raster_path,
+        "w",
+        driver="GTiff",
+        height=8,
+        width=8,
+        count=1,
+        dtype="float64",
+        crs="EPSG:4326",
+        transform=from_bounds(0.0, 0.0, 1.0, 1.0, 8, 8),
+    ) as writing:
+        writing.write(np.ones((8, 8)), 1)
+    archive = write_archive(tmp_path, 2020, {"GHS_POP_E2020.tif": raster_path.read_bytes()})
+    boundary = dissolve_place_boundary(
+        gpd.GeoDataFrame({"ISO_A3": ["AAA"], "geometry": [box(0, 0, 1, 1)]}, crs="EPSG:4326")
+    )
+    grid = build_cell_grid(boundary, resolution_km=30.0)
+
+    counted = population_on_cells(grid, 2020, tmp_path)
+    archive.unlink()
+
+    def offline(*args, **kwargs):
+        raise AssertionError("reached the network on a warm cache")
+
+    monkeypatch.setattr(requests, "get", offline)
+    np.testing.assert_array_equal(population_on_cells(grid, 2020, tmp_path), counted)
 
 
 def test_the_epochs_reach_back_past_the_study_window():
@@ -137,3 +209,35 @@ def test_gridded_population_holds_the_country_total_at_any_resolution():
 
     assert totals[0] == pytest.approx(totals[1], rel=0.001)
     assert totals[0] == pytest.approx(7.4e6, rel=0.05)
+
+
+def test_force_reload_downloads_the_epoch_again_and_recounts_it(tmp_path, serve_downloads):
+    def raster_of(people_per_pixel):
+        raster_path = tmp_path / "people.tif"
+        with rasterio.open(
+            raster_path,
+            "w",
+            driver="GTiff",
+            height=8,
+            width=8,
+            count=1,
+            dtype="float64",
+            crs="EPSG:4326",
+            transform=from_bounds(0.0, 0.0, 1.0, 1.0, 8, 8),
+        ) as writing:
+            writing.write(np.full((8, 8), people_per_pixel), 1)
+        return raster_path.read_bytes()
+
+    write_archive(tmp_path, 2020, {"GHS_POP_E2020.tif": raster_of(1.0)})
+    boundary = dissolve_place_boundary(
+        gpd.GeoDataFrame({"ISO_A3": ["AAA"], "geometry": [box(0, 0, 1, 1)]}, crs="EPSG:4326")
+    )
+    grid = build_cell_grid(boundary, resolution_km=30.0)
+    counted = population_on_cells(grid, 2020, tmp_path)
+
+    upstream = write_archive(tmp_path / "upstream", 2020, {"GHS_POP_E2020.tif": raster_of(2.0)})
+    requested = serve_downloads({population_source(2020).url: upstream.read_bytes()})
+    recounted = population_on_cells(grid, 2020, tmp_path, force_reload=True)
+
+    np.testing.assert_allclose(recounted, 2 * counted)
+    assert requested == [population_source(2020).url]

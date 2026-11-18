@@ -6,8 +6,8 @@ GCN_DIR = Path(__file__).parent / "gcn"
 # each Calvo recursion to one Phillips curve. They share a calibration and a shock set, so a result
 # from one is comparable with a result from the other.
 GCN_FILES = {
-    "nonlinear": "m8_linear_labor.gcn",
-    "approx": "m8_linear_labor_approx.gcn",
+    "nonlinear": "catdsge_v3.gcn",
+    "approx": "catdsge_v3_linear_approx.gcn",
 }
 
 

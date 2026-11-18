@@ -109,10 +109,12 @@ def load_place_points(iso: str, cache_dir: Path, *, force_reload: bool = False) 
                 has_header=False,
                 quote_char=None,
                 columns=list(DUMP_FIELDS),
-                new_columns=list(DUMP_FIELDS.values()),
-                schema_overrides={"lat": pl.Float64, "lon": pl.Float64, "population": pl.Int64},
                 infer_schema_length=0,
             )
+
+        rows = rows.rename(dict(zip(rows.columns, DUMP_FIELDS.values(), strict=True))).cast(
+            {"lat": pl.Float64, "lon": pl.Float64, "population": pl.Int64}
+        )
 
         spellings = rows.with_columns(
             pl.concat_list(

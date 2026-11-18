@@ -1,0 +1,947 @@
+symbols
+{
+    # Quantities
+    C[]      { name = "Consumption"; positive = True; };
+    Y[]      { name = "Final good"; positive = True; };
+    GDP[]    { name = "GDP"; positive = True; };
+    H[]      { name = "Domestic output"; positive = True; };
+    H_H[]    { name = "Domestic goods sold at home"; positive = True; };
+    L[]      { name = "Hours worked"; positive = True; };
+    K[]      { name = "Capital stock"; positive = True; };
+    I[]      { name = "Investment"; positive = True; };
+    M[]      { name = "Imports"; positive = True; };
+    X[]      { name = "Exports"; positive = True; };
+    G[]      { name = "Government spending"; positive = True; };
+    Y_star[] { name = "Foreign output"; positive = True; };
+    B[]      { name = "Government debt"; };
+    T_lump[] { name = "Lump-sum tax"; };
+    B_star[] { name = "Foreign bond holdings"; };
+    U[]      { name = "Lifetime utility"; };
+    U_C[]    { name = "Lifetime utility from consumption"; };
+    u[]      { name = "Period utility"; };
+
+    # Prices and wages
+    p_H[]       { name = "Relative price of domestic goods"; positive = True; };
+    p_M[]       { name = "Relative price of imports"; positive = True; };
+    p_X[]       { name = "Relative price of exports"; positive = True; };
+    p_M_star[]  { name = "World price of imports"; positive = True; };
+    w[]         { name = "Real wage"; positive = True; };
+    w_tilde[]   { name = "Reset wage"; positive = True; };
+    r[]         { name = "Rental rate of capital"; positive = True; };
+    p_H_tilde[] { name = "Domestic reset price"; positive = True; };
+    p_M_tilde[] { name = "Import reset price"; positive = True; };
+    p_X_tilde[] { name = "Export reset price"; positive = True; };
+    q[]         { name = "Real exchange rate"; };
+
+    # Inflation and interest rates
+    pi[]      { name = "CPI inflation"; positive = True; };
+    pi_H[]    { name = "Domestic price inflation"; positive = True; };
+    pi_M[]    { name = "Import price inflation"; positive = True; };
+    pi_X[]    { name = "Export price inflation"; positive = True; };
+    pi_star[] { name = "Foreign inflation"; positive = True; };
+    pi_w[]    { name = "Wage inflation"; positive = True; };
+    i[]       { name = "Policy rate"; };
+    i_star[]  { name = "Foreign interest rate"; };
+
+    # Marginal costs and multipliers
+    mu_H[]     { name = "Domestic real marginal cost"; positive = True; };
+    mu_Y[]     { name = "Final good marginal cost"; };
+    lambda[]   { name = "Marginal utility of wealth"; positive = True; };
+    tobins_q[] { name = "Shadow value of installed capital"; positive = True; };
+
+    # Capital utilization
+    z[]    { name = "Capital utilization"; positive = True; };
+    Psi_z[] { name = "Utilization cost"; };
+
+    # Dispersion and risk premium
+    nu_H[]         { name = "Domestic price dispersion"; positive = True; };
+    nu_M[]         { name = "Import price dispersion"; positive = True; };
+    nu_X[]         { name = "Export price dispersion"; positive = True; };
+    nu_w[]         { name = "Wage dispersion"; positive = True; };
+    Phi_B[]        { name = "Foreign borrowing premium"; positive = True; };
+    R_star_given[] { name = "Gross foreign bond return"; positive = True; };
+
+    # Calvo auxiliary variables
+    x_1[]   { name = "Domestic reset price numerator"; positive = True; };
+    x_2[]   { name = "Domestic reset price denominator"; positive = True; };
+    z_1_M[] { name = "Import reset price numerator"; positive = True; };
+    z_2_M[] { name = "Import reset price denominator"; positive = True; };
+    z_1_X[] { name = "Export reset price numerator"; positive = True; };
+    z_2_X[] { name = "Export reset price denominator"; positive = True; };
+    x_1_w[] { name = "Reset wage numerator"; positive = True; };
+    x_2_w[] { name = "Reset wage denominator"; positive = True; };
+
+    # Time-varying shocks (level, SS = 1)
+    A[]    { name = "Total factor productivity"; };
+    beta[] { name = "Discount factor"; positive = True; };
+    xi_I[] { name = "Investment-specific technology"; positive = True; };
+    xi_H[] { name = "Domestic price markup shock"; positive = True; };
+    xi_w[] { name = "Wage markup shock"; positive = True; };
+    xi_XD[] { name = "Export demand shock"; positive = True; };
+    xi_K[] { name = "Surviving share of capital"; positive = True; };
+
+    # Tax rates
+    tau_L[] { name = "Labor income tax rate"; positive = True; };
+    tau_M[] { name = "Import tariff"; positive = True; };
+
+    # Firm costs and profits
+    TC_H[] { name = "Domestic firm total cost"; positive = True; };
+    TC_Q[] { name = "Final bundler total cost"; positive = True; };
+    Pi_H[] { name = "Domestic firm profit"; };
+    Pi_M[] { name = "Importer profit"; };
+    Pi_X[] { name = "Exporter profit"; };
+
+    # Shocks
+    epsilon_A[]        { name = "Productivity innovation"; };
+    epsilon_beta[]     { name = "Discount factor innovation"; };
+    epsilon_xi_I[]     { name = "Investment technology innovation"; };
+    epsilon_xi_H[]     { name = "Domestic markup innovation"; };
+    epsilon_xi_w[]     { name = "Wage markup innovation"; };
+    epsilon_xi_K[]     { name = "Capital destruction innovation"; };
+    epsilon_q[]        { name = "Real exchange rate innovation"; };
+    epsilon_i_star[]   { name = "Foreign interest rate innovation"; };
+    epsilon_pi_star[]  { name = "Foreign inflation innovation"; };
+    epsilon_Y_star[]   { name = "Foreign output innovation"; };
+    epsilon_p_M_star[] { name = "World import price innovation"; };
+    epsilon_i[]        { name = "Monetary policy innovation"; };
+    epsilon_tau_L[]    { name = "Labor tax innovation"; };
+    epsilon_tau_M[]    { name = "Tariff innovation"; };
+    epsilon_G[]        { name = "Government spending innovation"; };
+    epsilon_xi_M[]     { name = "Import markup innovation"; };
+    epsilon_xi_X[]     { name = "Export markup innovation"; };
+    epsilon_xi_XD[]    { name = "Export demand innovation"; };
+
+    # Preferences
+    beta    { name = "Discount factor"; positive = True; };
+    sigma   { name = "Relative risk aversion"; positive = True; };
+    chi     { name = "Inverse Frisch elasticity"; positive = True; };
+    Theta   { name = "Labor disutility weight"; positive = True; };
+    phi_H   { name = "Habit persistence"; positive = True; };
+
+    # Technology and capital
+    alpha   { name = "Capital share"; positive = True; };
+    delta   { name = "Depreciation rate"; positive = True; };
+    gamma_I { name = "Investment adjustment cost"; positive = True; };
+    psi_z   { name = "Utilization cost curvature"; positive = True; };
+    psi_z_1 { name = "Utilization cost slope"; };
+
+    # Final good and trade
+    alpha_Y      { name = "Home bias in the final good"; positive = True; };
+    psi_Y        { name = "Elasticity between domestic goods and imports"; positive = True; };
+    alpha_Y_star { name = "Foreign home bias"; positive = True; };
+    psi_Y_star   { name = "Price elasticity of export demand"; positive = True; };
+    phi_Y_star   { name = "Foreign to domestic output ratio"; positive = True; };
+    psi_B        { name = "Risk premium elasticity"; positive = True; };
+    phi_B        { name = "Net foreign asset target"; positive = True; };
+    q_bar        { name = "Steady-state real exchange rate"; };
+    p_M_star_bar { name = "Steady-state world import price"; };
+
+    # Price and wage setting
+    psi_H   { name = "Elasticity of substitution, domestic goods"; positive = True; };
+    psi_M   { name = "Elasticity of substitution, imports"; positive = True; };
+    psi_X   { name = "Elasticity of substitution, exports"; positive = True; };
+    psi_w   { name = "Elasticity of substitution, labor"; positive = True; };
+    theta_H { name = "Calvo probability, domestic prices"; positive = True; };
+    theta_M { name = "Calvo probability, import prices"; positive = True; };
+    theta_X { name = "Calvo probability, export prices"; positive = True; };
+    theta_w { name = "Calvo probability, wages"; positive = True; };
+    gamma_H { name = "Indexation, domestic prices"; };
+    gamma_M { name = "Indexation, import prices"; };
+    gamma_X { name = "Indexation, export prices"; };
+    gamma_w { name = "Indexation, wages"; };
+
+    # Monetary policy
+    pi_bar { name = "Inflation target"; positive = True; };
+    i_bar  { name = "Steady-state policy rate"; };
+    rho_i  { name = "Interest rate smoothing"; };
+    phi_pi { name = "Taylor rule, inflation"; positive = True; };
+    phi_y  { name = "Taylor rule, output"; positive = True; };
+    phi_q  { name = "Taylor rule, real exchange rate"; positive = True; };
+
+    # Rest of the world
+    i_star_bar   { name = "Steady-state foreign interest rate"; };
+    rho_i_star   { name = "Foreign interest rate smoothing"; };
+    rho_pi_star  { name = "Foreign inflation persistence"; };
+    rho_Y_star   { name = "Foreign output persistence"; };
+    phi_pi_star  { name = "Foreign Taylor rule, inflation"; positive = True; };
+    phi_y_star   { name = "Foreign Taylor rule, output"; positive = True; };
+    kappa_star   { name = "Foreign Phillips curve slope"; positive = True; };
+    gamma_i_star { name = "Foreign output response to the interest rate"; positive = True; };
+
+    # Fiscal policy
+    psi_G     { name = "Government spending share"; positive = True; };
+    b_target  { name = "Debt to output target"; };
+    T_lump    { name = "Steady-state lump-sum tax"; };
+    tau_C     { name = "Steady-state consumption tax rate"; };
+    tau_K     { name = "Steady-state capital income tax rate"; };
+    tau_L     { name = "Steady-state labor income tax rate"; };
+    tau_M     { name = "Steady-state import tariff"; };
+    tau_X     { name = "Steady-state export tax rate"; };
+    phi_tau_L { name = "Labor tax response to output"; };
+    phi_debt  { name = "Lump-sum tax response to debt"; };
+
+    # Shock persistence
+    rho_A        { name = "Productivity persistence"; };
+    rho_beta     { name = "Discount factor persistence"; };
+    rho_xi_I     { name = "Investment technology persistence"; };
+    rho_xi_H     { name = "Domestic markup persistence"; };
+    rho_xi_w     { name = "Wage markup persistence"; };
+    rho_xi_XD    { name = "Export demand persistence"; };
+    rho_q        { name = "Real exchange rate persistence"; };
+    rho_p_M_star { name = "World import price persistence"; };
+    rho_tau_L    { name = "Labor tax persistence"; };
+    rho_tau_M    { name = "Tariff persistence"; };
+    rho_G        { name = "Government spending persistence"; };
+
+    # Shock standard deviations
+    sigma_A        { name = "Productivity shock sd"; };
+    sigma_beta     { name = "Discount factor shock sd"; };
+    sigma_xi_I     { name = "Investment technology shock sd"; };
+    sigma_xi_H     { name = "Domestic markup shock sd"; };
+    sigma_xi_w     { name = "Wage markup shock sd"; };
+    sigma_xi_K     { name = "Capital destruction shock sd"; };
+    sigma_q        { name = "Real exchange rate shock sd"; };
+    sigma_i_star   { name = "Foreign interest rate shock sd"; };
+    sigma_pi_star  { name = "Foreign inflation shock sd"; };
+    sigma_Y_star   { name = "Foreign output shock sd"; };
+    sigma_p_M_star { name = "World import price shock sd"; };
+    sigma_i        { name = "Monetary policy shock sd"; };
+    sigma_tau_L    { name = "Labor tax shock sd"; };
+    sigma_tau_M    { name = "Tariff shock sd"; };
+    sigma_G        { name = "Government spending shock sd"; };
+    sigma_xi_M     { name = "Import markup shock sd"; };
+    sigma_xi_X     { name = "Export markup shock sd"; };
+    sigma_xi_XD    { name = "Export demand shock sd"; };
+};
+
+tryreduce
+{
+	TC_H[], TC_Q[], Pi_H[], Pi_X[], Pi_M[];
+};
+
+
+block STEADY_STATE
+{
+    identities
+    {
+        A[ss] = 1;
+        P[ss] = 1;
+
+        pi[ss] = pi_bar;
+        pi_H[ss] = pi_bar;
+        pi_M[ss] = pi_bar;
+        pi_X[ss] = pi_bar;
+        pi_star[ss] = 1;
+        pi_w[ss] = pi_bar;
+
+        q[ss] = q_bar;
+        p_M_star[ss] = p_M_star_bar;
+
+        i_star[ss] = i_star_bar;
+        i[ss] = pi_bar / beta - 1;
+        R_star_given[ss] = 1 + i_star[ss];
+        Phi_B[ss] = 1;
+
+        tau_L[ss] = tau_L;
+        tau_M[ss] = tau_M;
+
+        z[ss] = 1;
+        beta[ss] = beta;
+        xi_I[ss] = 1;
+        xi_H[ss] = 1;
+        xi_w[ss] = 1;
+        xi_XD[ss] = 1;
+        xi_K[ss] = 1;
+
+        # Trend inflation net of indexation, which is what Calvo non-resetters fall behind by each period
+        pi_gap_H[ss] = pi_bar ^ (1 - gamma_H);
+        pi_gap_M[ss] = pi_bar ^ (1 - gamma_M);
+        pi_gap_X[ss] = pi_bar ^ (1 - gamma_X);
+        pi_gap_w[ss] = pi_bar ^ (1 - gamma_w);
+
+        # Calvo reset prices and dispersion under trend inflation
+        p_H_tilde[ss] = ((1 - theta_H * pi_gap_H[ss] ^ (psi_H - 1)) / (1 - theta_H)) ^ (1 / (1 - psi_H));
+        p_M_tilde[ss] = ((1 - theta_M * pi_gap_M[ss] ^ (psi_M - 1)) / (1 - theta_M)) ^ (1 / (1 - psi_M));
+        p_X_tilde[ss] = ((1 - theta_X * pi_gap_X[ss] ^ (psi_X - 1)) / (1 - theta_X)) ^ (1 / (1 - psi_X));
+
+        nu_H[ss] = (1 - theta_H) * p_H_tilde[ss] ^ (-psi_H) / (1 - theta_H * pi_gap_H[ss] ^ psi_H);
+        nu_M[ss] = (1 - theta_M) * p_M_tilde[ss] ^ (-psi_M) / (1 - theta_M * pi_gap_M[ss] ^ psi_M);
+        nu_X[ss] = (1 - theta_X) * p_X_tilde[ss] ^ (-psi_X) / (1 - theta_X * pi_gap_X[ss] ^ psi_X);
+
+        # Ratio of the two Calvo discount sums, which scales each sector's markup
+        D_H[ss] = (1 - beta * theta_H * pi_gap_H[ss] ^ (psi_H - 1)) / (1 - beta * theta_H * pi_gap_H[ss] ^ psi_H);
+        D_M[ss] = (1 - beta * theta_M * pi_gap_M[ss] ^ (psi_M - 1)) / (1 - beta * theta_M * pi_gap_M[ss] ^ psi_M);
+        D_X[ss] = (1 - beta * theta_X * pi_gap_X[ss] ^ (psi_X - 1)) / (1 - beta * theta_X * pi_gap_X[ss] ^ psi_X);
+        D_w[ss] = (1 - beta * theta_w * pi_gap_w[ss] ^ (psi_w - 1)) / (1 - beta * theta_w * pi_gap_w[ss] ^ (psi_w * (1 + chi)));
+
+        p_M[ss] = psi_M / (psi_M - 1) * (1 + tau_M[ss]) * q[ss] * p_M_star[ss] * D_M[ss] / p_M_tilde[ss];
+        p_H[ss] = ((1 - (1 - alpha_Y) * p_M[ss] ^ (1 - psi_Y)) / alpha_Y) ^ (1 / (1 - psi_Y));
+        mu_H[ss] = (psi_H - 1) / psi_H * p_H[ss] * p_H_tilde[ss] / D_H[ss];
+        p_X[ss] = psi_X / (psi_X - 1) * p_H[ss] / (1 - tau_X) * D_X[ss] / p_X_tilde[ss];
+
+        r[ss] = (1 / beta - (1 - delta)) / (1 - tau_K);
+        N[ss] = (alpha * mu_H[ss] / r[ss]) ^ (1 / (1 - alpha));
+        w[ss] = (1 - alpha) * mu_H[ss] * N[ss] ^ alpha;
+        w_tilde[ss] = w[ss] * ((1 - theta_w * pi_gap_w[ss] ^ (psi_w - 1)) / (1 - theta_w)) ^ (1 / (1 - psi_w));
+        nu_w[ss] = (1 - theta_w) * (w_tilde[ss] / w[ss]) ^ (-psi_w * (1 + chi))
+                    / (1 - theta_w * pi_gap_w[ss] ^ (psi_w * (1 + chi)));
+
+        omega_X[ss] = (1 - alpha_Y_star) * (p_X[ss] / q[ss]) ^ (-psi_Y_star) * phi_Y_star;
+        Omega[ss] = 1 - q[ss] * p_M_star[ss] * nu_M[ss] * (1 - alpha_Y) * p_M[ss] ^ (-psi_Y)
+                    + p_X[ss] * omega_X[ss] + i_star[ss] * phi_B;
+        Gamma[ss] = (Omega[ss] - psi_G) * N[ss] ^ alpha
+                    / (nu_H[ss] * alpha_Y * p_H[ss] ^ (-psi_Y) + nu_X[ss] * omega_X[ss])
+                    - delta * N[ss];
+
+        L[ss] = ((psi_w - 1) / psi_w * (1 - tau_L[ss]) / (1 + tau_C)
+                    * (1 - phi_H * beta) / (1 - phi_H) ^ sigma
+                    * w[ss] * (w_tilde[ss] / w[ss]) ^ (1 + psi_w * chi) / D_w[ss]
+                    / Theta / Gamma[ss] ^ sigma) ^ (1 / (chi + sigma));
+
+        H[ss] = N[ss] ^ alpha * L[ss];
+        Y[ss] = H[ss] / (nu_H[ss] * alpha_Y * p_H[ss] ^ (-psi_Y) + nu_X[ss] * omega_X[ss]);
+        Y_star[ss] = phi_Y_star * Y[ss];
+        H_H[ss] = alpha_Y * p_H[ss] ^ (-psi_Y) * Y[ss];
+        X[ss] = omega_X[ss] * Y[ss];
+        M[ss] = (1 - alpha_Y) * p_M[ss] ^ (-psi_Y) * Y[ss];
+        GDP[ss] = Y[ss] + p_X[ss] * X[ss] - q[ss] * p_M_star[ss] * nu_M[ss] * M[ss];
+
+        K[ss] = N[ss] * L[ss];
+        I[ss] = delta * K[ss];
+        B[ss] = b_target * Y[ss];
+        T_lump[ss] = T_lump;
+        B_star[ss] = phi_B * Y[ss] / q[ss];
+        C[ss] = Gamma[ss] * L[ss];
+        lambda[ss] = (1 - phi_H * beta) / ((1 + tau_C) * ((1 - phi_H) * C[ss]) ^ sigma);
+        tobins_q[ss] = lambda[ss];
+
+        U_C[ss] = ((1 - phi_H) * C[ss]) ^ (1 - sigma) / (1 - sigma) / (1 - beta);
+        U[ss] = U_C[ss] - Theta * nu_w[ss] * L[ss] ^ (1 + chi) / (1 + chi) / (1 - beta);
+
+        x_1[ss] = mu_H[ss] * H_H[ss] / (1 - beta * theta_H * pi_gap_H[ss] ^ psi_H);
+        x_2[ss] = p_H[ss] * H_H[ss] / (1 - beta * theta_H * pi_gap_H[ss] ^ (psi_H - 1));
+
+        z_1_M[ss] = (1 + tau_M[ss]) * q[ss] * p_M_star[ss] * M[ss] / (1 - beta * theta_M * pi_gap_M[ss] ^ psi_M);
+        z_2_M[ss] = p_M[ss] * M[ss] / (1 - beta * theta_M * pi_gap_M[ss] ^ (psi_M - 1));
+
+        z_1_X[ss] = p_H[ss] * X[ss] / (1 - beta * theta_X * pi_gap_X[ss] ^ psi_X);
+        z_2_X[ss] = (1 - tau_X) * p_X[ss] * X[ss] / (1 - beta * theta_X * pi_gap_X[ss] ^ (psi_X - 1));
+
+        x_1_w[ss] = Theta * L[ss] ^ (1 + chi) * w[ss] ^ (psi_w * (1 + chi))
+                    / (1 - beta * theta_w * pi_gap_w[ss] ^ (psi_w * (1 + chi)));
+        x_2_w[ss] = lambda[ss] * (1 - tau_L[ss]) * w[ss] ^ psi_w * L[ss] / (1 - beta * theta_w * pi_gap_w[ss] ^ (psi_w - 1));
+
+        TC_H[ss] = r[ss] * z[ss] * K[ss] + w[ss] * L[ss];
+        Pi_H[ss] = p_H[ss] * (H_H[ss] + nu_X[ss] * X[ss]) - TC_H[ss];
+        TB[ss] = p_X[ss] * X[ss] - (1 + tau_M[ss]) * q[ss] * p_M_star[ss] * nu_M[ss] * M[ss];
+
+        G[ss] = psi_G * Y[ss];
+        Tax_Revenue[ss] = tau_C * C[ss]
+                        + tau_K * r[ss] * z[ss] * K[ss]
+                        + tau_L[ss] * w[ss] * L[ss]
+                        + tau_M[ss] * q[ss] * p_M_star[ss] * nu_M[ss] * M[ss]
+                        + tau_X * p_X[ss] * X[ss];
+    };
+};
+
+block HOUSEHOLD
+{
+	definitions
+	{
+		@name = "Period utility"
+		u[] = ((C[] - phi_H * C[-1]) ^ (1 - sigma) / (1 - sigma) - Theta * nu_w[] * L[] ^ (1 + chi) / (1 + chi));
+		@name = "Utilization cost"
+		Psi_z[] = psi_z_1 * (z[] - 1) + psi_z / 2 * (z[] - 1) ^ 2;
+	};
+
+    objective
+    {
+        @name = "Lifetime utility"
+        U[] = u[] + beta[] * E[][U[1]];
+    };
+
+    controls
+    {
+        @foc_name = "Consumption Euler equation"
+        C[];
+
+        @foc_name = "Investment demand"
+        I[];
+
+        @foc_name = "Capital Euler equation"
+        K[];
+
+        @foc_name = "Bond Euler equation"
+        B[];
+
+        @foc_name = "Foreign bond Euler equation"
+        B_star[];
+
+        @foc_name = "Capital utilization"
+        z[];
+    };
+
+    constraints
+    {
+		@name = "Household budget constraint"
+		(1 + tau_C) * C[] + I[] + B[] + q[] * B_star[] + Psi_z[] * xi_K[] * K[-1]
+		    = (1 - tau_K) * r[] * z[] * xi_K[] * K[-1] + (1 - tau_L[]) * w[] * L[]
+		    + (1 + i[-1]) / pi[] * B[-1]
+		    + q[] * R_star_given[-1] / pi_star[] * B_star[-1]
+		    + Pi_H[] + Pi_X[] + Pi_M[]
+		    - T_lump[] : lambda[];
+		@name = "Capital accumulation"
+		K[] = (1 - delta) * xi_K[] * K[-1] + I[] * (1 - gamma_I / 2 * (xi_I[] * I[] / I[-1] - 1) ^ 2) : tobins_q[];
+    };
+
+    identities
+    {
+        @name = "Foreign borrowing premium"
+        Phi_B[] = exp(-psi_B * (q[] * B_star[] / Y[] - phi_B));
+        @name = "Gross foreign bond return"
+        R_star_given[] = (1 + i_star[]) * Phi_B[];
+
+        @name = "Lifetime utility from consumption"
+        U_C[] = (C[] - phi_H * C[-1]) ^ (1 - sigma) / (1 - sigma) + beta[] * E[][U_C[1]];
+
+        # Discount factor shock (AR(1) in logs, mean-reverting to beta)
+        @name = "Discount factor shock"
+        log(beta[]) = rho_beta * log(beta[-1]) + (1 - rho_beta) * log(beta) + epsilon_beta[];
+
+        # Investment-specific technology shock (AR(1) in logs, SS = 1)
+        @name = "Investment technology shock"
+        log(xi_I[]) = rho_xi_I * log(xi_I[-1]) + epsilon_xi_I[];
+    };
+
+    shocks
+    {
+        epsilon_beta[] ~ Normal(mu=0, sigma=sigma_beta);
+        epsilon_xi_I[] ~ Normal(mu=0, sigma=sigma_xi_I);
+    };
+
+    calibration
+    {
+        beta ~ maxent(Beta(), lower=0.90, upper=0.97, mass=0.99) = 0.95;
+        sigma ~ maxent(Gamma(), lower=1.0, upper=4.0, mass=0.99) = 2.0;
+        chi ~ maxent(Gamma(), lower=0.5, upper=4.0, mass=0.99) = 1.5;
+        delta ~ maxent(Beta(), lower=0.06, upper=0.15, mass=0.99) = 0.10;
+        Theta = 1.0;
+
+        psi_B ~ maxent(Gamma(), lower=0.5, upper=5.0, mass=0.99) = 2.0;
+		phi_B = 0.15;
+
+        phi_H ~ maxent(Beta(), lower=0.3, upper=0.8, mass=0.99) = 0.60;
+        gamma_I ~ maxent(Gamma(), lower=4.0, upper=15.0, mass=0.99) = 8.0;
+        psi_z ~ maxent(Beta(), lower=0.05, upper=0.40) = 0.20;
+        psi_z_1 = 1 / beta - (1 - delta);
+
+        # Shock persistence (annual frequency)
+        rho_beta ~ maxent(Beta(), lower=0.3, upper=0.9, mass=0.99) = 0.70;
+        rho_xi_I    ~ maxent(Beta(), lower=0.3, upper=0.9, mass=0.99) = 0.70;
+
+        # Shock std devs
+        sigma_beta ~ maxent(InverseGamma(), lower=0.005, upper=0.05, mass=0.99) = 0.01;
+        sigma_xi_I    ~ maxent(InverseGamma(), lower=0.005, upper=0.05, mass=0.99) = 0.01;
+    };
+};
+
+block WAGE_SETTING
+{
+    identities
+    {
+        # xi_w[] enters as a multiplicative shock on the desired markup
+        @name = "Optimal reset wage"
+        w_tilde[] ^ (1 + psi_w * chi) = xi_w[] * psi_w / (psi_w - 1) * x_1_w[] / x_2_w[];
+
+        @name = "Reset wage numerator"
+        x_1_w[] = Theta * L[] ^ (1 + chi) * w[] ^ (psi_w * (1 + chi)) +
+            theta_w * beta[] * E[][(pi[1] / pi[] ^ gamma_w) ^ (psi_w * (1 + chi)) * x_1_w[1]];
+        @name = "Reset wage denominator"
+        x_2_w[] = lambda[] * (1 - tau_L[]) * w[] ^ psi_w * L[] +
+            theta_w * beta[] * E[][(pi[1] / pi[] ^ gamma_w) ^ (psi_w - 1) * x_2_w[1]];
+
+        @name = "Wage index"
+        w[] ^ (1 - psi_w) = (1 - theta_w) * w_tilde[] ^ (1 - psi_w) +
+            theta_w * (pi[] / pi[-1] ^ gamma_w) ^ (psi_w - 1) * w[-1] ^ (1 - psi_w);
+
+        @name = "Wage dispersion"
+        nu_w[] = (1 - theta_w) * (w_tilde[] / w[]) ^ (-psi_w * (1 + chi))
+               + theta_w * (pi_w[] / pi[-1] ^ gamma_w) ^ (psi_w * (1 + chi)) * nu_w[-1];
+        @name = "Wage inflation"
+        pi_w[] = w[] / w[-1] * pi[];
+
+        # Wage markup shock (AR(1) in logs, SS = 1)
+        @name = "Wage markup shock"
+        log(xi_w[]) = rho_xi_w * log(xi_w[-1]) + epsilon_xi_w[];
+    };
+
+    shocks
+    {
+        epsilon_xi_w[] ~ Normal(mu=0, sigma=sigma_xi_w);
+    };
+
+    calibration
+    {
+        psi_w   ~ maxent(Gamma(), lower=1.5, upper=15.0, mass=0.99) = 4.0;
+        theta_w ~ maxent(Beta(), lower=0.1, upper=0.7, mass=0.99) = 0.50;
+        gamma_w ~ maxent(Beta(), lower=0.05, upper=0.8, mass=0.99) = 0.5;
+
+        rho_xi_w   ~ maxent(Beta(), lower=0.3, upper=0.9, mass=0.99) = 0.60;
+        sigma_xi_w ~ maxent(InverseGamma(), lower=0.005, upper=0.03, mass=0.99) = 0.01;
+    };
+};
+
+block FINAL_BUNDLER
+{
+    controls
+    {
+        @foc_name = "Import demand"
+        M[];
+
+        @foc_name = "Domestic goods demand"
+        H_H[];
+    };
+
+    objective
+    {
+        @name = "Final bundler total cost"
+        @minimize
+        TC_Q[] = p_H[] * H_H[] + p_M[] * M[];
+    };
+
+    constraints
+    {
+        @name = "Final good aggregator"
+        Y[] = (alpha_Y ^ (1 / psi_Y) * H_H[] ^ ((psi_Y - 1) / psi_Y) +
+              (1 - alpha_Y) ^ (1 / psi_Y) * M[] ^ ((psi_Y - 1) / psi_Y)) ^ (psi_Y / (psi_Y - 1)) : mu_Y[];
+    };
+
+    identities
+    {
+        @name = "Final good price normalization"
+        mu_Y[] = 1;
+        @name = "CPI inflation"
+        pi[] = pi_H[] * p_H[-1] / p_H[];
+    };
+
+    calibration
+    {
+        alpha_Y ~ maxent(Beta(), lower=0.2, upper=0.7, mass=0.99) = 0.40;
+        psi_Y   ~ maxent(Gamma(), lower=0.3, upper=5.0, mass=0.99) = 0.80;
+    };
+};
+
+block DOMESTIC_FIRM
+{
+    controls
+    {
+        @foc_name = "Capital demand"
+        K[-1];
+
+        @foc_name = "Labor demand"
+        L[];
+    };
+
+    objective
+    {
+        @name = "Domestic firm total cost"
+        @minimize
+        TC_H[] = r[] * z[] * xi_K[] * K[-1] + w[] * L[];
+    };
+
+    constraints
+    {
+        @name = "Production function"
+        H[] = A[] * (z[] * xi_K[] * K[-1]) ^ alpha * L[] ^ (1 - alpha) : mu_H[];
+    };
+
+    identities
+    {
+        @name = "Productivity shock"
+        log(A[]) = rho_A * log(A[-1]) + epsilon_A[];
+        @name = "Domestic firm profit"
+        Pi_H[] = p_H[] * (H_H[] + nu_X[] * X[]) - TC_H[];
+    };
+
+    shocks
+    {
+        epsilon_A[] ~ Normal(mu=0, sigma=sigma_A);
+    };
+
+    calibration
+    {
+		alpha ~ maxent(Beta(), lower=0.15, upper=0.45, mass=0.99) = 0.30;
+        rho_A ~ maxent(Beta(), lower=0.3, upper=0.9, mass=0.99) = 0.70;
+
+        # TFP shock std dev
+        sigma_A ~ maxent(InverseGamma(), lower=0.005, upper=0.03, mass=0.99) = 0.01;
+    };
+};
+
+block DOMESTIC_FIRM_PRICE_SETTING_PROBLEM
+{
+ 	identities
+ 	{
+        # xi_H[] enters as a multiplicative shock on the desired markup
+		@name = "Optimal domestic reset price"
+		p_H_tilde[] = xi_H[] * psi_H / (psi_H - 1) * x_1[] / x_2[];
+
+        @name = "Domestic reset price numerator"
+        x_1[] = mu_H[] * H_H[] + beta[] * theta_H * E[][
+            lambda[1] / lambda[] * (pi_H[1] / pi_H[] ^ gamma_H) ^ psi_H * x_1[1]
+        ];
+        @name = "Domestic reset price denominator"
+        x_2[] = p_H[] * H_H[] + beta[] * theta_H * E[][
+            lambda[1] / lambda[] * (pi_H[1] / pi_H[] ^ gamma_H) ^ (psi_H - 1) * x_2[1]
+        ];
+
+        @name = "Domestic price index"
+        1 = theta_H * (pi_H[] / pi_H[-1] ^ gamma_H) ^ (psi_H - 1) +
+				(1 - theta_H) * p_H_tilde[] ^ (1 - psi_H);
+
+        @name = "Domestic price dispersion"
+        nu_H[] = (1 - theta_H) * p_H_tilde[] ^ (-psi_H) + theta_H * (pi_H[] / pi_H[-1] ^ gamma_H) ^ psi_H * nu_H[-1];
+
+        # Domestic price markup shock (AR(1) in logs, SS = 1)
+        @name = "Domestic markup shock"
+        log(xi_H[]) = rho_xi_H * log(xi_H[-1]) + epsilon_xi_H[];
+	};
+
+	shocks
+	{
+	    epsilon_xi_H[] ~ Normal(mu=0, sigma=sigma_xi_H);
+	};
+
+	calibration
+	{
+		psi_H ~ maxent(Gamma(), lower=1.5, upper=15.0, mass=0.99) = 4.0;
+        theta_H ~ maxent(Beta(), lower=0.1, upper=0.7, mass=0.99) = 0.50;
+        gamma_H ~ maxent(Beta(), lower=0.05, upper=0.8, mass=0.99) = 0.5;
+
+        rho_xi_H   ~ maxent(Beta(), lower=0.3, upper=0.9, mass=0.99) = 0.60;
+        sigma_xi_H ~ maxent(InverseGamma(), lower=0.005, upper=0.03, mass=0.99) = 0.01;
+	};
+};
+
+block CAPITAL_DESTRUCTION
+{
+    identities
+    {
+        # Share of the installed capital stock that survives the period. A disaster is a negative
+        # draw: it destroys capital in place, and the loss persists through accumulation.
+        @name = "Capital destruction shock"
+        log(xi_K[]) = epsilon_xi_K[];
+    };
+
+    shocks
+    {
+        epsilon_xi_K[] ~ Normal(mu=0, sigma=sigma_xi_K);
+    };
+
+    calibration
+    {
+        sigma_xi_K ~ maxent(InverseGamma(), lower=0.005, upper=0.10, mass=0.99) = 0.02;
+    };
+};
+
+block EXCHANGE_RATE
+{
+    identities
+    {
+        @name = "Real exchange rate"
+        log(q[]) = (1 - rho_q) * log(q_bar) + rho_q * log(q[-1]) + epsilon_q[];
+    };
+
+    shocks
+    {
+        epsilon_q[] ~ Normal(mu=0, sigma=sigma_q);
+    };
+
+    calibration
+    {
+        q_bar = 1.0;
+        rho_q ~ maxent(Beta(), lower=0.3, upper=0.9, mass=0.99) = 0.70;
+
+        # RER shock std dev
+        sigma_q ~ maxent(InverseGamma(), lower=0.01, upper=0.15, mass=0.99) = 0.02;
+    };
+};
+
+block FOREIGN
+{
+    identities
+    {
+        @name = "Foreign monetary policy rule"
+        log(1 + i_star[]) = (1 - rho_i_star) * log(1 + i_star_bar)
+            + rho_i_star * log(1 + i_star[-1])
+            + phi_pi_star * log(pi_star[-1])
+            + phi_y_star * (log(Y_star[-1]) - log(Y_star[ss]))
+            + epsilon_i_star[];
+
+        @name = "Foreign Phillips curve"
+        log(pi_star[]) = rho_pi_star * log(pi_star[-1])
+            + kappa_star * (log(Y_star[-1]) - log(Y_star[ss]))
+            + epsilon_pi_star[];
+
+        @name = "Foreign output"
+        log(Y_star[]) = (1 - rho_Y_star) * log(Y_star[ss])
+            + rho_Y_star * log(Y_star[-1])
+            - gamma_i_star * (log(1 + i_star[-1]) - log(1 + i_star_bar))
+            + epsilon_Y_star[];
+
+        @name = "Export demand"
+        X[] = xi_XD[] * (1 - alpha_Y_star) * (p_X[] / q[]) ^ (-psi_Y_star) * Y_star[];
+
+        @name = "Export demand shock"
+        log(xi_XD[]) = rho_xi_XD * log(xi_XD[-1]) + epsilon_xi_XD[];
+    };
+
+    shocks
+    {
+        epsilon_i_star[] ~ Normal(mu=0, sigma=sigma_i_star);
+        epsilon_pi_star[] ~ Normal(mu=0, sigma=sigma_pi_star);
+        epsilon_Y_star[] ~ Normal(mu=0, sigma=sigma_Y_star);
+        epsilon_xi_XD[] ~ Normal(mu=0, sigma=sigma_xi_XD);
+    };
+
+    calibration
+    {
+        alpha_Y_star ~ maxent(Beta(), lower=0.5, upper=0.95, mass=0.99) = 0.85;
+        psi_Y_star   ~ maxent(Gamma(), lower=0.5, upper=5.0, mass=0.99) = 1.5;
+        rho_xi_XD    ~ maxent(Beta(), lower=0.2, upper=0.9, mass=0.99) = 0.5;
+        sigma_xi_XD  ~ maxent(InverseGamma(), lower=0.005, upper=0.08, mass=0.99) = 0.02;
+
+        rho_i_star  ~ maxent(Beta(), lower=0.2, upper=0.8, mass=0.99) = 0.8;
+        rho_pi_star ~ maxent(Beta(), lower=0.5, upper=0.99, mass=0.99) = 0.85;
+        rho_Y_star  ~ maxent(Beta(), lower=0.2, upper=0.8, mass=0.99) = 0.5;
+
+        phi_pi_star  ~ maxent(Gamma(), lower=0.1, upper=0.8, mass=0.99) = 0.3;
+        phi_y_star   ~ maxent(Gamma(), lower=0.01, upper=0.3, mass=0.99) = 0.1;
+        kappa_star   ~ maxent(Gamma(), lower=0.001, upper=0.5, mass=0.99) = 0.05;
+        gamma_i_star ~ maxent(Gamma(), lower=0.05, upper=0.5, mass=0.99) = 0.2;
+
+        i_star_bar = 1 / beta - 1;
+        phi_Y_star = 1.0;
+
+        # Shock std devs
+        sigma_i_star  ~ maxent(InverseGamma(), lower=0.001, upper=0.02, mass=0.99) = 0.005;
+        sigma_pi_star ~ maxent(InverseGamma(), lower=0.005, upper=0.05, mass=0.99) = 0.01;
+        sigma_Y_star  ~ maxent(InverseGamma(), lower=0.005, upper=0.05, mass=0.99) = 0.01;
+    };
+};
+
+block IMPORT_FIRM
+{
+    identities
+    {
+        # The markup shock is i.i.d. and enters the reset-price condition additively, as in the gEcon
+        # implementation of Smets and Wouters (2003) by Klima et al. (2015), which keeps the markup psi_M fixed.
+        @name = "Optimal import reset price"
+        p_M_tilde[] = psi_M / (psi_M - 1) * z_1_M[] / z_2_M[] + epsilon_xi_M[];
+
+        @name = "Import reset price numerator"
+        z_1_M[] = (1 + tau_M[]) * q[] * p_M_star[] * M[] +
+            beta[] * theta_M * E[][
+                lambda[1] / lambda[] * (pi_M[1] / pi_M[] ^ gamma_M) ^ psi_M * z_1_M[1]];
+        @name = "Import reset price denominator"
+        z_2_M[] = p_M[] * M[] +
+            beta[] * theta_M * E[][
+                lambda[1] / lambda[] * (pi_M[1] / pi_M[] ^ gamma_M) ^ (psi_M - 1) * z_2_M[1]];
+
+        @name = "Import price index"
+        1 = theta_M * (pi_M[] / pi_M[-1] ^ gamma_M) ^ (psi_M - 1) + (1 - theta_M) * p_M_tilde[] ^ (1 - psi_M);
+        @name = "Import price dispersion"
+        nu_M[] = (1 - theta_M) * p_M_tilde[] ^ (-psi_M) + theta_M * (pi_M[] / pi_M[-1] ^ gamma_M) ^ psi_M * nu_M[-1];
+        @name = "Import price inflation"
+        p_M[] = p_M[-1] * pi_M[] / pi[];
+
+        @name = "World import price"
+        log(p_M_star[]) = (1 - rho_p_M_star) * log(p_M_star_bar) + rho_p_M_star * log(p_M_star[-1]) + epsilon_p_M_star[];
+        @name = "Importer profit"
+        Pi_M[] = p_M[] * M[] - (1 + tau_M[]) * q[] * p_M_star[] * nu_M[] * M[];
+    };
+
+    shocks
+    {
+        epsilon_p_M_star[] ~ Normal(mu=0, sigma=sigma_p_M_star);
+        epsilon_xi_M[] ~ Normal(mu=0, sigma=sigma_xi_M);
+    };
+
+    calibration
+    {
+        psi_M ~ maxent(Gamma(), lower=1.5, upper=10.0, mass=0.99) = 4.0;
+        theta_M ~ maxent(Beta(), lower=0.1, upper=0.7, mass=0.99) = 0.50;
+        gamma_M ~ maxent(Beta(), lower=0.05, upper=0.8, mass=0.99) = 0.5;
+        rho_p_M_star ~ maxent(Beta(), lower=0.3, upper=0.99, mass=0.99) = 0.70;
+        p_M_star_bar = 1.0;
+
+        # Import price shock std dev
+        sigma_p_M_star ~ maxent(InverseGamma(), lower=0.01, upper=0.15, mass=0.99) = 0.02;
+        sigma_xi_M ~ maxent(InverseGamma(), lower=0.005, upper=0.05, mass=0.99) = 0.01;
+    };
+};
+
+block EXPORT_FIRM
+{
+    identities
+    {
+        # The markup shock enters as in the import reset price.
+        @name = "Optimal export reset price"
+        p_X_tilde[] = psi_X / (psi_X - 1) * z_1_X[] / z_2_X[] + epsilon_xi_X[];
+
+        @name = "Export reset price numerator"
+        z_1_X[] = p_H[] * X[] +
+            beta[] * theta_X * E[][
+                lambda[1] / lambda[] * (pi_X[1] / pi_X[] ^ gamma_X) ^ psi_X * z_1_X[1]];
+        @name = "Export reset price denominator"
+        z_2_X[] = (1 - tau_X) * p_X[] * X[] +
+            beta[] * theta_X * E[][
+                lambda[1] / lambda[] * (pi_X[1] / pi_X[] ^ gamma_X) ^ (psi_X - 1) * z_2_X[1]];
+
+        @name = "Export price index"
+        1 = theta_X * (pi_X[] / pi_X[-1] ^ gamma_X) ^ (psi_X - 1) + (1 - theta_X) * p_X_tilde[] ^ (1 - psi_X);
+        @name = "Export price dispersion"
+        nu_X[] = (1 - theta_X) * p_X_tilde[] ^ (-psi_X) + theta_X * (pi_X[] / pi_X[-1] ^ gamma_X) ^ psi_X * nu_X[-1];
+        @name = "Export price inflation"
+        p_X[] = p_X[-1] * pi_X[] / pi[];
+
+        @name = "Exporter profit"
+        Pi_X[] = (1 - tau_X) * p_X[] * X[] - p_H[] * nu_X[] * X[];
+    };
+
+    shocks
+    {
+        epsilon_xi_X[] ~ Normal(mu=0, sigma=sigma_xi_X);
+    };
+
+    calibration
+    {
+        psi_X ~ maxent(Gamma(), lower=1.5, upper=10.0, mass=0.99) = 4.0;
+        theta_X ~ maxent(Beta(), lower=0.1, upper=0.7, mass=0.99) = 0.50;
+        gamma_X ~ maxent(Beta(), lower=0.05, upper=0.8, mass=0.99) = 0.5;
+        sigma_xi_X ~ maxent(InverseGamma(), lower=0.005, upper=0.05, mass=0.99) = 0.01;
+    };
+};
+
+block MONETARY_POLICY
+{
+    identities
+    {
+        # Developing-economy Taylor rule with exchange rate response
+        # Responds to real exchange rate depreciation (q/q_bar > 1)
+        @name = "Taylor rule"
+        log(1 + i[]) = rho_i * log(1 + i[-1])
+            + (1 - rho_i) * (log(1 + i_bar)
+                + phi_pi * log(pi[] / pi_bar)
+                + phi_y * log(Y[] / Y[ss])
+                + phi_q * log(q[] / q_bar))
+            + epsilon_i[];
+    };
+
+    shocks
+    {
+        epsilon_i[] ~ Normal(mu=0, sigma=sigma_i);
+    };
+
+    calibration
+    {
+        pi_bar = 1.0;
+        i_bar = pi_bar / beta - 1;
+
+        # More aggressive inflation response
+        phi_pi ~ maxent(Gamma(), lower=1.2, upper=5.0, mass=0.99) = 2.0;
+
+        # Less weight on output gap
+        phi_y  ~ maxent(Gamma(), lower=0.01, upper=1.0, mass=0.99) = 0.25;
+
+        # Exchange rate response: tighten when currency depreciates (q rises)
+        # Empirical range: 0.1-0.5 for developing economies
+        phi_q ~ maxent(Gamma(), lower=0.05, upper=1.0, mass=0.99) = 0.30;
+
+        rho_i  ~ maxent(Beta(), lower=0.2, upper=0.8, mass=0.99) = 0.70;
+
+        # Shock std dev
+        sigma_i ~ maxent(InverseGamma(), lower=0.001, upper=0.02, mass=0.99) = 0.005;
+    };
+};
+
+block FISCAL_AUTHORITY
+{
+    identities
+    {
+        @name = "Labor tax rule"
+        tau_L[] = (1 - rho_tau_L) * (tau_L + phi_tau_L * (Y[] / Y[ss] - 1))
+            + rho_tau_L * tau_L[-1]
+            + epsilon_tau_L[];
+
+        @name = "Tariff rule"
+        tau_M[] = (1 - rho_tau_M) * tau_M + rho_tau_M * tau_M[-1] + epsilon_tau_M[];
+
+        @name = "Lump-sum tax rule"
+        T_lump[] = T_lump + phi_debt * (B[-1] - b_target * Y[-1]);
+
+        @name = "Government spending"
+        log(G[]) = (1 - rho_G) * log(G[ss]) + rho_G * log(G[-1]) + epsilon_G[];
+
+        @name = "Government budget constraint"
+        B[] = (1 + i[-1]) / pi[] * B[-1] + G[]
+            - tau_C * C[]
+            - tau_K * r[] * z[] * xi_K[] * K[-1]
+            - tau_L[] * w[] * L[]
+            - tau_M[] * q[] * p_M_star[] * nu_M[] * M[]
+            - tau_X * p_X[] * X[]
+            - T_lump[];
+    };
+
+    shocks
+    {
+        epsilon_tau_L[] ~ Normal(mu=0, sigma=sigma_tau_L);
+        epsilon_tau_M[] ~ Normal(mu=0, sigma=sigma_tau_M);
+        epsilon_G[] ~ Normal(mu=0, sigma=sigma_G);
+    };
+
+    calibration
+    {
+        tau_C = 0.15;
+        tau_K = 0.15;
+        tau_L = 0.15;
+        tau_M = 0.10;
+        tau_X = 0.05;
+        psi_G = 0.18;
+        b_target = 0.45;
+
+        T_lump = ((1 + i[ss]) / pi[ss] - 1) * b_target * Y[ss]
+               - (tau_C * C[ss] + tau_K * r[ss] * K[ss] + tau_L * w[ss] * L[ss]
+                + tau_M * q[ss] * p_M_star[ss] * nu_M[ss] * M[ss] + tau_X * p_X[ss] * X[ss]
+                - psi_G * Y[ss]);
+
+        # Impact response of tau_L per unit output gap
+        phi_tau_L = 0.05 / (1 - rho_tau_L);
+
+        # Share of the debt gap repaid through lump-sum taxes each quarter. Debt is stable for any value above the
+        # steady-state real interest rate.
+        phi_debt ~ maxent(Gamma(), lower=0.01, upper=0.20, mass=0.99) = 0.05;
+
+        rho_tau_L ~ maxent(Beta(), lower=0.5, upper=0.95, mass=0.99) = 0.85;
+        rho_tau_M ~ maxent(Beta(), lower=0.5, upper=0.99, mass=0.99) = 0.90;
+        rho_G     ~ maxent(Beta(), lower=0.7, upper=0.99, mass=0.99) = 0.90;
+
+        sigma_tau_L ~ maxent(InverseGamma(), lower=0.001, upper=0.02, mass=0.99) = 0.005;
+        sigma_tau_M ~ maxent(InverseGamma(), lower=0.001, upper=0.02, mass=0.99) = 0.005;
+        sigma_G     ~ maxent(InverseGamma(), lower=0.005, upper=0.05, mass=0.99) = 0.01;
+    };
+};
+
+block MARKET_CLEARING
+{
+    identities
+    {
+        @name = "Domestic goods market clearing"
+        H[] = nu_H[] * H_H[] + nu_X[] * X[];
+
+        # Value added: final sales net of imports at world prices, plus exports.
+        @name = "GDP"
+        GDP[] = Y[] + p_X[] * X[] - q[] * p_M_star[] * nu_M[] * M[];
+        # TB[] = p_X[] * X[] - (1 + tau_M[]) * q[] * p_M_star[] * nu_M[] * M[];
+    };
+};

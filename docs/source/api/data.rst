@@ -23,12 +23,18 @@ These fetch on a cold cache, read from disk on a warm one, and re-fetch under ``
     ~hadcrut.load_hadcrut_data
     ~gpcc.load_gpcc_data
     ~ipcc.process_ipcc_scenarios
+    ~forcing.load_effective_radiative_forcing
     ~world_bank.load_wb_data
     ~fred.load_fred_data
     ~ilo.load_labour_income_share
     ~deflate.load_price_level
     ~partner_activity.load_partner_activity
+    ~weo.load_government_debt
     ~ghsl.population_on_cells
+    ~hadcrut.temperature_on_cells
+    ~gpcc.precipitation_on_cells
+    ~cell_samples.load_cell_unit_overlaps
+    ~cell_samples.load_cell_distances_to
 
 Loaders for manually obtained sources
 -------------------------------------
@@ -66,6 +72,7 @@ returns the frame the loader caches.
     ~fred.transform_fred
     ~ilo.transform_labour_share
     ~partner_activity.transform_partner_activity
+    ~weo.transform_government_debt
     ~pwt.transform_pwt
 
 Aggregating over time
@@ -78,6 +85,8 @@ shared with the panel builders, so a monthly panel and a monthly CO2 series land
     :toctree: generated/
 
     ~frequency.mean_by_period
+    ~hadcrut.annual_anomalies
+    ~gpcc.annual_precipitation
 
 Constant dollars
 ----------------
@@ -128,6 +137,7 @@ Caching
     ~cache.geo_parquet
     ~cache.cache_key
     ~cache.builder_fingerprint
+    ~cell_samples.features_fingerprint
 
 Cache layout
 ------------
@@ -137,6 +147,8 @@ Where each source lives inside the cache directory.
 .. autosummary::
     :toctree: generated/
 
+    ~cell_samples.cell_samples_dir
+    ~forcing.forcing_dir
     ~gadm.gadm_dir
     ~gadm.gadm_path
     ~geo_disasters.geo_disasters_dir
@@ -203,6 +215,7 @@ Administrative units and event footprints
     :toctree: generated/
 
     ~gadm.administered_territories
+    ~forcing.forcing_source
     ~geo_disasters.resolve_to_gadm
     ~geo_disasters.compare_event_units
     ~geo_disasters.event_unit_ids

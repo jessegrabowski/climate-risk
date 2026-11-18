@@ -24,13 +24,14 @@ FRED = ApiSource(
 )
 
 # The foreign block the small open economy model treats as exogenous: a world interest rate, a world
-# price level, and world prices for the goods it imports. Every one is a world aggregate, so this
-# list is the same whichever country is being estimated. Country-specific series come from the World
-# Bank panel, which is keyed by ISO code.
+# price level, world output, and world prices for the goods it imports. Every one is a world aggregate,
+# so this list is the same whichever country is being estimated. Country-specific series come from the
+# World Bank panel, which is keyed by ISO code.
 SERIES_NAMES = {
     "DTB3": "world_rate_3m",
     "DGS10": "world_rate_10y",
     "CPIAUCSL": "world_price_level",
+    "GDPC1": "world_output",
     "PALLFNFINDEXM": "commodity_all",
     "PNRGINDEXM": "commodity_energy",
     "PFOODINDEXM": "commodity_food",
