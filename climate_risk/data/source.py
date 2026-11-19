@@ -1,3 +1,6 @@
+import hashlib
+import re
+
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -69,6 +72,9 @@ class ManualSource:
         How to credit the publisher.
     retrieved : str
         ISO date this declaration was last checked against the publisher.
+    sha256 : str, optional
+        Lowercase hex SHA-256 of the one release the loader is built against, for a publisher that reissues a file
+        under the same name. Default None, which accepts any file of that name.
     """
 
     filename: str
@@ -76,6 +82,7 @@ class ManualSource:
     license: str
     citation: str
     retrieved: str
+    sha256: str | None = None
 
     def __post_init__(self) -> None:
         if not self.filename or Path(self.filename).name != self.filename:
@@ -89,19 +96,32 @@ class ManualSource:
         except ValueError as err:
             raise ValueError(f"{self.filename}: retrieved must be an ISO date, got {self.retrieved!r}") from err
 
+        if self.sha256 is not None and not re.fullmatch(r"[0-9a-f]{64}", self.sha256):
+            raise ValueError(f"{self.filename}: sha256 must be 64 lowercase hex digits, got {self.sha256!r}")
+
     def path(self, directory: Path) -> Path:
         """Return where this source is stored inside ``directory``."""
         return directory / self.filename
 
     def require(self, directory: Path) -> Path:
-        """Return the path to the file, raising if nobody has put it there."""
+        """Return the path to the file, raising if nobody has put it there or it is not the release declared."""
         path = self.path(directory)
         if not path.exists():
             raise NotImplementedError(
-                f"No {self.filename} was found at `{path}`.\n"
+                f"No {self.filename!r} was found at `{path}`.\n"
                 f"License: {self.license}\n"
                 f"Obtain it from {self.homepage} and place it at `{path}`."
             )
+
+        if self.sha256 is not None:
+            found = hashlib.sha256(path.read_bytes()).hexdigest()
+            if found != self.sha256:
+                raise ValueError(
+                    f"`{path}` is not the release this loader is built against: its SHA-256 is {found}, "
+                    f"not {self.sha256}.\n"
+                    f"Place the export retrieved on {self.retrieved} from {self.homepage} at `{path}`, or update the "
+                    f"declaration's sha256 and retrieved date to adopt the new release."
+                )
 
         return path
 

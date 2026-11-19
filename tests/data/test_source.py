@@ -1,3 +1,4 @@
+import hashlib
 import re
 
 import pytest
@@ -90,6 +91,29 @@ def test_a_manual_source_reports_its_license_when_the_file_is_missing(tmp_path):
     """A user hitting this has to know the terms before going to fetch the file."""
     with pytest.raises(NotImplementedError, match="non-commercial use only"):
         manual().require(tmp_path)
+
+
+def test_a_pinned_manual_source_accepts_the_release_it_names(tmp_path):
+    (tmp_path / "gadm_410.gpkg").write_bytes(b"release one")
+
+    path = manual(sha256=hashlib.sha256(b"release one").hexdigest()).require(tmp_path)
+
+    assert path == tmp_path / "gadm_410.gpkg"
+
+
+def test_a_pinned_manual_source_refuses_another_release_under_the_same_name(tmp_path):
+    """A publisher reissuing a file under its old name would otherwise change every frame built on it, silently."""
+    (tmp_path / "gadm_410.gpkg").write_bytes(b"release two")
+
+    with pytest.raises(ValueError, match=hashlib.sha256(b"release two").hexdigest()):
+        manual(sha256=hashlib.sha256(b"release one").hexdigest()).require(tmp_path)
+
+
+@pytest.mark.parametrize("digest", ["abc", "A" * 64, "g" * 64], ids=repr)
+def test_a_malformed_sha256_is_rejected(digest):
+    """`hexdigest` is lowercase, so an uppercase or short pin could never match a file."""
+    with pytest.raises(ValueError, match="64 lowercase hex"):
+        manual(sha256=digest)
 
 
 # Every file a person has to place in the cache themselves. A loader that raises for a missing
