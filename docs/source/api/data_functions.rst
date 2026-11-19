@@ -18,6 +18,29 @@ Analysis frames
     ~combine_data.build_time_series
     ~combine_data.total_precipitation
 
+India macroeconomic panel
+-------------------------
+
+The mixed-frequency quarterly panel the CatDSGE model for India is estimated on: RBI national
+accounts, prices and current account, seasonally adjusted with X-13ARIMA-SEATS, alongside the
+foreign block and annual fiscal and labour series.
+
+.. autosummary::
+    :toctree: generated/
+
+    ~india_panel.load_india_quarterly_panel
+    ~india_panel.india_panel_metadata
+    ~india_panel.splice_on_growth
+    ~india_panel.seasonally_adjust
+    ~india_panel.seasonally_adjusted_national_accounts
+    ~india_panel.complete_quarter_mean
+    ~india_panel.foreign_quarterly
+    ~india_panel.world_bank_annual_series
+    ~india_panel.place_annual
+    ~india_panel.assemble_panel
+    ~india_panel.QuarterlySeries
+    ~india_panel.AnnualSeries
+
 Disaster events
 ---------------
 
