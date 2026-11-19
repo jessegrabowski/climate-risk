@@ -26,6 +26,7 @@ These fetch on a cold cache, read from disk on a warm one, and re-fetch under ``
     ~forcing.load_effective_radiative_forcing
     ~world_bank.load_wb_data
     ~fred.load_fred_data
+    ~bis.load_real_effective_exchange_rate
     ~ilo.load_labour_income_share
     ~deflate.load_price_level
     ~partner_activity.load_partner_activity
@@ -76,6 +77,7 @@ returns the frame the loader caches.
     ~ipcc.transform_ipcc
     ~world_bank.transform_world_bank
     ~fred.transform_fred
+    ~bis.transform_effective_exchange_rate
     ~ilo.transform_labour_share
     ~partner_activity.transform_partner_activity
     ~weo.transform_government_debt
