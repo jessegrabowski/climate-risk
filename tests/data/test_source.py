@@ -14,6 +14,7 @@ from climate_risk.data.geonames import COUNTRY_INFO, country_dump
 from climate_risk.data.gpcc import FULL_DATA, MONITORING
 from climate_risk.data.hadcrut import HADCRUT
 from climate_risk.data.ocean_heat import OCEAN_HEAT
+from climate_risk.data.rbi import BALANCE_OF_PAYMENTS, CONSUMER_PRICES, FOREIGN_TRADE, QUARTERLY_GDP
 from climate_risk.data.source import DataSource, ManualSource, ShapefileArchive, VendoredSource
 from climate_risk.data_functions.emdat_processing import EMDAT
 from climate_risk.data_functions.rivers_data_loader import RIVERS
@@ -118,7 +119,14 @@ def test_a_malformed_sha256_is_rejected(digest):
 
 # Every file a person has to place in the cache themselves. A loader that raises for a missing
 # hand-placed file belongs here, so the terms it is held under are recorded in one place.
-MANUAL_SOURCES = {"EMDAT": EMDAT, "GADM": GADM}
+MANUAL_SOURCES = {
+    "EMDAT": EMDAT,
+    "GADM": GADM,
+    "RBI_QUARTERLY_GDP": QUARTERLY_GDP,
+    "RBI_BALANCE_OF_PAYMENTS": BALANCE_OF_PAYMENTS,
+    "RBI_CONSUMER_PRICES": CONSUMER_PRICES,
+    "RBI_FOREIGN_TRADE": FOREIGN_TRADE,
+}
 
 
 @pytest.mark.parametrize("declared", MANUAL_SOURCES.values(), ids=MANUAL_SOURCES.keys())

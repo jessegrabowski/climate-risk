@@ -39,7 +39,7 @@ These fetch on a cold cache, read from disk on a warm one, and re-fetch under ``
 Loaders for manually obtained sources
 -------------------------------------
 
-These four upstreams are published under terms that forbid automated download. Nothing in the
+These five upstreams are published under terms that forbid automated download. Nothing in the
 library fetches them: the file has to be placed in the cache by hand, and the loader raises with
 the license and the expected path until it is there.
 
@@ -47,6 +47,12 @@ the license and the expected path until it is there.
     :toctree: generated/
 
     ~pwt.load_pwt_data
+    ~rbi.load_rbi_quarterly_gdp
+    ~rbi.load_rbi_current_account
+    ~rbi.load_rbi_cpi
+    ~rbi.load_rbi_monthly_trade
+    ~rbi.rbi_directory
+    ~rbi.rbi_fingerprints
     ~gadm.load_admin_units
     ~gadm.load_units_in_country
     ~geo_disasters.load_event_locations
@@ -74,6 +80,13 @@ returns the frame the loader caches.
     ~partner_activity.transform_partner_activity
     ~weo.transform_government_debt
     ~pwt.transform_pwt
+    ~rbi.transform_quarterly_gdp
+    ~rbi.transform_current_account
+    ~rbi.transform_all_india_cpi
+    ~rbi.transform_monthly_trade
+    ~rbi.fiscal_quarter_to_period
+    ~rbi.fiscal_year_start
+    ~rbi.sum_complete_years
 
 Aggregating over time
 ---------------------
