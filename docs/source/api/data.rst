@@ -238,6 +238,7 @@ Administrative units and event footprints
     :toctree: generated/
 
     ~gadm.administered_territories
+    ~rbi.read_rbi_district_gadm_crosswalk
     ~forcing.forcing_source
     ~geo_disasters.resolve_to_gadm
     ~geo_disasters.compare_event_units
