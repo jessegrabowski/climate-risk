@@ -55,6 +55,46 @@ FOREIGN_TRADE = ManualSource(
     sha256="0e1843b3c0401d57976f10e07167854807ea2b0cae675bf7604f771e5e4ab75f",
 )
 
+_BANKING_RETRIEVED = "2026-09-25"
+DISTRICT_DEPOSITS_AND_CREDIT = ManualSource(
+    filename=(
+        "_Statement No. 4A _ District wise Number of Reporting Offices, Aggregate Deposit and Bank Credit of "
+        "Scheduled Commercial Banks (SCBs).xlsx"
+    ),
+    homepage=_HOMEPAGE,
+    license=_LICENSE,
+    citation=_CITATION,
+    retrieved=_BANKING_RETRIEVED,
+    sha256="c9b69334fcd5cdbfb7372d1a911ddd87f29368676fab27ab5d70766e79d9feab",
+)
+DISTRICT_DEPOSIT_TYPES = ManualSource(
+    filename=(
+        "_Statement No. 4B _ District wise and Type-wise Distribution of Aggregate deposits with Scheduled "
+        "Commercial Banks (SCBs).xlsx"
+    ),
+    homepage=_HOMEPAGE,
+    license=_LICENSE,
+    citation=_CITATION,
+    retrieved=_BANKING_RETRIEVED,
+    sha256="355346a3c481a3e5b0689964da7c1a3cc937383748e535d8ea0e49a0b9d79987",
+)
+DISTRICT_BANK_CREDIT = ManualSource(
+    filename=("_Bank Credit of SCBs - Bank Group, Population Group, Occupation (Sector), District Wise - Annual.xlsx"),
+    homepage=_HOMEPAGE,
+    license=_LICENSE,
+    citation=_CITATION,
+    retrieved=_BANKING_RETRIEVED,
+    sha256="9491292dc9caac78ad6f10d026ac59728e070ee1f4f3f8a2f646f443e33255fb",
+)
+NBFC_SECTOR_CREDIT = ManualSource(
+    filename="Table VI.5_ Credit to Various Sectors by NBFCs.xlsx",
+    homepage=_HOMEPAGE,
+    license=_LICENSE,
+    citation=_CITATION,
+    retrieved=_BANKING_RETRIEVED,
+    sha256="b54c90fc6f791b828f0fd71bbb797175cbc825442d88727da9b92c31ef4e01e8",
+)
+
 # Each expenditure component's column header contains its key.
 GDP_COMPONENTS = {
     "PFCE": "consumption",
@@ -75,6 +115,39 @@ CURRENT_ACCOUNT_ITEMS = {
     "1.2.1 Services": "services",
     "1.2.2 Transfers": "transfers",
     "1.2.3 Income": "primary income",
+}
+
+# Item labels of the district statements, with line breaks and padding collapsed to single spaces.
+DISTRICT_STATEMENT_ITEMS = {
+    "Number of Reporting Offices": "reporting_offices",
+    "Deposit": "deposits",
+    "Credit": "credit",
+}
+DEPOSIT_TYPES = {
+    "Current": "current_deposits",
+    "Saving": "savings_deposits",
+    "Term": "term_deposits",
+    "Total": "deposits",
+}
+
+# Headers of the BSR-1 data sheets.
+BANK_CREDIT_COLUMNS = {
+    "Year": "year",
+    "Region (Utilization)": "region",
+    "State (Utilization)": "state",
+    "District (Utilization)": "district",
+    "Population Group - Utilization": "population_group",
+    "Bank Group New": "bank_group",
+    "Occupation Group": "occupation_group",
+    "Occupation Sub- Group": "occupation_subgroup",
+    "No. of Accounts": "accounts",
+    "Credit Limit (in Rs Crores)": "credit_limit",
+    "Amount Outstanding (in Rs Crores)": "amount_outstanding",
+}
+# Labels the BSR-1 records spell two ways across years, after upper-casing, mapped to the spelling kept.
+BANK_CREDIT_LABEL_SYNONYMS = {
+    "SEMI URBAN": "SEMI-URBAN",
+    "SMALL FINANCE BANK": "SMALL FINANCE BANKS",
 }
 
 FISCAL_YEAR_PATTERN = r"\d{4}-\d{2}"
@@ -376,6 +449,182 @@ def transform_monthly_trade(sheet: pd.DataFrame) -> pd.DataFrame:
     return trade[["exports", "imports", "balance"]].astype(float).set_axis(months).sort_index()
 
 
+def _collapse_spaces(label: object) -> str:
+    """Return ``label`` as a string with line breaks and runs of spaces collapsed to single spaces."""
+    return " ".join(str(label).split())
+
+
+def _cell_position(row: pd.Series, label: str, where: str) -> int:
+    """Return the position of the cell in ``row`` reading ``label``, case and spaces aside."""
+    positions = np.flatnonzero(row.astype(str).str.strip().str.lower() == label)
+    if positions.size == 0:
+        raise ValueError(f"No cell in the header of {where} reads {label!r}.")
+
+    return int(positions[0])
+
+
+def _parse_district_statement(sheet: pd.DataFrame, items: Mapping[str, str], where: str) -> pd.DataFrame:
+    """Parse a district statement whose quarters run across the sheet, each split into the items in ``items``."""
+    header_row = _find_header_row(sheet, label="region", where=where)
+    region = _cell_position(sheet.iloc[header_row], label="region", where=where)
+    state, district = region + 1, region + 2
+    body = sheet.iloc[header_row + 1 :]
+    # The item labels sit in the last header row, directly above the first district.
+    item_row = header_row + int(np.argmax(body.iloc[:, region].notna().to_numpy()))
+    value_positions = list(range(district + 1, sheet.shape[1]))
+
+    item_labels = [_collapse_spaces(label) for label in sheet.iloc[item_row, value_positions]]
+    unknown = sorted(set(item_labels) - set(items))
+    if unknown:
+        raise ValueError(f"The columns {unknown} in {where} match none of {list(items)}.")
+    quarter_labels = sheet.iloc[header_row, value_positions].ffill().astype(str).str.strip()
+    fiscal_year, quarter = quarter_labels.str.split(":", expand=True).to_numpy().T
+    quarters = fiscal_quarter_to_period(fiscal_year=pd.Series(fiscal_year), quarter=pd.Series(quarter))
+
+    # State subtotals leave region and district blank, and the all-India totals leave state blank too.
+    districts = body[body.iloc[:, region].notna() & body.iloc[:, district].notna()]
+    names = districts.iloc[:, [region, state, district]].map(_collapse_spaces)
+    values = districts.iloc[:, value_positions].astype(float)
+    values.index = pd.MultiIndex.from_frame(names.set_axis(["region", "state", "district"], axis=1))
+    values.columns = pd.MultiIndex.from_arrays(
+        [quarters, [items[label] for label in item_labels]], names=["date", "item"]
+    )
+    statement = pd.DataFrame(values.stack("date", future_stack=True)).sort_index()
+    statement.columns.name = None
+    if not statement.index.is_unique:
+        raise ValueError(f"A district appears twice in {where}.")
+
+    return statement
+
+
+def transform_district_deposits_and_credit(sheet: pd.DataFrame) -> pd.DataFrame:
+    """
+    Read district deposits and credit of scheduled commercial banks from the RBI's Statement 4A.
+
+    State subtotals and the all-India totals are dropped.
+
+    Parameters
+    ----------
+    sheet : DataFrame
+        The statement's one sheet, read with no header. Each fiscal quarter's offices, deposits and credit sit side by
+        side.
+
+    Returns
+    -------
+    statement : DataFrame
+        The number of reporting offices, and deposits and credit in rupees crore, indexed by region, state, district and
+        calendar quarter.
+    """
+    return _parse_district_statement(sheet, items=DISTRICT_STATEMENT_ITEMS, where="Statement 4A")
+
+
+def transform_district_deposit_types(sheet: pd.DataFrame) -> pd.DataFrame:
+    """
+    Read district deposits of scheduled commercial banks by account type from the RBI's Statement 4B.
+
+    State subtotals and the all-India totals are dropped.
+
+    Parameters
+    ----------
+    sheet : DataFrame
+        The statement's one sheet, read with no header. Each fiscal quarter's current, savings, term and total deposits
+        sit side by side.
+
+    Returns
+    -------
+    deposits : DataFrame
+        Deposits in rupees crore by account type and in total, indexed by region, state, district and calendar quarter.
+    """
+    return _parse_district_statement(sheet, items=DEPOSIT_TYPES, where="Statement 4B")
+
+
+def transform_district_bank_credit(sheets: Mapping[str, pd.DataFrame]) -> pd.DataFrame:
+    """
+    Stack the BSR-1 credit records of scheduled commercial banks from every data sheet of the RBI workbook.
+
+    Labels are upper-cased and the spellings in ``BANK_CREDIT_LABEL_SYNONYMS`` merged, since the workbook changes case
+    and spelling from year to year. The few records with no district are dropped.
+
+    Parameters
+    ----------
+    sheets : dict of str to DataFrame
+        Each sheet read with no header, keyed by its name. The records run on from ``"Data"`` into ``"Data(1)"`` and
+        onward with no header of their own, and the summary sheets are ignored.
+
+    Returns
+    -------
+    credit : DataFrame
+        One row per year, district, population group, bank group and occupation, with the number of accounts, and the
+        credit limit and amount outstanding in rupees crore.
+    """
+    data_sheets = [sheet for name, sheet in sheets.items() if name.startswith("Data")]
+    if not data_sheets:
+        raise ValueError(f"The BSR-1 workbook has no data sheet among {list(sheets)}.")
+    first = data_sheets[0]
+    header_row = _find_header_row(first, label="year", where="the first BSR-1 data sheet")
+    positions = np.flatnonzero(first.iloc[header_row].notna().to_numpy())
+    header = [_collapse_spaces(label) for label in first.iloc[header_row, positions]]
+    unknown = sorted(set(header) - set(BANK_CREDIT_COLUMNS))
+    if unknown:
+        raise ValueError(f"The BSR-1 columns {unknown} match none of {list(BANK_CREDIT_COLUMNS)}.")
+
+    records = pd.concat(
+        [first.iloc[header_row + 1 :, positions], *(sheet.iloc[:, positions] for sheet in data_sheets[1:])],
+        ignore_index=True,
+    ).dropna(how="all")
+    records.columns = [BANK_CREDIT_COLUMNS[label] for label in header]
+    records = records.dropna(subset=["district"])
+
+    numeric = ["accounts", "credit_limit", "amount_outstanding"]
+    labels = [column for column in records.columns if column not in ["year", *numeric]]
+
+    return records.assign(
+        year=records["year"].astype(int),
+        **{column: records[column].astype(float) for column in numeric},
+        **{
+            column: records[column].str.strip().str.upper().replace(BANK_CREDIT_LABEL_SYNONYMS).astype("category")
+            for column in labels
+        },
+    )
+
+
+def transform_nbfc_sector_credit(sheet: pd.DataFrame) -> pd.DataFrame:
+    """
+    Read credit extended by non-bank financial companies to each sector from the RBI's Table VI.5.
+
+    Parameters
+    ----------
+    sheet : DataFrame
+        The table's one sheet, read with no header. Items run down the sheet and half-year ends across it, with ``-``
+        where a value is not available.
+
+    Returns
+    -------
+    credit : DataFrame
+        Credit outstanding in rupees crore, indexed by item, labeled as the table numbers it, and month. The table's
+        totals and subtotals are kept as items, so summing over items counts the same credit more than once.
+    """
+    where = "the NBFC credit table"
+    header_row = _find_header_row(sheet, label="item", where=where)
+    item = _cell_position(sheet.iloc[header_row], label="item", where=where)
+    date_positions = item + 1 + np.flatnonzero(sheet.iloc[header_row, item + 1 :].notna().to_numpy())
+    dates = sheet.iloc[header_row, date_positions].astype(str).str.strip().str.removeprefix("End-")
+    months = pd.PeriodIndex(pd.to_datetime(dates, format="%B %Y"), freq="M")
+
+    # A row numbering the columns follows the header, and notes follow a blank row after the last item.
+    body = sheet.iloc[header_row + 1 :]
+    last_item = int(np.argmax(body.iloc[:, item].isna().to_numpy()))
+    rows = body.iloc[:last_item]
+    rows = rows[rows.iloc[:, item].map(lambda label: isinstance(label, str))]
+
+    values = rows.iloc[:, date_positions]
+    values = values.mask(values.map(lambda value: isinstance(value, str) and value.strip() == "-")).astype(float)
+    values.index = pd.Index(rows.iloc[:, item].map(_collapse_spaces), name="item")
+    values.columns = pd.Index(months, name="date")
+
+    return pd.DataFrame({"credit": values.sort_index(axis=1).stack(future_stack=True)})
+
+
 def rbi_fingerprints() -> dict[str, str]:
     """
     Fingerprint how each RBI frame is built and which release it reads, so editing a parser, a rule such as
@@ -404,6 +653,35 @@ def rbi_fingerprints() -> dict[str, str]:
             transform_all_india_cpi, _all_india_general_cpi, CPI_BAD_MONTHS, CONSUMER_PRICES, *shared
         ),
         "rbi_monthly_trade": builder_fingerprint(transform_monthly_trade, FOREIGN_TRADE, *shared),
+        "rbi_district_deposits_and_credit": builder_fingerprint(
+            transform_district_deposits_and_credit,
+            _parse_district_statement,
+            _cell_position,
+            _collapse_spaces,
+            DISTRICT_STATEMENT_ITEMS,
+            DISTRICT_DEPOSITS_AND_CREDIT,
+            *shared,
+        ),
+        "rbi_district_deposit_types": builder_fingerprint(
+            transform_district_deposit_types,
+            _parse_district_statement,
+            _cell_position,
+            _collapse_spaces,
+            DEPOSIT_TYPES,
+            DISTRICT_DEPOSIT_TYPES,
+            *shared,
+        ),
+        "rbi_district_bank_credit": builder_fingerprint(
+            transform_district_bank_credit,
+            _collapse_spaces,
+            BANK_CREDIT_COLUMNS,
+            BANK_CREDIT_LABEL_SYNONYMS,
+            DISTRICT_BANK_CREDIT,
+            *shared,
+        ),
+        "rbi_nbfc_sector_credit": builder_fingerprint(
+            transform_nbfc_sector_credit, _cell_position, _collapse_spaces, NBFC_SECTOR_CREDIT, *shared
+        ),
     }
 
 
@@ -570,5 +848,162 @@ def load_rbi_monthly_trade(cache_dir: Path, *, force_reload: bool = False) -> pd
         lambda: transform_monthly_trade(_read_first_sheet(FOREIGN_TRADE, cache_dir)),
         pandas_parquet(),
         params={"reading": rbi_fingerprints()["rbi_monthly_trade"]},
+        force=force_reload,
+    )
+
+
+def load_rbi_district_deposits_and_credit(cache_dir: Path, *, force_reload: bool = False) -> pd.DataFrame:
+    """
+    Return the reporting offices, deposits and credit of scheduled commercial banks in each Indian district.
+
+    Parameters
+    ----------
+    cache_dir : Path
+        Directory holding the ``rbi`` workbook directory and the cached parquet.
+    force_reload : bool, optional
+        Re-read the workbook even when the parquet is present. Default False.
+
+    Returns
+    -------
+    statement : DataFrame
+        The number of reporting offices, and deposits and credit in rupees crore, indexed by region, state, district and
+        calendar quarter.
+
+    Examples
+    --------
+    The workbook has to be placed in ``data/rbi`` by hand first:
+
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.rbi import load_rbi_district_deposits_and_credit
+
+        statement = load_rbi_district_deposits_and_credit(Path("data"))
+    """
+    return cached(
+        cache_dir,
+        "rbi_district_deposits_and_credit",
+        lambda: transform_district_deposits_and_credit(_read_first_sheet(DISTRICT_DEPOSITS_AND_CREDIT, cache_dir)),
+        pandas_parquet(),
+        params={"reading": rbi_fingerprints()["rbi_district_deposits_and_credit"]},
+        force=force_reload,
+    )
+
+
+def load_rbi_district_deposit_types(cache_dir: Path, *, force_reload: bool = False) -> pd.DataFrame:
+    """
+    Return deposits with scheduled commercial banks in each Indian district by account type.
+
+    Parameters
+    ----------
+    cache_dir : Path
+        Directory holding the ``rbi`` workbook directory and the cached parquet.
+    force_reload : bool, optional
+        Re-read the workbook even when the parquet is present. Default False.
+
+    Returns
+    -------
+    deposits : DataFrame
+        Current, savings, term and total deposits in rupees crore, indexed by region, state, district and calendar
+        quarter.
+
+    Examples
+    --------
+    The workbook has to be placed in ``data/rbi`` by hand first:
+
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.rbi import load_rbi_district_deposit_types
+
+        deposits = load_rbi_district_deposit_types(Path("data"))
+    """
+    return cached(
+        cache_dir,
+        "rbi_district_deposit_types",
+        lambda: transform_district_deposit_types(_read_first_sheet(DISTRICT_DEPOSIT_TYPES, cache_dir)),
+        pandas_parquet(),
+        params={"reading": rbi_fingerprints()["rbi_district_deposit_types"]},
+        force=force_reload,
+    )
+
+
+def load_rbi_district_bank_credit(cache_dir: Path, *, force_reload: bool = False) -> pd.DataFrame:
+    """
+    Return the BSR-1 credit records of scheduled commercial banks by district, bank group and occupation.
+
+    The workbook holds about 2.2 million records, so the first read takes minutes.
+
+    Parameters
+    ----------
+    cache_dir : Path
+        Directory holding the ``rbi`` workbook directory and the cached parquet.
+    force_reload : bool, optional
+        Re-read the workbook even when the parquet is present. Default False.
+
+    Returns
+    -------
+    credit : DataFrame
+        One row per year, district, population group, bank group and occupation, with the number of accounts, and the
+        credit limit and amount outstanding in rupees crore.
+
+    Examples
+    --------
+    The workbook has to be placed in ``data/rbi`` by hand first:
+
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.rbi import load_rbi_district_bank_credit
+
+        credit = load_rbi_district_bank_credit(Path("data"))
+    """
+    return cached(
+        cache_dir,
+        "rbi_district_bank_credit",
+        lambda: transform_district_bank_credit(_read_sheets(DISTRICT_BANK_CREDIT, cache_dir)),
+        pandas_parquet(),
+        params={"reading": rbi_fingerprints()["rbi_district_bank_credit"]},
+        force=force_reload,
+    )
+
+
+def load_rbi_nbfc_sector_credit(cache_dir: Path, *, force_reload: bool = False) -> pd.DataFrame:
+    """
+    Return credit extended by Indian non-bank financial companies to each sector, at half-year ends.
+
+    Parameters
+    ----------
+    cache_dir : Path
+        Directory holding the ``rbi`` workbook directory and the cached parquet.
+    force_reload : bool, optional
+        Re-read the workbook even when the parquet is present. Default False.
+
+    Returns
+    -------
+    credit : DataFrame
+        Credit outstanding in rupees crore, indexed by item and month.
+
+    Examples
+    --------
+    The workbook has to be placed in ``data/rbi`` by hand first:
+
+    .. code-block:: python
+
+        from pathlib import Path
+
+        from climate_risk.data.rbi import load_rbi_nbfc_sector_credit
+
+        credit = load_rbi_nbfc_sector_credit(Path("data"))
+    """
+    return cached(
+        cache_dir,
+        "rbi_nbfc_sector_credit",
+        lambda: transform_nbfc_sector_credit(_read_first_sheet(NBFC_SECTOR_CREDIT, cache_dir)),
+        pandas_parquet(),
+        params={"reading": rbi_fingerprints()["rbi_nbfc_sector_credit"]},
         force=force_reload,
     )

@@ -15,7 +15,11 @@ from climate_risk.data.rbi import (
     sum_complete_years,
     transform_all_india_cpi,
     transform_current_account,
+    transform_district_bank_credit,
+    transform_district_deposit_types,
+    transform_district_deposits_and_credit,
     transform_monthly_trade,
+    transform_nbfc_sector_credit,
     transform_quarterly_gdp,
 )
 
@@ -277,6 +281,204 @@ def test_editing_the_cpi_mask_rebuilds_the_cached_cpi(tmp_path, monkeypatch):
 
     assert np.isnan(masked["index"].to_dict()[june])
     assert unmasked["index"].to_dict()[june] == 113.0
+
+
+STATEMENT_4A_HEADER = ["Region", "State or UTs", "District", "2024-25:Q4", np.nan, np.nan, "2025-26:Q4", np.nan, np.nan]
+STATEMENT_4A_ITEMS = [np.nan, np.nan, np.nan, *["Number of\nReporting\nOffices", "Deposit", "Credit"] * 2]
+
+
+def test_district_statement_quarters_land_on_calendar_quarters():
+    """The statement labels each column by fiscal quarter, and fiscal Q4 is the first calendar quarter of the next year."""
+    rows = [STATEMENT_4A_ITEMS, ["CENTRAL REGION", "CHHATTISGARH", "BALOD", 1, 2.0, 3.0, 4, 5.0, 6.0]]
+
+    statement = transform_district_deposits_and_credit(workbook_sheet(STATEMENT_4A_HEADER, rows))
+
+    assert statement.to_dict("index") == {
+        ("CENTRAL REGION", "CHHATTISGARH", "BALOD", pd.Period("2025Q1")): {
+            "reporting_offices": 1.0,
+            "deposits": 2.0,
+            "credit": 3.0,
+        },
+        ("CENTRAL REGION", "CHHATTISGARH", "BALOD", pd.Period("2026Q1")): {
+            "reporting_offices": 4.0,
+            "deposits": 5.0,
+            "credit": 6.0,
+        },
+    }
+
+
+def test_district_statement_subtotals_are_dropped():
+    """State subtotals and the all-India rows sit among the districts, and keeping them would double every sum."""
+    district = [1, 2.0, 3.0, 4, 5.0, 6.0]
+    rows = [
+        STATEMENT_4A_ITEMS,
+        ["CENTRAL REGION", "CHHATTISGARH", "BALOD", *district],
+        [np.nan, "CHHATTISGARH", np.nan, *district],
+        ["ALL-INDIA", np.nan, np.nan, *district],
+    ]
+
+    statement = transform_district_deposits_and_credit(workbook_sheet(STATEMENT_4A_HEADER, rows))
+
+    assert statement.index.unique("district").tolist() == ["BALOD"]
+
+
+def test_deposit_types_are_read_from_the_last_header_row():
+    """Statement 4B puts a "Deposit" row between the quarters and the account types."""
+    header = ["Region", "State or UTs", "District", "2025-26:Q4", np.nan, np.nan, np.nan]
+    rows = [
+        [np.nan, np.nan, np.nan, "Deposit", np.nan, np.nan, np.nan],
+        [np.nan, np.nan, np.nan, "Current", "Saving\n", "Term", "Total"],
+        ["CENTRAL REGION", "CHHATTISGARH", "BALOD", 1.0, 2.0, 3.0, 6.0],
+    ]
+
+    deposits = transform_district_deposit_types(workbook_sheet(header, rows))
+
+    assert deposits.iloc[0].to_dict() == {
+        "current_deposits": 1.0,
+        "savings_deposits": 2.0,
+        "term_deposits": 3.0,
+        "deposits": 6.0,
+    }
+
+
+def test_an_unknown_district_statement_item_is_named_in_the_error():
+    rows = [
+        [np.nan, np.nan, np.nan, "Number of\nReporting\nOffices", "Deposit", "Advances"],
+        ["CENTRAL REGION", "CHHATTISGARH", "BALOD", 1, 2.0, 3.0],
+    ]
+
+    with pytest.raises(ValueError, match="Advances"):
+        transform_district_deposits_and_credit(workbook_sheet(STATEMENT_4A_HEADER[:6], rows))
+
+
+BANK_CREDIT_HEADER = [
+    "Year",
+    "Region (Utilization)",
+    "State (Utilization)",
+    "District (Utilization)",
+    "Population Group - Utilization",
+    "Bank Group New",
+    "Occupation Group",
+    "Occupation Sub- Group",
+    "No. of Accounts",
+    "Credit Limit (in Rs Crores)",
+    "Amount Outstanding (in Rs Crores)",
+]
+
+
+def bank_credit_row(year, amount_outstanding):
+    place = ["EASTERN REGION", "BIHAR", "PATNA", "URBAN"]
+    lending = ["PRIVATE SECTOR BANKS", "VI. TRADE", "2. Retail Trade"]
+    return [year, *place, *lending, 5, 2.0, amount_outstanding]
+
+
+def test_bank_credit_records_run_on_across_data_sheets():
+    """Excel caps a sheet at a million rows, so the records continue on headerless sheets, and the national summary
+    sheets beside them would double count if read as records."""
+    continuation = pd.DataFrame([[np.nan, *bank_credit_row("2020", 2.0)]])
+    sheets = {
+        "Data": workbook_sheet(BANK_CREDIT_HEADER, [bank_credit_row("2026", 1.0)]),
+        "Data(1)": continuation,
+        "Summary - Year Wise": workbook_sheet(["Year", "No. of Accounts"], [["2026", 99]]),
+    }
+
+    credit = transform_district_bank_credit(sheets)
+
+    assert credit[["year", "amount_outstanding"]].to_dict("records") == [
+        {"year": 2026, "amount_outstanding": 1.0},
+        {"year": 2020, "amount_outstanding": 2.0},
+    ]
+    assert credit["occupation_subgroup"].tolist() == ["2. RETAIL TRADE", "2. RETAIL TRADE"]
+
+
+def test_bank_credit_labels_are_one_category_across_years():
+    """The workbook writes 2024's bank groups in title case and renames semi-urban in 2023, so a per-year groupby on the
+    raw labels shows public sector banks vanishing for a year."""
+    rows = [
+        [
+            "2022",
+            "EASTERN REGION",
+            "BIHAR",
+            "PATNA",
+            "SEMI-URBAN",
+            "PUBLIC SECTOR BANKS",
+            "VI. TRADE",
+            "1. Wholesale",
+            5,
+            2.0,
+            1.0,
+        ],
+        [
+            "2024",
+            "EASTERN REGION",
+            "BIHAR",
+            "PATNA",
+            "SEMI URBAN",
+            "Public Sector Banks",
+            "VI. TRADE",
+            "1. Wholesale",
+            5,
+            2.0,
+            1.0,
+        ],
+    ]
+
+    credit = transform_district_bank_credit({"Data": workbook_sheet(BANK_CREDIT_HEADER, rows)})
+
+    assert credit["bank_group"].cat.categories.tolist() == ["PUBLIC SECTOR BANKS"]
+    assert credit["population_group"].cat.categories.tolist() == ["SEMI-URBAN"]
+
+
+def test_bank_credit_records_without_a_district_are_dropped():
+    placeless = [
+        "2011",
+        np.nan,
+        np.nan,
+        np.nan,
+        "URBAN",
+        "PUBLIC SECTOR BANKS",
+        "II. INDUSTRY",
+        "4. Textiles",
+        0,
+        0.0,
+        0.0,
+    ]
+
+    credit = transform_district_bank_credit(
+        {"Data": workbook_sheet(BANK_CREDIT_HEADER, [bank_credit_row("2026", 1.0), placeless])}
+    )
+
+    assert credit["year"].tolist() == [2026]
+
+
+def test_an_unknown_bank_credit_column_is_named_in_the_error():
+    header = [*BANK_CREDIT_HEADER[:-1], "Amount Sanctioned"]
+
+    with pytest.raises(ValueError, match="Amount Sanctioned"):
+        transform_district_bank_credit({"Data": workbook_sheet(header, [bank_credit_row("2026", 1.0)])})
+
+
+def test_unavailable_nbfc_credit_is_missing_and_notes_are_dropped():
+    """The table marks unavailable cells with a dash, numbers its columns under the header, and ends in a notes cell."""
+    rows = [
+        [1, 2, 3],
+        ["Gross Advances (1 to 5)", 20.0, 10.0],
+        [" 2.1 Power      ", "-", 4.0],
+        [np.nan, np.nan, np.nan],
+        ["- : Not applicable or Not available or Nil.", np.nan, np.nan],
+    ]
+
+    credit = transform_nbfc_sector_credit(workbook_sheet(["Item", "End-September 2025", "End-March 2025"], rows))
+
+    assert credit["credit"].to_dict() == pytest.approx(
+        {
+            ("Gross Advances (1 to 5)", pd.Period("2025-03")): 10.0,
+            ("Gross Advances (1 to 5)", pd.Period("2025-09")): 20.0,
+            ("2.1 Power", pd.Period("2025-03")): 4.0,
+            ("2.1 Power", pd.Period("2025-09")): np.nan,
+        },
+        nan_ok=True,
+    )
 
 
 def test_adopting_a_new_release_rebuilds_the_cached_frame(tmp_path, monkeypatch):
