@@ -277,3 +277,19 @@ def test_editing_the_cpi_mask_rebuilds_the_cached_cpi(tmp_path, monkeypatch):
 
     assert np.isnan(masked["index"].to_dict()[june])
     assert unmasked["index"].to_dict()[june] == 113.0
+
+
+def test_adopting_a_new_release_rebuilds_the_cached_frame(tmp_path, monkeypatch):
+    """A workbook re-pinned to a later DBIE release must be read again, not answered from the earlier release's cache."""
+    monkeypatch.setattr(rbi, "FOREIGN_TRADE", replace(rbi.FOREIGN_TRADE, sha256=None))
+    write_trade_workbook(tmp_path)
+    first = load_rbi_monthly_trade(tmp_path)
+
+    rows = [TRADE_COLUMN_NUMBERS, ["2026-27", "April", 30.0, 4.0, -1.0]]
+    workbook_sheet(TRADE_HEADER, rows).to_excel(
+        tmp_path / "rbi" / "Indias Foreign Trade - US Dollar.xlsx", header=False, index=False
+    )
+    monkeypatch.setattr(rbi, "FOREIGN_TRADE", replace(rbi.FOREIGN_TRADE, retrieved="2027-01-01"))
+
+    assert first["exports"].tolist() == [3.0]
+    assert load_rbi_monthly_trade(tmp_path)["exports"].tolist() == [30.0]

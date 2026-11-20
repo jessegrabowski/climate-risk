@@ -378,8 +378,8 @@ def transform_monthly_trade(sheet: pd.DataFrame) -> pd.DataFrame:
 
 def rbi_fingerprints() -> dict[str, str]:
     """
-    Fingerprint how each RBI frame is built, so editing a parser or a rule such as ``CPI_BAD_MONTHS`` turns its cache
-    over.
+    Fingerprint how each RBI frame is built and which release it reads, so editing a parser, a rule such as
+    ``CPI_BAD_MONTHS``, or a workbook's pinned release turns its cache over.
 
     Returns
     -------
@@ -390,17 +390,20 @@ def rbi_fingerprints() -> dict[str, str]:
 
     return {
         "rbi_quarterly_gdp": builder_fingerprint(
-            transform_quarterly_gdp, _parse_quarterly_gdp, _component_name, GDP_COMPONENTS, *shared
+            transform_quarterly_gdp, _parse_quarterly_gdp, _component_name, GDP_COMPONENTS, QUARTERLY_GDP, *shared
         ),
         "rbi_current_account": builder_fingerprint(
             transform_current_account,
             _parse_balance_of_payments,
             _current_account_items,
             CURRENT_ACCOUNT_ITEMS,
+            BALANCE_OF_PAYMENTS,
             *shared,
         ),
-        "rbi_cpi": builder_fingerprint(transform_all_india_cpi, _all_india_general_cpi, CPI_BAD_MONTHS, *shared),
-        "rbi_monthly_trade": builder_fingerprint(transform_monthly_trade, *shared),
+        "rbi_cpi": builder_fingerprint(
+            transform_all_india_cpi, _all_india_general_cpi, CPI_BAD_MONTHS, CONSUMER_PRICES, *shared
+        ),
+        "rbi_monthly_trade": builder_fingerprint(transform_monthly_trade, FOREIGN_TRADE, *shared),
     }
 
 
