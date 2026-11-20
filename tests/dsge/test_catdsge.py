@@ -229,8 +229,10 @@ def test_a_consumption_drop_under_log_utility_costs_its_discounted_size_in_quart
 
 @pytest.mark.slow
 @pytest.mark.filterwarnings("ignore:Provided data contains missing values")
-def test_the_estimation_model_builds_on_the_india_observables():
-    """Builds the model without sampling, so a change in the gEconpy or pymc-extras API fails here first."""
+def test_the_estimation_model_builds_with_each_shock_variance_in_statespace_order():
+    """Builds the model without sampling, so a change in the gEconpy or pymc-extras API fails here first. The shock
+    covariance is assembled structural shocks first and noise shocks last, then permuted back to the statespace's
+    order, and a wrong permutation would pair each shock with another's variance."""
     model = ge.model_from_gcn(GCN_DIR / "catdsge_v4.gcn", verbose=False)
     observed = build_observed(india_panel(np.random.default_rng(4)))
     statespace = load_estimation_statespace()
@@ -241,4 +243,10 @@ def test_the_estimation_model_builds_on_the_india_observables():
         model_parameters=model.parameters(),
     )
 
-    assert {"theta_w", "state_cov"} <= set(pymc_model.named_vars)
+    shocks = list(statespace.shock_names)
+    state_cov, *shock_sds = pm.draw(
+        [pymc_model["state_cov"], *[pymc_model[f"sigma_{shock}"] for shock in shocks]], random_seed=1
+    )
+
+    assert [variable.name for variable in pymc_model.observed_RVs] == ["obs"]
+    assert np.diag(state_cov) == pytest.approx(np.array(shock_sds) ** 2)
