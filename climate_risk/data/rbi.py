@@ -95,6 +95,9 @@ NBFC_SECTOR_CREDIT = ManualSource(
     sha256="b54c90fc6f791b828f0fd71bbb797175cbc825442d88727da9b92c31ef4e01e8",
 )
 
+# Built for this package from the district names in Statement 4A and BSR-1, and shipped with it.
+DISTRICT_GADM_CROSSWALK = Path(__file__).parent / "rbi_district_gadm.csv"
+
 # Each expenditure component's column header contains its key.
 GDP_COMPONENTS = {
     "PFCE": "consumption",
@@ -969,6 +972,34 @@ def load_rbi_district_bank_credit(cache_dir: Path, *, force_reload: bool = False
         params={"reading": rbi_fingerprints()["rbi_district_bank_credit"]},
         force=force_reload,
     )
+
+
+def read_rbi_district_gadm_crosswalk(*, path: Path = DISTRICT_GADM_CROSSWALK) -> pd.DataFrame:
+    """
+    Read the links from RBI districts to the GADM 4.1 districts they lie in.
+
+    Parameters
+    ----------
+    path : Path, optional
+        The crosswalk table. Default the one shipped with the package.
+
+    Returns
+    -------
+    crosswalk : DataFrame
+        One row per RBI state, RBI district and GADM ``gid``, with the ``relation`` between them (``same``,
+        ``renamed`` or ``carved_from``) and a ``note`` giving the evidence for every link other than ``same``. A
+        district carved out after GADM's boundaries links to its parent, and a district spanning several GADM
+        districts has one row for each.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from climate_risk.data.rbi import read_rbi_district_gadm_crosswalk
+
+        crosswalk = read_rbi_district_gadm_crosswalk()
+    """
+    return pd.read_csv(path)
 
 
 def load_rbi_nbfc_sector_credit(cache_dir: Path, *, force_reload: bool = False) -> pd.DataFrame:

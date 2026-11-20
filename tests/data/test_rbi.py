@@ -12,6 +12,7 @@ from climate_risk.data.rbi import (
     load_rbi_cpi,
     load_rbi_monthly_trade,
     load_rbi_quarterly_gdp,
+    read_rbi_district_gadm_crosswalk,
     sum_complete_years,
     transform_all_india_cpi,
     transform_current_account,
@@ -495,3 +496,21 @@ def test_adopting_a_new_release_rebuilds_the_cached_frame(tmp_path, monkeypatch)
 
     assert first["exports"].tolist() == [3.0]
     assert load_rbi_monthly_trade(tmp_path)["exports"].tolist() == [30.0]
+
+
+def test_no_rbi_district_links_to_one_gadm_district_twice():
+    """Amounts are split equally over a district's links, so a repeated link would put twice the share on one district."""
+    crosswalk = read_rbi_district_gadm_crosswalk()
+
+    repeated = crosswalk[crosswalk.duplicated(["rbi_state", "rbi_district", "gid"], keep=False)]
+
+    assert repeated.empty, f"links repeated: {repeated[['rbi_state', 'rbi_district', 'gid']].values.tolist()[:5]}"
+
+
+def test_every_link_other_than_same_carries_its_evidence():
+    """A rename or a carve-out is a claim about the boundaries, and the table is curated by hand."""
+    crosswalk = read_rbi_district_gadm_crosswalk()
+    asserted = crosswalk[crosswalk["relation"] != "same"]
+
+    assert set(crosswalk["relation"]) <= {"same", "renamed", "carved_from"}
+    assert asserted["note"].notna().all(), asserted.loc[asserted["note"].isna(), "rbi_district"].tolist()[:5]
