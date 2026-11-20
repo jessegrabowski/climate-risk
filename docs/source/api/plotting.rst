@@ -41,3 +41,20 @@ Predictions
     plot_predicted_damages
     attach_count_predictions
     attach_damage_predictions
+
+CatDSGE figures
+---------------
+
+Figures of the CatDSGE model in :ref:`api_dsge`. They take quantiles, densities and labels as
+arguments, so this module stays free of the model.
+
+.. autosummary::
+    :toctree: generated/
+
+    plot_estimate
+    plot_impact_heatmap
+    plot_response_grid
+    plot_shock_responses
+    plot_density_against_data
+    plot_moment_grid
+    plot_clipped_densities
