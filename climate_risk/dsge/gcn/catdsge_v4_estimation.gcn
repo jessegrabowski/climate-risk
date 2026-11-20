@@ -133,7 +133,7 @@ symbols
     psi_Y_star   { name = "Price elasticity of export demand"; positive = True; };
     phi_Y_star   { name = "Foreign to domestic output ratio"; positive = True; };
     psi_B        { name = "Risk premium elasticity"; positive = True; };
-    phi_B        { name = "Net foreign asset target"; positive = True; };
+    phi_B        { name = "Net foreign asset target"; };
     q_bar        { name = "Steady-state real exchange rate"; };
     p_M_star_bar { name = "Steady-state world import price"; };
 
