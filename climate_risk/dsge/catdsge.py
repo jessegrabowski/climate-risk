@@ -154,7 +154,7 @@ def model_ratios(model: Model, **parameter_updates: float) -> pd.Series:
         panel = load_india_quarterly_panel(Path("data"))
         panel.index = panel.index.to_period("Q")
 
-        ratios = model_ratios(model, **calibrate_india(model, panel))
+        ratios = model_ratios(model, **calibrate_india(model=model, panel=panel))
     """
     with ge.rc_context({"steady_state.rtol": STEADY_STATE_RTOL}):
         steady_state = model.steady_state(verbose=False, progressbar=False, **parameter_updates)
@@ -301,7 +301,7 @@ def calibrate_india(model: Model, panel: pd.DataFrame) -> dict[str, float]:
         panel = load_india_quarterly_panel(Path("data"))
         panel.index = panel.index.to_period("Q")
 
-        india_parameters = calibrate_india(model, panel)
+        india_parameters = calibrate_india(model=model, panel=panel)
         model_parameters = model.parameters(**india_parameters)
     """
     shock_persistence = {
@@ -848,7 +848,7 @@ def error_scale(fit_data: pd.DataFrame, name: str) -> float:
         from climate_risk.dsge.catdsge import error_scale
 
         fit_data = pd.DataFrame({"foreign_rate": [1.0, 1.1, 1.2, 1.3]})
-        scale = error_scale(fit_data, "foreign_rate")
+        scale = error_scale(fit_data, name="foreign_rate")
     """
     series = fit_data[name].dropna() if name in ANNUAL_OBSERVABLES else fit_data[name]
 
@@ -864,8 +864,9 @@ def fixed_parameters(statespace: DSGEStateSpace, model_parameters: dict[str, flo
     statespace : DSGEStateSpace
         A configured CatDSGE statespace.
     model_parameters : dict of str to float
-        Every model parameter, with the calibration applied, as ``model.parameters(**calibrate_india(model, panel))``
-        returns them. The calibration alone does not name every parameter.
+        Every model parameter, with the calibration applied, as
+        ``model.parameters(**calibrate_india(model=model, panel=panel))`` returns them. The calibration alone does not
+        name every parameter.
 
     Returns
     -------
@@ -884,7 +885,7 @@ def fixed_parameters(statespace: DSGEStateSpace, model_parameters: dict[str, flo
         from climate_risk.dsge.model_files import GCN_DIR
 
         model = ge.model_from_gcn(GCN_DIR / "catdsge_v4.gcn")
-        fixed = fixed_parameters(load_estimation_statespace(), model.parameters())
+        fixed = fixed_parameters(load_estimation_statespace(), model_parameters=model.parameters())
     """
     return {
         name: model_parameters[name]
@@ -978,7 +979,7 @@ def build_pymc_model(
         model = ge.model_from_gcn(GCN_DIR / "catdsge_v4.gcn")
         panel = load_india_quarterly_panel(Path("data"))
         panel.index = panel.index.to_period("Q")
-        model_parameters = model.parameters(**calibrate_india(model, panel))
+        model_parameters = model.parameters(**calibrate_india(model=model, panel=panel))
 
         statespace = load_estimation_statespace()
         observed = build_observed(panel)
@@ -997,7 +998,7 @@ def build_pymc_model(
     discount_factor = model_parameters["beta"]
 
     observable_names = list(statespace.coords["observed_state"])
-    observable_sd = np.array([error_scale(fit_data, name) for name in observable_names])
+    observable_sd = np.array([error_scale(fit_data, name=name) for name in observable_names])
     error_groups = list(TYPICAL_ERROR_SHARES)
     error_group_index = np.array(
         [error_groups.index("foreign" if name in FOREIGN_OBSERVABLES else "domestic") for name in observable_names]
@@ -1007,7 +1008,7 @@ def build_pymc_model(
     with pm.Model(coords=statespace.coords | {"error_group": error_groups}) as pymc_model:
         for name, (distribution, mean, sd) in STRUCTURAL_PRIORS.items():
             distribution(name, mu=mean, sigma=sd)
-        for name, value in fixed_parameters(statespace, model_parameters).items():
+        for name, value in fixed_parameters(statespace, model_parameters=model_parameters).items():
             pm.Data(name, value)
 
         log_wage_slope = pm.Normal("log_wage_slope", **WAGE_SLOPE_PRIOR)
@@ -1091,12 +1092,12 @@ def statespace_trace(
         model = ge.model_from_gcn(GCN_DIR / "catdsge_v4.gcn")
         panel = load_india_quarterly_panel(Path("data"))
         panel.index = panel.index.to_period("Q")
-        model_parameters = model.parameters(**calibrate_india(model, panel))
+        model_parameters = model.parameters(**calibrate_india(model=model, panel=panel))
 
         statespace = load_estimation_statespace()
         trace = statespace_trace(
             draws=xr.open_datatree("catdsge_idata.nc")["posterior"].to_dataset(),
-            parameter_values=fixed_parameters(statespace, model_parameters),
+            parameter_values=fixed_parameters(statespace, model_parameters=model_parameters),
             observed_data=xr.Dataset(),
             group="posterior",
         )
@@ -1163,7 +1164,7 @@ def simulation_trace(
         model = ge.model_from_gcn(GCN_DIR / "catdsge_v4.gcn")
         panel = load_india_quarterly_panel(Path("data"))
         panel.index = panel.index.to_period("Q")
-        model_parameters = model.parameters(**calibrate_india(model, panel))
+        model_parameters = model.parameters(**calibrate_india(model=model, panel=panel))
 
         trace = simulation_trace(
             simulation_statespace=load_simulation_statespace(),
@@ -1195,7 +1196,7 @@ def simulation_trace(
 
     return statespace_trace(
         draws=draws.drop_vars(["state_cov", "shock", "shock_aux"]).assign(state_cov=simulation_cov),
-        parameter_values=fixed_parameters(simulation_statespace, model_parameters),
+        parameter_values=fixed_parameters(simulation_statespace, model_parameters=model_parameters),
         observed_data=observed_data,
         group=group,
     )
@@ -1241,7 +1242,7 @@ def bind_to_model(graphs: list[Any], model: pm.Model) -> list[Any]:
         model = ge.model_from_gcn(GCN_DIR / "catdsge_v4.gcn")
         panel = load_india_quarterly_panel(Path("data"))
         panel.index = panel.index.to_period("Q")
-        model_parameters = model.parameters(**calibrate_india(model, panel))
+        model_parameters = model.parameters(**calibrate_india(model=model, panel=panel))
 
         observed = build_observed(panel)
         pymc_model = build_pymc_model(
@@ -1305,7 +1306,7 @@ def build_welfare_model(pymc_model: pm.Model, simulation_statespace: DSGEStateSp
         model = ge.model_from_gcn(GCN_DIR / "catdsge_v4.gcn")
         panel = load_india_quarterly_panel(Path("data"))
         panel.index = panel.index.to_period("Q")
-        model_parameters = model.parameters(**calibrate_india(model, panel))
+        model_parameters = model.parameters(**calibrate_india(model=model, panel=panel))
 
         observed = build_observed(panel)
         pymc_model = build_pymc_model(

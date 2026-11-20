@@ -936,7 +936,7 @@ def _plot_response_band(
     """The median and outer interval of one response over ``quantile``, with ``reference`` dashed on top when given."""
     lower, upper = quantiles.isel(quantile=0), quantiles.isel(quantile=-1)
     interval = float(quantiles["quantile"][-1] - quantiles["quantile"][0])
-    ax.fill_between(quantiles["time"], lower, upper, color=PALETTE["primary"], alpha=0.3, linewidth=0)
+    ax.fill_between(x=quantiles["time"], y1=lower, y2=upper, color=PALETTE["primary"], alpha=0.3, linewidth=0)
     ax.plot(
         quantiles["time"],
         quantiles.sel(quantile=0.5),
@@ -1392,7 +1392,7 @@ def plot_clipped_densities(
             near_mean = np.abs(density_x - mean) <= label_half_width
             label_height = np.nanmax(np.where(near_mean, density_y, np.nan)) + label_pad
             ax.vlines(x=mean, ymin=0.0, ymax=label_height, color=color, lw=0.8, ls=":")
-            ax.text(mean, label_height, f"mean {mean:.3g}", ha="center", va="bottom", color=color, fontsize=9)
+            ax.text(x=mean, y=label_height, s=f"mean {mean:.3g}", ha="center", va="bottom", color=color, fontsize=9)
     ax.axvline(0.0, color="0.6", lw=0.8)
     ax.set_xlabel(xlabel)
     ax.set_title(title, loc="left")

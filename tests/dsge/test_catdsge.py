@@ -113,18 +113,20 @@ def test_a_rupee_appreciation_lowers_the_observed_real_exchange_rate():
 def test_an_observable_in_levels_is_scaled_by_its_changes():
     fit_data = pd.DataFrame({"foreign_rate": [1.0, 1.1, 1.2, 1.3], "gdp_growth": [1.0, 1.1, 1.2, 1.3]})
 
-    assert error_scale(fit_data, "foreign_rate") == pytest.approx(0.0, abs=1e-12)
-    assert error_scale(fit_data, "gdp_growth") == pytest.approx(fit_data["gdp_growth"].std())
+    assert error_scale(fit_data, name="foreign_rate") == pytest.approx(0.0, abs=1e-12)
+    assert error_scale(fit_data, name="gdp_growth") == pytest.approx(fit_data["gdp_growth"].std())
 
 
 def test_inflation_and_the_policy_rate_are_annualized_percentage_points():
     irf = xr.DataArray([0.01, 0.01, 0.01], dims=["variable"], coords={"variable": ["pi", "i", "GDP"]})
 
-    assert float(to_display_units(irf, "pi", policy_rate_ss=1.02)) == pytest.approx(100 * QUARTERS_PER_YEAR * 0.01)
-    assert float(to_display_units(irf, "i", policy_rate_ss=1.02)) == pytest.approx(
+    assert float(to_display_units(irf, variable="pi", policy_rate_ss=1.02)) == pytest.approx(
+        100 * QUARTERS_PER_YEAR * 0.01
+    )
+    assert float(to_display_units(irf, variable="i", policy_rate_ss=1.02)) == pytest.approx(
         100 * QUARTERS_PER_YEAR * 1.02 * np.expm1(0.01)
     )
-    assert float(to_display_units(irf, "GDP", policy_rate_ss=1.02)) == pytest.approx(1.0)
+    assert float(to_display_units(irf, variable="GDP", policy_rate_ss=1.02)) == pytest.approx(1.0)
 
 
 def test_unsolved_draws_are_left_out_of_the_response_quantiles():
