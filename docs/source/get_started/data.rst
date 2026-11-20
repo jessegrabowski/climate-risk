@@ -48,6 +48,12 @@ placed at.
      - CC BY 4.0.
      - ``<cache_dir>/pwt100.xlsx``
      - :func:`~climate_risk.data.pwt.load_pwt_data`
+   * - RBI Database on Indian Economy
+     - India's quarterly GDP by expenditure, quarterly balance of payments, monthly CPI by base year
+       and monthly merchandise trade, as four workbooks.
+     - Reserve Bank of India terms of use. Not redistributed with this package.
+     - ``<cache_dir>/rbi/``, under the names DBIE exports them with
+     - :mod:`climate_risk.data.rbi`
 
 Where to obtain each:
 
@@ -56,6 +62,16 @@ Where to obtain each:
 - GADM: https://gadm.org/download_world.html, the "Geopackage" download of version 4.1.
 - Geo-Disasters: https://doi.org/10.5281/zenodo.15487667.
 - Penn World Table: https://www.rug.nl/ggdc/productivity/pwt/, version 10.0.
+- RBI: https://data.rbi.org.in/, the four workbooks exported to ``xlsx`` and placed in
+  ``<cache_dir>/rbi/`` under exactly these names, the space before ``.xlsx`` in the third included:
+
+  - ``Quarterly Estimates of Gross Domestic Product (At Constant Prices) New Series (Base _ 2022-23).xlsx``
+  - ``Indias Overall Balance of Payments - Quarterly - US Dollar.xlsx``
+  - ``Consumer Price Index - Rural, Urban, Combined (State-Wise) .xlsx``
+  - ``Indias Foreign Trade - US Dollar.xlsx``
+
+  Each is pinned to the release retrieved on 2026-09-24 by its SHA-256, because DBIE reissues a
+  workbook under the same name as its data are revised. A later export raises with the hash it found.
 
 Rename the download to the filename in the table. The loaders look for that exact name, and PWT in
 particular publishes under a version-stamped name that does not match.

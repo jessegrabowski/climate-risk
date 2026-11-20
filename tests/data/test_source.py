@@ -1,3 +1,4 @@
+import hashlib
 import re
 
 import pytest
@@ -13,6 +14,7 @@ from climate_risk.data.geonames import COUNTRY_INFO, country_dump
 from climate_risk.data.gpcc import FULL_DATA, MONITORING
 from climate_risk.data.hadcrut import HADCRUT
 from climate_risk.data.ocean_heat import OCEAN_HEAT
+from climate_risk.data.rbi import BALANCE_OF_PAYMENTS, CONSUMER_PRICES, FOREIGN_TRADE, QUARTERLY_GDP
 from climate_risk.data.source import DataSource, ManualSource, ShapefileArchive, VendoredSource
 from climate_risk.data_functions.emdat_processing import EMDAT
 from climate_risk.data_functions.rivers_data_loader import RIVERS
@@ -92,9 +94,39 @@ def test_a_manual_source_reports_its_license_when_the_file_is_missing(tmp_path):
         manual().require(tmp_path)
 
 
+def test_a_pinned_manual_source_accepts_the_release_it_names(tmp_path):
+    (tmp_path / "gadm_410.gpkg").write_bytes(b"release one")
+
+    path = manual(sha256=hashlib.sha256(b"release one").hexdigest()).require(tmp_path)
+
+    assert path == tmp_path / "gadm_410.gpkg"
+
+
+def test_a_pinned_manual_source_refuses_another_release_under_the_same_name(tmp_path):
+    """A publisher reissuing a file under its old name would otherwise change every frame built on it, silently."""
+    (tmp_path / "gadm_410.gpkg").write_bytes(b"release two")
+
+    with pytest.raises(ValueError, match=hashlib.sha256(b"release two").hexdigest()):
+        manual(sha256=hashlib.sha256(b"release one").hexdigest()).require(tmp_path)
+
+
+@pytest.mark.parametrize("digest", ["abc", "A" * 64, "g" * 64], ids=repr)
+def test_a_malformed_sha256_is_rejected(digest):
+    """`hexdigest` is lowercase, so an uppercase or short pin could never match a file."""
+    with pytest.raises(ValueError, match="64 lowercase hex"):
+        manual(sha256=digest)
+
+
 # Every file a person has to place in the cache themselves. A loader that raises for a missing
 # hand-placed file belongs here, so the terms it is held under are recorded in one place.
-MANUAL_SOURCES = {"EMDAT": EMDAT, "GADM": GADM}
+MANUAL_SOURCES = {
+    "EMDAT": EMDAT,
+    "GADM": GADM,
+    "RBI_QUARTERLY_GDP": QUARTERLY_GDP,
+    "RBI_BALANCE_OF_PAYMENTS": BALANCE_OF_PAYMENTS,
+    "RBI_CONSUMER_PRICES": CONSUMER_PRICES,
+    "RBI_FOREIGN_TRADE": FOREIGN_TRADE,
+}
 
 
 @pytest.mark.parametrize("declared", MANUAL_SOURCES.values(), ids=MANUAL_SOURCES.keys())

@@ -1,0 +1,888 @@
+rbi_state,rbi_district,gid,relation,note
+ANDAMAN & NICOBAR,NICOBAR,IND.1.1_1,renamed,Spelling variant of GADM 4.1 'Nicobar Islands'.
+ANDAMAN & NICOBAR,NORTH AND MIDDLE ANDAMAN,IND.1.2_1,same,
+ANDAMAN & NICOBAR,SOUTH ANDAMAN,IND.1.3_1,same,
+ANDAMAN & NICOBAR ISLANDS,NICOBAR,IND.1.1_1,renamed,Spelling variant of GADM 4.1 'Nicobar Islands'.
+ANDAMAN & NICOBAR ISLANDS,NORTH AND MIDDLE ANDAMAN,IND.1.2_1,same,
+ANDAMAN & NICOBAR ISLANDS,SOUTH ANDAMAN,IND.1.3_1,same,
+ANDHRA PRADESH,ADILABAD,IND.32.1_1,same,"RBI files this Telangana district under ANDHRA PRADESH before the state's bifurcation on 2 June 2014 (https://en.wikipedia.org/wiki/Andhra_Pradesh_Reorganisation_Act,_2014); GADM 4.1 files it under Telangana."
+ANDHRA PRADESH,ALLURI SITHARAMA RAJU,IND.2.10_1,carved_from,Created 2022 from Visakhapatnam (Paderu) and East Godavari (Rampachodavaram) (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh).
+ANDHRA PRADESH,ALLURI SITHARAMA RAJU,IND.2.3_1,carved_from,Created 2022 from Visakhapatnam (Paderu) and East Godavari (Rampachodavaram) (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh).
+ANDHRA PRADESH,ANAKAPALLI,IND.2.10_1,carved_from,Created 2022 from Visakhapatnam (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh).
+ANDHRA PRADESH,ANANTAPUR,IND.2.1_1,same,
+ANDHRA PRADESH,ANANTHAPURAMU,IND.2.1_1,renamed,Official spelling of Anantapur since 2022 (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh).
+ANDHRA PRADESH,ANNAMAYYA,IND.2.13_1,carved_from,"Created 2022 from YSR Kadapa (Rajampet, Rayachoti) and Chittoor (Madanapalle) (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh)."
+ANDHRA PRADESH,ANNAMAYYA,IND.2.2_1,carved_from,"Created 2022 from YSR Kadapa (Rajampet, Rayachoti) and Chittoor (Madanapalle) (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh)."
+ANDHRA PRADESH,BAPATLA,IND.2.4_1,carved_from,"Created 2022 from Guntur (Bapatla, Repalle) and Prakasam (Chirala) (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh)."
+ANDHRA PRADESH,BAPATLA,IND.2.8_1,carved_from,"Created 2022 from Guntur (Bapatla, Repalle) and Prakasam (Chirala) (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh)."
+ANDHRA PRADESH,CHITTOOR,IND.2.2_1,same,
+ANDHRA PRADESH,DR. B.R. AMBEDKAR KONASEEMA,IND.2.3_1,carved_from,"Created 2022 from East Godavari as Konaseema, renamed 2022 (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh)."
+ANDHRA PRADESH,EAST GODAVARI,IND.2.3_1,same,
+ANDHRA PRADESH,ELURU,IND.2.12_1,carved_from,"Created 2022 from West Godavari (Eluru, Jangareddygudem) and Krishna (Nuzvid) (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh)."
+ANDHRA PRADESH,ELURU,IND.2.5_1,carved_from,"Created 2022 from West Godavari (Eluru, Jangareddygudem) and Krishna (Nuzvid) (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh)."
+ANDHRA PRADESH,GUNTUR,IND.2.4_1,same,
+ANDHRA PRADESH,HYDERABAD,IND.32.2_1,same,"RBI files this Telangana district under ANDHRA PRADESH before the state's bifurcation on 2 June 2014 (https://en.wikipedia.org/wiki/Andhra_Pradesh_Reorganisation_Act,_2014); GADM 4.1 files it under Telangana."
+ANDHRA PRADESH,KAKINADA,IND.2.3_1,carved_from,Created 2022 from East Godavari (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh).
+ANDHRA PRADESH,KARIMNAGAR,IND.32.3_1,same,"RBI files this Telangana district under ANDHRA PRADESH before the state's bifurcation on 2 June 2014 (https://en.wikipedia.org/wiki/Andhra_Pradesh_Reorganisation_Act,_2014); GADM 4.1 files it under Telangana."
+ANDHRA PRADESH,KHAMMAM,IND.32.4_1,same,"RBI files this Telangana district under ANDHRA PRADESH before the state's bifurcation on 2 June 2014 (https://en.wikipedia.org/wiki/Andhra_Pradesh_Reorganisation_Act,_2014); GADM 4.1 files it under Telangana."
+ANDHRA PRADESH,KONASEEMA,IND.2.3_1,carved_from,Created 2022 from East Godavari; renamed Dr. B.R. Ambedkar Konaseema (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh).
+ANDHRA PRADESH,KRISHNA,IND.2.5_1,same,
+ANDHRA PRADESH,KURNOOL,IND.2.6_1,same,
+ANDHRA PRADESH,MAHBUBNAGAR,IND.32.5_1,same,"RBI files this Telangana district under ANDHRA PRADESH before the state's bifurcation on 2 June 2014 (https://en.wikipedia.org/wiki/Andhra_Pradesh_Reorganisation_Act,_2014); GADM 4.1 files it under Telangana."
+ANDHRA PRADESH,MEDAK,IND.32.6_1,same,"RBI files this Telangana district under ANDHRA PRADESH before the state's bifurcation on 2 June 2014 (https://en.wikipedia.org/wiki/Andhra_Pradesh_Reorganisation_Act,_2014); GADM 4.1 files it under Telangana."
+ANDHRA PRADESH,NALGONDA,IND.32.7_1,same,"RBI files this Telangana district under ANDHRA PRADESH before the state's bifurcation on 2 June 2014 (https://en.wikipedia.org/wiki/Andhra_Pradesh_Reorganisation_Act,_2014); GADM 4.1 files it under Telangana."
+ANDHRA PRADESH,NANDYAL,IND.2.6_1,carved_from,Created 2022 from Kurnool (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh).
+ANDHRA PRADESH,NIZAMABAD,IND.32.8_1,same,"RBI files this Telangana district under ANDHRA PRADESH before the state's bifurcation on 2 June 2014 (https://en.wikipedia.org/wiki/Andhra_Pradesh_Reorganisation_Act,_2014); GADM 4.1 files it under Telangana."
+ANDHRA PRADESH,NTR,IND.2.5_1,carved_from,Created 2022 from Krishna (Vijayawada) (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh).
+ANDHRA PRADESH,PALNADU,IND.2.4_1,carved_from,Created 2022 from Guntur (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh).
+ANDHRA PRADESH,PARVATHIPURAM MANYAM,IND.2.11_1,carved_from,Created 2022 from Vizianagaram (Parvathipuram) and Srikakulam (Palakonda) (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh).
+ANDHRA PRADESH,PARVATHIPURAM MANYAM,IND.2.9_1,carved_from,Created 2022 from Vizianagaram (Parvathipuram) and Srikakulam (Palakonda) (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh).
+ANDHRA PRADESH,PRAKASAM,IND.2.8_1,same,
+ANDHRA PRADESH,RANGAREDDI,IND.32.9_1,renamed,"Spelling variant of GADM 4.1 'Ranga Reddy'. RBI files this Telangana district under ANDHRA PRADESH before the state's bifurcation on 2 June 2014 (https://en.wikipedia.org/wiki/Andhra_Pradesh_Reorganisation_Act,_2014); GADM 4.1 files it under Telangana."
+ANDHRA PRADESH,SRI POTTI SRIRAMULU NELLORE,IND.2.7_1,renamed,Official name of Nellore district (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh).
+ANDHRA PRADESH,SRI SATHYA SAI,IND.2.1_1,carved_from,Created 2022 from Anantapur (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh).
+ANDHRA PRADESH,SRIKAKULAM,IND.2.9_1,same,
+ANDHRA PRADESH,TIRUPATI,IND.2.2_1,carved_from,"Created 2022 from Chittoor (Tirupati, Srikalahasti) and Nellore (Gudur, Naidupeta) (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh)."
+ANDHRA PRADESH,TIRUPATI,IND.2.7_1,carved_from,"Created 2022 from Chittoor (Tirupati, Srikalahasti) and Nellore (Gudur, Naidupeta) (https://en.wikipedia.org/wiki/List_of_districts_of_Andhra_Pradesh)."
+ANDHRA PRADESH,VISAKHAPATNAM,IND.2.10_1,same,
+ANDHRA PRADESH,VIZIANAGARAM,IND.2.11_1,same,
+ANDHRA PRADESH,WARANGAL,IND.32.10_1,same,"RBI files this Telangana district under ANDHRA PRADESH before the state's bifurcation on 2 June 2014 (https://en.wikipedia.org/wiki/Andhra_Pradesh_Reorganisation_Act,_2014); GADM 4.1 files it under Telangana."
+ANDHRA PRADESH,WEST GODAVARI,IND.2.12_1,same,
+ANDHRA PRADESH,Y.S.R.,IND.2.13_1,same,
+ARUNACHAL PRADESH,ANJAW,IND.3.1_1,same,GADM 4.1 files the part of Anjaw that China claims under Z07 (Z07.3.1_1); the district is the union of IND.3.1_1 and Z07.3.1_1.
+ARUNACHAL PRADESH,ANJAW,Z07.3.1_1,same,GADM 4.1 files the part of Anjaw that China claims under Z07 (Z07.3.1_1); the district is the union of IND.3.1_1 and Z07.3.1_1.
+ARUNACHAL PRADESH,CHUNGLANG,IND.3.2_1,renamed,Spelling variant of GADM 4.1 'Changlang'.
+ARUNACHAL PRADESH,DIBANG VALLEY,Z07.3.3_1,same,
+ARUNACHAL PRADESH,EAST KAMENG,Z07.3.4_1,same,
+ARUNACHAL PRADESH,EAST SIANG,IND.3.5_1,same,GADM 4.1 files the part of East Siang that China claims under Z07 (Z07.3.5_1); the district is the union of IND.3.5_1 and Z07.3.5_1.
+ARUNACHAL PRADESH,EAST SIANG,Z07.3.5_1,same,GADM 4.1 files the part of East Siang that China claims under Z07 (Z07.3.5_1); the district is the union of IND.3.5_1 and Z07.3.5_1.
+ARUNACHAL PRADESH,KAMLE,Z07.3.10_1,carved_from,Created 2017 from Lower Subansiri and three circles of Upper Subansiri (https://en.wikipedia.org/wiki/Kamle_district).
+ARUNACHAL PRADESH,KAMLE,Z07.3.16_1,carved_from,Created 2017 from Lower Subansiri and three circles of Upper Subansiri (https://en.wikipedia.org/wiki/Kamle_district).
+ARUNACHAL PRADESH,KRA DAADI,Z07.3.6_1,carved_from,Created 2015 from Kurung Kumey (https://en.wikipedia.org/wiki/List_of_districts_of_Arunachal_Pradesh).
+ARUNACHAL PRADESH,KURUNG KUMEY,Z07.3.6_1,same,
+ARUNACHAL PRADESH,LEPARADA,Z07.3.18_1,carved_from,"Created 2018 from Lower Siang, itself carved from West Siang (https://en.wikipedia.org/wiki/List_of_districts_of_Arunachal_Pradesh)."
+ARUNACHAL PRADESH,LOHIT,IND.3.7_1,same,GADM 4.1 files the part of Lohit that China claims under Z07 (Z07.3.7_1); the district is the union of IND.3.7_1 and Z07.3.7_1.
+ARUNACHAL PRADESH,LOHIT,Z07.3.7_1,same,GADM 4.1 files the part of Lohit that China claims under Z07 (Z07.3.7_1); the district is the union of IND.3.7_1 and Z07.3.7_1.
+ARUNACHAL PRADESH,LONGDING,IND.3.8_1,same,
+ARUNACHAL PRADESH,LOWER DIBANG VALLEY,IND.3.9_1,same,GADM 4.1 files the part of Lower Dibang Valley that China claims under Z07 (Z07.3.9_1); the district is the union of IND.3.9_1 and Z07.3.9_1.
+ARUNACHAL PRADESH,LOWER DIBANG VALLEY,Z07.3.9_1,same,GADM 4.1 files the part of Lower Dibang Valley that China claims under Z07 (Z07.3.9_1); the district is the union of IND.3.9_1 and Z07.3.9_1.
+ARUNACHAL PRADESH,LOWER SIANG,IND.3.5_1,carved_from,GADM 4.1 files the part of East Siang that China claims under Z07 (Z07.3.5_1); the district is the union of IND.3.5_1 and Z07.3.5_1. Created 2017 (approved 2013) from West Siang and East Siang (https://en.wikipedia.org/wiki/Lower_Siang_district).
+ARUNACHAL PRADESH,LOWER SIANG,Z07.3.18_1,carved_from,Created 2017 (approved 2013) from West Siang and East Siang (https://en.wikipedia.org/wiki/Lower_Siang_district).
+ARUNACHAL PRADESH,LOWER SIANG,Z07.3.5_1,carved_from,GADM 4.1 files the part of East Siang that China claims under Z07 (Z07.3.5_1); the district is the union of IND.3.5_1 and Z07.3.5_1. Created 2017 (approved 2013) from West Siang and East Siang (https://en.wikipedia.org/wiki/Lower_Siang_district).
+ARUNACHAL PRADESH,LOWER SUBANSIRI,Z07.3.10_1,same,
+ARUNACHAL PRADESH,NAMSAI,IND.3.11_1,same,
+ARUNACHAL PRADESH,PAKKE KESSANG,Z07.3.4_1,carved_from,Created 2018 from East Kameng (https://en.wikipedia.org/wiki/List_of_districts_of_Arunachal_Pradesh).
+ARUNACHAL PRADESH,PAPUMPARE,Z07.3.12_1,same,
+ARUNACHAL PRADESH,SHI-YOMI,Z07.3.18_1,carved_from,Created 2018 from West Siang (https://en.wikipedia.org/wiki/List_of_districts_of_Arunachal_Pradesh).
+ARUNACHAL PRADESH,SIANG,IND.3.5_1,carved_from,GADM 4.1 files the part of East Siang that China claims under Z07 (Z07.3.5_1); the district is the union of IND.3.5_1 and Z07.3.5_1. Created 2015 from West Siang and East Siang (https://en.wikipedia.org/wiki/Siang_district).
+ARUNACHAL PRADESH,SIANG,Z07.3.18_1,carved_from,Created 2015 from West Siang and East Siang (https://en.wikipedia.org/wiki/Siang_district).
+ARUNACHAL PRADESH,SIANG,Z07.3.5_1,carved_from,GADM 4.1 files the part of East Siang that China claims under Z07 (Z07.3.5_1); the district is the union of IND.3.5_1 and Z07.3.5_1. Created 2015 from West Siang and East Siang (https://en.wikipedia.org/wiki/Siang_district).
+ARUNACHAL PRADESH,TAWANG,Z07.3.13_1,same,
+ARUNACHAL PRADESH,TIRAP,IND.3.14_1,same,
+ARUNACHAL PRADESH,UPPER SIANG,Z07.3.15_1,same,
+ARUNACHAL PRADESH,UPPER SUBANSIRI,Z07.3.16_1,same,
+ARUNACHAL PRADESH,WEST KAMENG,Z07.3.17_1,same,
+ARUNACHAL PRADESH,WEST SIANG,Z07.3.18_1,same,
+ASSAM,BAJALI,IND.4.2_1,carved_from,Created 2020 from Barpeta; merged back into Barpeta on 31 December 2022 and re-created from 2023 (https://en.wikipedia.org/wiki/List_of_districts_of_Assam).
+ASSAM,BAKSA,IND.4.1_1,same,
+ASSAM,BARPETA,IND.4.2_1,same,
+ASSAM,BISWANATH,IND.4.25_1,carved_from,Created 2015 from Sonitpur; merged back into Sonitpur on 31 December 2022 and re-created from 2023 (https://en.wikipedia.org/wiki/List_of_districts_of_Assam).
+ASSAM,BONGAIGAON,IND.4.3_1,same,
+ASSAM,CACHAR,IND.4.4_1,same,
+ASSAM,CHARAIDEO,IND.4.24_1,carved_from,Created 2015 from Sivasagar (https://en.wikipedia.org/wiki/List_of_districts_of_Assam).
+ASSAM,CHIRANG,IND.4.5_1,same,
+ASSAM,DARRANG,IND.4.6_1,same,
+ASSAM,DHEMAJI,IND.4.7_1,same,
+ASSAM,DHUBRI,IND.4.8_1,same,
+ASSAM,DIBRUGARH,IND.4.9_1,same,
+ASSAM,DIMA HASAO,IND.4.10_1,same,
+ASSAM,GOALPARA,IND.4.11_1,same,
+ASSAM,GOLAGHAT,IND.4.12_1,same,
+ASSAM,HAILAKANDI,IND.4.13_1,same,
+ASSAM,HOJAI,IND.4.22_1,carved_from,Created 2015 from Nagaon; merged back into Nagaon on 31 December 2022 and re-created from 2023 (https://en.wikipedia.org/wiki/List_of_districts_of_Assam).
+ASSAM,JORHAT,IND.4.14_1,same,
+ASSAM,KAMRUP,IND.4.16_1,same,
+ASSAM,KAMRUP METROPOLITAN,IND.4.15_1,same,
+ASSAM,KARBI ANGLONG,IND.4.17_1,same,
+ASSAM,KARIMGANJ,IND.4.18_1,same,
+ASSAM,KOKRAJHAR,IND.4.19_1,same,
+ASSAM,LAKHIMPUR,IND.4.20_1,same,
+ASSAM,MAJULI,IND.4.14_1,carved_from,Created 2016 from Jorhat (https://en.wikipedia.org/wiki/List_of_districts_of_Assam).
+ASSAM,MORIGAON,IND.4.21_1,same,
+ASSAM,NAGAON,IND.4.22_1,same,
+ASSAM,NALBARI,IND.4.23_1,same,
+ASSAM,NORTH CACHAR HILLS,IND.4.10_1,renamed,Renamed Dima Hasao in 2010 (https://en.wikipedia.org/wiki/List_of_districts_of_Assam).
+ASSAM,SIBSAGAR,IND.4.24_1,renamed,Spelling variant of GADM 4.1 'Sivasagar'.
+ASSAM,SONITPUR,IND.4.25_1,same,
+ASSAM,SOUTH SALMARA-MANKACHAR,IND.4.8_1,carved_from,Created 2015 from Dhubri (https://en.wikipedia.org/wiki/List_of_districts_of_Assam).
+ASSAM,TAMULPUR,IND.4.1_1,carved_from,Created 2022 from Baksa; merged back into Baksa on 31 December 2022 and re-created from 2023 (https://en.wikipedia.org/wiki/List_of_districts_of_Assam).
+ASSAM,TINSUKIA,IND.4.26_1,same,
+ASSAM,UDALGURI,IND.4.27_1,same,
+ASSAM,WEST KARBI ANGLONG,IND.4.17_1,carved_from,Created 2016 from Karbi Anglong (https://en.wikipedia.org/wiki/List_of_districts_of_Assam).
+BIHAR,ARARIA,IND.5.1_1,same,
+BIHAR,ARWAL,IND.5.2_1,same,
+BIHAR,AURANGABAD,IND.5.3_1,same,
+BIHAR,BANKA,IND.5.4_1,same,
+BIHAR,BEGUSARAI,IND.5.5_1,same,
+BIHAR,BHAGALPUR,IND.5.6_1,same,
+BIHAR,BHOJPUR,IND.5.7_1,same,
+BIHAR,BUXAR,IND.5.8_1,same,
+BIHAR,DARBHANGA,IND.5.9_1,same,
+BIHAR,GAYA,IND.5.10_1,same,
+BIHAR,GOPALGANJ,IND.5.11_1,same,
+BIHAR,JAMUI,IND.5.12_1,same,
+BIHAR,JEHANABAD,IND.5.13_1,same,
+BIHAR,KAIMUR,IND.5.14_1,same,
+BIHAR,KATIHAR,IND.5.15_1,same,
+BIHAR,KHAGARIA,IND.5.16_1,same,
+BIHAR,KISHANGANJ,IND.5.17_1,same,
+BIHAR,LAKHISARAI,IND.5.18_1,same,
+BIHAR,MADHEPURA,IND.5.19_1,same,
+BIHAR,MADHUBANI,IND.5.20_1,same,
+BIHAR,MUNGER,IND.5.21_1,same,
+BIHAR,MUZAFFARPUR,IND.5.22_1,same,
+BIHAR,NALANDA,IND.5.23_1,same,
+BIHAR,NAWADA,IND.5.24_1,same,
+BIHAR,PASCHIMI CHAMPARAN,IND.5.25_1,renamed,Spelling variant of GADM 4.1 'Pashchim Champaran'.
+BIHAR,PATNA,IND.5.26_1,same,
+BIHAR,PURBI CHAMPARAN,IND.5.27_1,renamed,Spelling variant of GADM 4.1 'Purba Champaran'.
+BIHAR,PURNIA,IND.5.28_1,same,
+BIHAR,ROHTAS,IND.5.29_1,same,
+BIHAR,SAHARSA,IND.5.30_1,same,
+BIHAR,SAMASTIPUR,IND.5.31_1,same,
+BIHAR,SARAN,IND.5.32_1,same,
+BIHAR,SHEIKHPURA,IND.5.33_1,same,
+BIHAR,SHEOHAR,IND.5.34_1,same,
+BIHAR,SITAMARHI,IND.5.35_1,same,
+BIHAR,SIWAN,IND.5.36_1,same,
+BIHAR,SUPAUL,IND.5.37_1,same,
+BIHAR,VAISHALI,IND.5.38_1,same,
+CHANDIGARH,CHANDIGARH,IND.6.1_1,same,
+CHHATTISGARH,BALOD,IND.7.2_1,same,
+CHHATTISGARH,BALODABAZAR,IND.7.1_1,same,
+CHHATTISGARH,BALRAMPUR,IND.7.3_1,same,
+CHHATTISGARH,BASTAR,IND.7.4_1,same,
+CHHATTISGARH,BEMETARA,IND.7.5_1,same,
+CHHATTISGARH,BIJAPUR,IND.7.6_1,same,
+CHHATTISGARH,BILASPUR,IND.7.7_1,same,
+CHHATTISGARH,DAKSHIN BASTAR DANTEWADA,IND.7.8_1,renamed,Official name of Dantewada district (https://en.wikipedia.org/wiki/List_of_districts_of_Chhattisgarh).
+CHHATTISGARH,DANTEWADA,IND.7.8_1,same,
+CHHATTISGARH,DHAMTARI,IND.7.9_1,same,
+CHHATTISGARH,DURG,IND.7.10_1,same,
+CHHATTISGARH,GARIYABAND,IND.7.11_1,renamed,Spelling variant of GADM 4.1 'Gariaband'.
+CHHATTISGARH,GAURELA-PENDRA-MARWAHI,IND.7.7_1,carved_from,Created 2020 from Bilaspur (https://en.wikipedia.org/wiki/List_of_districts_of_Chhattisgarh).
+CHHATTISGARH,JANJGIR-CHAMPA,IND.7.12_1,same,
+CHHATTISGARH,JASHPUR,IND.7.13_1,same,
+CHHATTISGARH,KABEERDHAM,IND.7.14_1,same,
+CHHATTISGARH,KANKER,IND.7.27_1,renamed,Short name of Uttar Bastar Kanker (https://en.wikipedia.org/wiki/List_of_districts_of_Chhattisgarh).
+CHHATTISGARH,KAWARDHA,IND.7.14_1,renamed,"Kabirdham district, named for its seat Kawardha (https://en.wikipedia.org/wiki/List_of_districts_of_Chhattisgarh). GADM 4.1 names it 'Kabeerdham'."
+CHHATTISGARH,KHAIRAGARH-CHHUIKHADAN-GANDAI,IND.7.23_1,carved_from,Created 2022 from Rajnandgaon (https://en.wikipedia.org/wiki/List_of_districts_of_Chhattisgarh).
+CHHATTISGARH,KONDAGAON,IND.7.15_1,same,
+CHHATTISGARH,KORBA,IND.7.16_1,same,
+CHHATTISGARH,KORIYA,IND.7.17_1,same,
+CHHATTISGARH,MAHASAMUND,IND.7.18_1,same,
+CHHATTISGARH,MANENDRAGARH-CHIRMIRI-BHARATPUR,IND.7.17_1,carved_from,Created 2022 from Koriya (https://en.wikipedia.org/wiki/List_of_districts_of_Chhattisgarh).
+CHHATTISGARH,MOHLA-MANPUR-AMBAGARH CHOUKI,IND.7.23_1,carved_from,Created 2022 from Rajnandgaon (https://en.wikipedia.org/wiki/List_of_districts_of_Chhattisgarh).
+CHHATTISGARH,MUNGELI,IND.7.19_1,same,
+CHHATTISGARH,NARAYANPUR,IND.7.20_1,same,
+CHHATTISGARH,RAIGARH,IND.7.21_1,same,
+CHHATTISGARH,RAIPUR,IND.7.22_1,same,
+CHHATTISGARH,RAJNANDGAON,IND.7.23_1,same,
+CHHATTISGARH,SAKTI,IND.7.12_1,carved_from,Created 2022 from Janjgir-Champa (https://en.wikipedia.org/wiki/List_of_districts_of_Chhattisgarh).
+CHHATTISGARH,SARANGARH-BILAIGARH,IND.7.1_1,carved_from,Created 2022 from Raigarh (Sarangarh) and Baloda Bazar (Bilaigarh) (https://en.wikipedia.org/wiki/List_of_districts_of_Chhattisgarh).
+CHHATTISGARH,SARANGARH-BILAIGARH,IND.7.21_1,carved_from,Created 2022 from Raigarh (Sarangarh) and Baloda Bazar (Bilaigarh) (https://en.wikipedia.org/wiki/List_of_districts_of_Chhattisgarh).
+CHHATTISGARH,SUKMA,IND.7.24_1,same,
+CHHATTISGARH,SURAJPUR,IND.7.25_1,same,
+CHHATTISGARH,SURGUJA,IND.7.26_1,same,
+CHHATTISGARH,UTTAR BASTAR KANKER,IND.7.27_1,same,
+DADRA & NAGAR HAVELI,DADRA&NAGAR HAVELI,IND.8.1_1,same,"GADM 4.1 keeps Dadra and Nagar Haveli (IND.8_1) and Daman and Diu (IND.9_1) as two states; the RBI files them under DADRA & NAGAR HAVELI and DAMAN & DIU until 2019 and under the merged UT from 2020 (merger of 26 January 2020, https://en.wikipedia.org/wiki/Dadra_and_Nagar_Haveli_and_Daman_and_Diu)."
+DADRA AND NAGAR HAVELI AND DAMAN AND DIU,DADRA&NAGAR HAVELI,IND.8.1_1,same,"GADM 4.1 keeps Dadra and Nagar Haveli (IND.8_1) and Daman and Diu (IND.9_1) as two states; the RBI files them under DADRA & NAGAR HAVELI and DAMAN & DIU until 2019 and under the merged UT from 2020 (merger of 26 January 2020, https://en.wikipedia.org/wiki/Dadra_and_Nagar_Haveli_and_Daman_and_Diu)."
+DADRA AND NAGAR HAVELI AND DAMAN AND DIU,DAMAN,IND.9.1_1,same,"GADM 4.1 keeps Dadra and Nagar Haveli (IND.8_1) and Daman and Diu (IND.9_1) as two states; the RBI files them under DADRA & NAGAR HAVELI and DAMAN & DIU until 2019 and under the merged UT from 2020 (merger of 26 January 2020, https://en.wikipedia.org/wiki/Dadra_and_Nagar_Haveli_and_Daman_and_Diu)."
+DADRA AND NAGAR HAVELI AND DAMAN AND DIU,DIU,IND.9.2_1,same,"GADM 4.1 keeps Dadra and Nagar Haveli (IND.8_1) and Daman and Diu (IND.9_1) as two states; the RBI files them under DADRA & NAGAR HAVELI and DAMAN & DIU until 2019 and under the merged UT from 2020 (merger of 26 January 2020, https://en.wikipedia.org/wiki/Dadra_and_Nagar_Haveli_and_Daman_and_Diu)."
+DAMAN & DIU,DAMAN,IND.9.1_1,same,"GADM 4.1 keeps Dadra and Nagar Haveli (IND.8_1) and Daman and Diu (IND.9_1) as two states; the RBI files them under DADRA & NAGAR HAVELI and DAMAN & DIU until 2019 and under the merged UT from 2020 (merger of 26 January 2020, https://en.wikipedia.org/wiki/Dadra_and_Nagar_Haveli_and_Daman_and_Diu)."
+DAMAN & DIU,DIU,IND.9.2_1,same,"GADM 4.1 keeps Dadra and Nagar Haveli (IND.8_1) and Daman and Diu (IND.9_1) as two states; the RBI files them under DADRA & NAGAR HAVELI and DAMAN & DIU until 2019 and under the merged UT from 2020 (merger of 26 January 2020, https://en.wikipedia.org/wiki/Dadra_and_Nagar_Haveli_and_Daman_and_Diu)."
+DELHI,NEW DELHI,IND.25.1_1,renamed,"GADM 4.1 holds the whole NCT of Delhi as a single level-2 unit, IND.25.1_1, named 'West' (about 1500 km2). Statement 4A and BSR-1 before 2017 report all of Delhi under NEW DELHI (2023Q1 4A credit 14.9 lakh crore against 15.4 lakh crore summed over BSR-1's eleven Delhi districts); from 2017 BSR-1 splits out ten other districts and NEW DELHI is one of eleven, still inside this unit."
+GOA,KUSHAVATI,IND.10.2_1,carved_from,Created 2025 (notified 31 December) from South Goa (https://en.wikipedia.org/wiki/Kushavati_district).
+GOA,NORTH GOA,IND.10.1_1,same,
+GOA,SOUTH GOA,IND.10.2_1,same,
+GUJARAT,AHMEDABAD,IND.11.1_1,renamed,Spelling variant of GADM 4.1 'Ahmadabad'.
+GUJARAT,AMRELI,IND.11.2_1,same,
+GUJARAT,ANAND,IND.11.3_1,same,
+GUJARAT,ARAVALLI,IND.11.4_1,same,
+GUJARAT,BANAS KANTHA,IND.11.5_1,same,
+GUJARAT,BHARUCH,IND.11.6_1,same,
+GUJARAT,BHAVNAGAR,IND.11.7_1,same,
+GUJARAT,BOTAD,IND.11.8_1,same,
+GUJARAT,CHHOTAUDEPUR,IND.11.9_1,renamed,Spelling variant of GADM 4.1 'Chhota Udaipur'.
+GUJARAT,DANGS,IND.11.31_1,renamed,Spelling variant of GADM 4.1 'The Dangs'.
+GUJARAT,DEVBHUMI DWARKA,IND.11.11_1,same,
+GUJARAT,DOHAD,IND.11.10_1,renamed,Spelling variant of GADM 4.1 'Dahod'.
+GUJARAT,GANDHINAGAR,IND.11.12_1,same,
+GUJARAT,GIR SOMNATH,IND.11.13_1,same,
+GUJARAT,JAMNAGAR,IND.11.14_1,same,
+GUJARAT,JUNAGADH,IND.11.15_1,same,
+GUJARAT,KACHCHH,IND.11.16_1,same,
+GUJARAT,KHEDA,IND.11.17_1,same,
+GUJARAT,MAHESANA,IND.11.18_1,same,
+GUJARAT,MAHISAGAR,IND.11.19_1,same,
+GUJARAT,MORBI,IND.11.20_1,same,
+GUJARAT,NARMADA,IND.11.21_1,same,
+GUJARAT,NAVSARI,IND.11.22_1,same,
+GUJARAT,PANCH MAHALS,IND.11.23_1,same,
+GUJARAT,PATAN,IND.11.24_1,same,
+GUJARAT,PORBANDAR,IND.11.25_1,same,
+GUJARAT,RAJKOT,IND.11.26_1,same,
+GUJARAT,SABAR KANTHA,IND.11.27_1,same,
+GUJARAT,SURAT,IND.11.28_1,same,
+GUJARAT,SURENDRANAGAR,IND.11.29_1,same,
+GUJARAT,TAPI,IND.11.30_1,same,
+GUJARAT,VADODARA,IND.11.32_1,same,
+GUJARAT,VALSAD,IND.11.33_1,same,
+GUJARAT,VAV-THARAD,IND.11.5_1,carved_from,"Created 2025 (announced January, in force October) from Banaskantha (https://en.wikipedia.org/wiki/Vav-Tharad_district)."
+HARYANA,AMBALA,IND.12.1_1,same,
+HARYANA,BHIWANI,IND.12.2_1,same,
+HARYANA,CHARKI DADRI,IND.12.2_1,carved_from,Created 2016 from Bhiwani (https://en.wikipedia.org/wiki/List_of_districts_of_Haryana).
+HARYANA,FARIDABAD,IND.12.3_1,same,
+HARYANA,FATEHABAD,IND.12.4_1,same,
+HARYANA,GURGAON,IND.12.5_1,same,
+HARYANA,GURUGRAM,IND.12.5_1,renamed,Renamed Gurugram in 2016 (https://en.wikipedia.org/wiki/List_of_districts_of_Haryana). GADM 4.1 names it 'Gurgaon'.
+HARYANA,HANSI,IND.12.6_1,carved_from,Created 2025 (notified 22 December) from Hisar (https://en.wikipedia.org/wiki/Hansi_district).
+HARYANA,HISAR,IND.12.6_1,same,
+HARYANA,JHAJJAR,IND.12.7_1,same,
+HARYANA,JIND,IND.12.8_1,same,
+HARYANA,KAITHAL,IND.12.9_1,same,
+HARYANA,KARNAL,IND.12.10_1,same,
+HARYANA,KURUKSHETRA,IND.12.11_1,same,
+HARYANA,MAHENDRAGARH,IND.12.12_1,same,
+HARYANA,MEWAT,IND.12.13_1,same,
+HARYANA,NUH,IND.12.13_1,renamed,Mewat district renamed Nuh in 2016 (https://en.wikipedia.org/wiki/List_of_districts_of_Haryana).
+HARYANA,PALWAL,IND.12.14_1,same,
+HARYANA,PANCHKULA,IND.12.15_1,same,
+HARYANA,PANIPAT,IND.12.16_1,same,
+HARYANA,REWARI,IND.12.17_1,same,
+HARYANA,ROHTAK,IND.12.18_1,same,
+HARYANA,SIRSA,IND.12.19_1,same,
+HARYANA,SONIPAT,IND.12.20_1,same,
+HARYANA,YAMUNANAGAR,IND.12.21_1,same,
+HIMACHAL PRADESH,BILASPUR,IND.13.1_1,same,
+HIMACHAL PRADESH,CHAMBA,IND.13.2_1,same,
+HIMACHAL PRADESH,HAMIRPUR,IND.13.3_1,same,
+HIMACHAL PRADESH,KANGRA,IND.13.4_1,same,
+HIMACHAL PRADESH,KINNAUR,IND.13.5_1,same,GADM 4.1 files the part of Kinnaur that China claims under Z09 (Z09.13.5_1); the district is the union of IND.13.5_1 and Z09.13.5_1.
+HIMACHAL PRADESH,KINNAUR,Z04.13.5_1,same,GADM 4.1 files the part of Kinnaur that China claims under Z04 (Z04.13.5_1); the district is the union of IND.13.5_1 and Z04.13.5_1.
+HIMACHAL PRADESH,KINNAUR,Z09.13.5_1,same,GADM 4.1 files the part of Kinnaur that China claims under Z09 (Z09.13.5_1); the district is the union of IND.13.5_1 and Z09.13.5_1.
+HIMACHAL PRADESH,KULU,IND.13.6_1,renamed,Spelling variant of GADM 4.1 'Kullu'.
+HIMACHAL PRADESH,LAHUL & SPITI,IND.13.7_1,same,GADM 4.1 files the part of Lahul & Spiti that China claims under Z04 (Z04.13.7_1); the district is the union of IND.13.7_1 and Z04.13.7_1.
+HIMACHAL PRADESH,LAHUL & SPITI,Z04.13.7_1,same,GADM 4.1 files the part of Lahul & Spiti that China claims under Z04 (Z04.13.7_1); the district is the union of IND.13.7_1 and Z04.13.7_1.
+HIMACHAL PRADESH,MANDI,IND.13.8_1,same,
+HIMACHAL PRADESH,SHIMLA,IND.13.9_1,same,
+HIMACHAL PRADESH,SIRMAUR,IND.13.10_1,same,
+HIMACHAL PRADESH,SOLAN,IND.13.11_1,same,
+HIMACHAL PRADESH,UNA,IND.13.12_1,same,
+JAMMU & KASHMIR,ANANTNAG,Z01.14.1_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,BADGAM,Z01.14.2_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,BANDIPORA,Z01.14.3_1,renamed,"Spelling variant of GADM 4.1 'Bandipore'. GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,BARAMULLA,Z01.14.4_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,DODA,Z01.14.5_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,GANDERBAL,Z01.14.6_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,JAMMU,Z01.14.7_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,KARGIL,Z01.14.8_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,KATHUA,Z01.14.9_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,KISHTWAR,Z01.14.10_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,KULGAM,Z01.14.11_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,KUPWARA,Z01.14.12_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,LEH LADAKH,Z01.14.13_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,POONCH,Z01.14.14_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,PULWAMA,Z01.14.15_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,RAJOURI,Z01.14.16_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,RAMBAN,Z01.14.17_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,REASI,Z01.14.18_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,SAMBA,Z01.14.19_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,SHOPIAN,Z01.14.20_1,renamed,"Spelling variant of GADM 4.1 'Shupiyan'. GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,SRINAGAR,Z01.14.21_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JAMMU & KASHMIR,UDHAMPUR,Z01.14.22_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+JHARKHAND,BOKARO,IND.15.1_1,same,
+JHARKHAND,CHATRA,IND.15.2_1,same,
+JHARKHAND,DEOGHAR,IND.15.3_1,same,
+JHARKHAND,DHANBAD,IND.15.4_1,same,
+JHARKHAND,DUMKA,IND.15.5_1,same,
+JHARKHAND,GARHWA,IND.15.6_1,same,
+JHARKHAND,GIRIDIH,IND.15.7_1,same,
+JHARKHAND,GODDA,IND.15.8_1,same,
+JHARKHAND,GUMLA,IND.15.9_1,same,
+JHARKHAND,HAZARIBAG,IND.15.10_1,renamed,Spelling variant of GADM 4.1 'Hazaribagh'.
+JHARKHAND,JAMTARA,IND.15.11_1,same,
+JHARKHAND,KHUNTI,IND.15.12_1,same,
+JHARKHAND,KODERMA,IND.15.13_1,renamed,Spelling variant of GADM 4.1 'Kodarma'.
+JHARKHAND,LATEHAR,IND.15.14_1,same,
+JHARKHAND,LOHARDAGGA,IND.15.15_1,renamed,Spelling variant of GADM 4.1 'Lohardaga'.
+JHARKHAND,PAKUR,IND.15.16_1,same,
+JHARKHAND,PALAMAU,IND.15.17_1,renamed,Spelling variant of GADM 4.1 'Palamu'.
+JHARKHAND,PASCHIMI SINGHBHUM,IND.15.18_1,renamed,Spelling variant of GADM 4.1 'Pashchimi Singhbhum'.
+JHARKHAND,PURBI SINGHBHUM,IND.15.19_1,same,
+JHARKHAND,RAMGARH,IND.15.20_1,same,
+JHARKHAND,RANCHI,IND.15.21_1,same,
+JHARKHAND,SAHEBGANJ,IND.15.22_1,renamed,Spelling variant of GADM 4.1 'Sahibganj'.
+JHARKHAND,SERAIKELA-KHARSAWAN,IND.15.23_1,renamed,Spelling variant of GADM 4.1 'Saraikela-kharsawan'.
+JHARKHAND,SIMDEGA,IND.15.24_1,same,
+KARNATAKA,BAGALKOTE,IND.16.1_1,renamed,Spelling variant of GADM 4.1 'Bagalkot'.
+KARNATAKA,BALLARI,IND.16.5_1,renamed,Renamed Ballari in 2014 (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka). GADM 4.1 names it 'Bellary'.
+KARNATAKA,BANGALORE RURAL,IND.16.2_1,same,
+KARNATAKA,BANGALORE URBAN,IND.16.3_1,renamed,GADM 4.1 names Bangalore Urban district 'Bangalore' (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka).
+KARNATAKA,BANGALURU RURAL,IND.16.2_1,renamed,"Bengaluru Rural, renamed from Bangalore Rural in 2014 (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka)."
+KARNATAKA,BELAGAVI,IND.16.4_1,renamed,Renamed Belagavi in 2014 (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka). GADM 4.1 names it 'Belgaum'.
+KARNATAKA,BELGAUM,IND.16.4_1,same,
+KARNATAKA,BELLARY,IND.16.5_1,same,
+KARNATAKA,BENGALURU RURAL,IND.16.2_1,renamed,Renamed from Bangalore Rural in 2014 (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka).
+KARNATAKA,BENGALURU SOUTH,IND.16.25_1,renamed,Ramanagara renamed Bengaluru South in 2025 (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka).
+KARNATAKA,BENGALURU URBAN,IND.16.3_1,renamed,"Bangalore Urban, renamed Bengaluru Urban in 2014; GADM 4.1 names it 'Bangalore' (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka)."
+KARNATAKA,BIDAR,IND.16.6_1,same,
+KARNATAKA,BIJAPUR,IND.16.7_1,same,
+KARNATAKA,CHAMARAJANAGAR,IND.16.8_1,renamed,Spelling variant of GADM 4.1 'Chamrajnagar'.
+KARNATAKA,CHIKKABALLAPURA,IND.16.9_1,renamed,Spelling variant of GADM 4.1 'Chikballapura'.
+KARNATAKA,CHIKKAMAGALURU,IND.16.10_1,renamed,Renamed Chikkamagaluru in 2014 (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka).
+KARNATAKA,CHIKMAGALUR,IND.16.10_1,same,
+KARNATAKA,CHITRADURGA,IND.16.11_1,same,
+KARNATAKA,DAKSHIN KANNAD,IND.16.12_1,renamed,Spelling variant of GADM 4.1 'Dakshina Kannada'.
+KARNATAKA,DAVANGERE,IND.16.13_1,renamed,Spelling variant of GADM 4.1 'Davanagere'.
+KARNATAKA,DHARWAD,IND.16.14_1,same,
+KARNATAKA,GADAG,IND.16.15_1,same,
+KARNATAKA,GULBARGA,IND.16.16_1,same,
+KARNATAKA,HASSAN,IND.16.17_1,same,
+KARNATAKA,HAVERI,IND.16.18_1,same,
+KARNATAKA,KALABURAGI,IND.16.16_1,renamed,Renamed Kalaburagi in 2014 (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka). GADM 4.1 names it 'Gulbarga'.
+KARNATAKA,KODAGU,IND.16.19_1,same,
+KARNATAKA,KOLAR,IND.16.20_1,same,
+KARNATAKA,KOPPAL,IND.16.21_1,same,
+KARNATAKA,MANDYA,IND.16.22_1,same,
+KARNATAKA,MYSORE,IND.16.23_1,same,
+KARNATAKA,MYSURU,IND.16.23_1,renamed,Renamed Mysuru in 2014 (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka). GADM 4.1 names it 'Mysore'.
+KARNATAKA,RAICHUR,IND.16.24_1,same,
+KARNATAKA,RAMANAGARA,IND.16.25_1,same,
+KARNATAKA,SHIMOGA,IND.16.26_1,same,
+KARNATAKA,SHIVAMOGGA,IND.16.26_1,renamed,Renamed Shivamogga in 2014 (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka).
+KARNATAKA,TUMAKURU,IND.16.27_1,renamed,Renamed Tumakuru in 2014 (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka).
+KARNATAKA,TUMKUR,IND.16.27_1,same,
+KARNATAKA,UDIPI,IND.16.28_1,renamed,Spelling variant of GADM 4.1 'Udupi'.
+KARNATAKA,UTTAR KANNAD,IND.16.29_1,renamed,Spelling variant of GADM 4.1 'Uttara Kannada'.
+KARNATAKA,VIJAYANAGARA,IND.16.5_1,carved_from,Created 2021 from Ballari (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka).
+KARNATAKA,VIJAYAPURA,IND.16.7_1,renamed,Renamed Vijayapura in 2014 (https://en.wikipedia.org/wiki/List_of_districts_of_Karnataka). GADM 4.1 names it 'Bijapur'.
+KARNATAKA,YADGIR,IND.16.30_1,same,
+KERALA,ALAPUZHA,IND.17.1_1,renamed,Spelling variant of GADM 4.1 'Alappuzha'.
+KERALA,ERNAKULAM,IND.17.2_1,same,
+KERALA,IDUKKI,IND.17.3_1,same,
+KERALA,KANNUR,IND.17.4_1,same,
+KERALA,KASARAGOD,IND.17.5_1,same,
+KERALA,KOLLAM,IND.17.6_1,same,
+KERALA,KOTTAYAM,IND.17.7_1,same,
+KERALA,KOZHIKODE,IND.17.8_1,same,
+KERALA,MALAPPURAM,IND.17.9_1,same,
+KERALA,PALAKKAD,IND.17.10_1,same,
+KERALA,PATHANAMTHITTA,IND.17.11_1,same,
+KERALA,THIRUVANANTHAPURAM,IND.17.12_1,same,
+KERALA,THRISSUR,IND.17.13_1,same,
+KERALA,WAYANAD,IND.17.14_1,same,
+LADAKH,KARGIL,Z01.14.8_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+LADAKH,LEH LADAKH,Z01.14.13_1,same,"GADM 4.1 files Jammu and Kashmir, Ladakh included, under the disputed-territory code Z01 (Z01.14_1), not IND; Ladakh became a separate UT on 31 October 2019 (https://en.wikipedia.org/wiki/Jammu_and_Kashmir_Reorganisation_Act,_2019)."
+LAKSHADWEEP,LAKSHADWEEP,IND.18.1_1,same,
+MADHYA PRADESH,AGAR-MALWA,IND.19.1_1,same,
+MADHYA PRADESH,ALIRAJPUR,IND.19.2_1,same,
+MADHYA PRADESH,ANUPPUR,IND.19.3_1,same,
+MADHYA PRADESH,ASHOKNAGAR,IND.19.4_1,same,
+MADHYA PRADESH,BALAGHAT,IND.19.5_1,same,
+MADHYA PRADESH,BARWANI,IND.19.6_1,same,
+MADHYA PRADESH,BETUL,IND.19.7_1,same,
+MADHYA PRADESH,BHIND,IND.19.8_1,same,
+MADHYA PRADESH,BHOPAL,IND.19.9_1,same,
+MADHYA PRADESH,BURHANPUR,IND.19.10_1,same,
+MADHYA PRADESH,CHHATARPUR,IND.19.11_1,same,
+MADHYA PRADESH,CHHINDWARA,IND.19.12_1,same,
+MADHYA PRADESH,DAMOH,IND.19.13_1,same,
+MADHYA PRADESH,DATIA,IND.19.14_1,same,
+MADHYA PRADESH,DEWAS,IND.19.15_1,same,
+MADHYA PRADESH,DHAR,IND.19.16_1,same,
+MADHYA PRADESH,DINDORI,IND.19.17_1,same,
+MADHYA PRADESH,EAST NIMAR,IND.19.18_1,same,
+MADHYA PRADESH,GUNA,IND.19.19_1,same,
+MADHYA PRADESH,GWALIOR,IND.19.20_1,same,
+MADHYA PRADESH,HARDA,IND.19.21_1,same,
+MADHYA PRADESH,HOSHANGABAD,IND.19.22_1,same,
+MADHYA PRADESH,INDORE,IND.19.23_1,same,
+MADHYA PRADESH,JABALPUR,IND.19.24_1,same,
+MADHYA PRADESH,JHABUA,IND.19.25_1,same,
+MADHYA PRADESH,KATNI,IND.19.26_1,same,
+MADHYA PRADESH,MAIHAR,IND.19.38_1,carved_from,Created 2023 from Satna (https://en.wikipedia.org/wiki/List_of_districts_of_Madhya_Pradesh).
+MADHYA PRADESH,MANDLA,IND.19.27_1,same,
+MADHYA PRADESH,MANDSAUR,IND.19.28_1,same,
+MADHYA PRADESH,MAUGANJ,IND.19.36_1,carved_from,Created 2023 from Rewa (https://en.wikipedia.org/wiki/List_of_districts_of_Madhya_Pradesh).
+MADHYA PRADESH,MORENA,IND.19.29_1,same,
+MADHYA PRADESH,NARMADAPURAM,IND.19.22_1,renamed,Hoshangabad renamed Narmadapuram in 2022 (https://en.wikipedia.org/wiki/List_of_districts_of_Madhya_Pradesh).
+MADHYA PRADESH,NARSIMHAPUR,IND.19.30_1,same,
+MADHYA PRADESH,NEEMUCH,IND.19.31_1,same,
+MADHYA PRADESH,NIWARI,IND.19.47_1,carved_from,Created 2018 from Tikamgarh (https://en.wikipedia.org/wiki/List_of_districts_of_Madhya_Pradesh).
+MADHYA PRADESH,PANDHURNA,IND.19.12_1,carved_from,Created 2023 from Chhindwara (https://en.wikipedia.org/wiki/List_of_districts_of_Madhya_Pradesh).
+MADHYA PRADESH,PANNA,IND.19.32_1,same,
+MADHYA PRADESH,RAISEN,IND.19.33_1,same,
+MADHYA PRADESH,RAJGARH,IND.19.34_1,same,
+MADHYA PRADESH,RATLAM,IND.19.35_1,same,
+MADHYA PRADESH,REWA,IND.19.36_1,same,
+MADHYA PRADESH,SAGAR,IND.19.37_1,same,
+MADHYA PRADESH,SATNA,IND.19.38_1,same,
+MADHYA PRADESH,SEHORE,IND.19.39_1,same,
+MADHYA PRADESH,SEONI,IND.19.40_1,same,
+MADHYA PRADESH,SHAHDOL,IND.19.41_1,same,
+MADHYA PRADESH,SHAJAPUR,IND.19.42_1,same,
+MADHYA PRADESH,SHEOPUR,IND.19.43_1,same,
+MADHYA PRADESH,SHIVPURI,IND.19.44_1,same,
+MADHYA PRADESH,SIDHI,IND.19.45_1,same,
+MADHYA PRADESH,SINGRAULI,IND.19.46_1,same,
+MADHYA PRADESH,TIKAMGARH,IND.19.47_1,same,
+MADHYA PRADESH,UJJAIN,IND.19.48_1,same,
+MADHYA PRADESH,UMARIA,IND.19.49_1,same,
+MADHYA PRADESH,VIDISHA,IND.19.50_1,same,
+MADHYA PRADESH,WEST NIMAR,IND.19.51_1,same,
+MAHARASHTRA,AHILYANAGAR,IND.20.1_1,renamed,Ahmednagar renamed Ahilyanagar in 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Maharashtra). GADM 4.1 names it 'Ahmadnagar'.
+MAHARASHTRA,AHMADNAGAR,IND.20.1_1,same,
+MAHARASHTRA,AKOLA,IND.20.2_1,same,
+MAHARASHTRA,AMRAVATI,IND.20.3_1,same,
+MAHARASHTRA,AURANGABAD,IND.20.4_1,same,
+MAHARASHTRA,BHANDARA,IND.20.5_1,same,
+MAHARASHTRA,BID,IND.20.6_1,same,
+MAHARASHTRA,BULDHANA,IND.20.7_1,renamed,Spelling variant of GADM 4.1 'Buldana'.
+MAHARASHTRA,CHANDRAPUR,IND.20.8_1,same,
+MAHARASHTRA,CHHATRAPATI SAMBHAJINAGAR,IND.20.4_1,renamed,Aurangabad renamed Chhatrapati Sambhajinagar in 2023 (https://en.wikipedia.org/wiki/List_of_districts_of_Maharashtra).
+MAHARASHTRA,DHARASHIV,IND.20.23_1,renamed,Osmanabad renamed Dharashiv in 2023 (https://en.wikipedia.org/wiki/List_of_districts_of_Maharashtra).
+MAHARASHTRA,DHULE,IND.20.9_1,same,
+MAHARASHTRA,GADCHIROLI,IND.20.10_1,renamed,Spelling variant of GADM 4.1 'Garhchiroli'.
+MAHARASHTRA,GONDIA,IND.20.11_1,renamed,Spelling variant of GADM 4.1 'Gondiya'.
+MAHARASHTRA,HINGOLI,IND.20.12_1,same,
+MAHARASHTRA,JALGAON,IND.20.13_1,same,
+MAHARASHTRA,JALNA,IND.20.14_1,same,
+MAHARASHTRA,KOLHAPUR,IND.20.15_1,same,
+MAHARASHTRA,LATUR,IND.20.16_1,same,
+MAHARASHTRA,MUMBAI,IND.20.17_1,renamed,Mumbai City district; Statement 4A and BSR-1 report MUMBAI SUBURBAN separately (https://en.wikipedia.org/wiki/List_of_districts_of_Maharashtra).
+MAHARASHTRA,MUMBAI SUBURBAN,IND.20.18_1,same,
+MAHARASHTRA,NAGPUR,IND.20.19_1,same,
+MAHARASHTRA,NANDED,IND.20.20_1,same,
+MAHARASHTRA,NANDURBAR,IND.20.21_1,same,
+MAHARASHTRA,NASIK,IND.20.22_1,renamed,Spelling variant of GADM 4.1 'Nashik'.
+MAHARASHTRA,OSMANABAD,IND.20.23_1,same,
+MAHARASHTRA,PALGHAR,IND.20.24_1,same,
+MAHARASHTRA,PARBHANI,IND.20.25_1,same,
+MAHARASHTRA,PUNE,IND.20.26_1,same,
+MAHARASHTRA,RAIGAD,IND.20.27_1,renamed,Spelling variant of GADM 4.1 'Raigarh'.
+MAHARASHTRA,RATNAGIRI,IND.20.28_1,same,
+MAHARASHTRA,SANGLI,IND.20.29_1,same,
+MAHARASHTRA,SATARA,IND.20.30_1,same,
+MAHARASHTRA,SINDHUDURG,IND.20.31_1,same,
+MAHARASHTRA,SOLAPUR,IND.20.32_1,same,
+MAHARASHTRA,THANE,IND.20.33_1,same,
+MAHARASHTRA,WARDHA,IND.20.34_1,same,
+MAHARASHTRA,WASHIM,IND.20.35_1,same,
+MAHARASHTRA,YAVATMAL,IND.20.36_1,same,
+MANIPUR,BISHENPUR,IND.21.1_1,renamed,Spelling variant of GADM 4.1 'Bishnupur'.
+MANIPUR,CHANDEL,IND.21.2_1,same,
+MANIPUR,CHURACHANDPUR,IND.21.3_1,same,
+MANIPUR,IMPHAL EAST,IND.21.4_1,same,
+MANIPUR,IMPHAL WEST,IND.21.5_1,same,
+MANIPUR,JIRIBAM,IND.21.4_1,carved_from,Created 2016 from Imphal East (https://en.wikipedia.org/wiki/List_of_districts_of_Manipur).
+MANIPUR,KAKCHING,IND.21.8_1,carved_from,"Created 2016 from Thoubal, with some areas of Chandel (https://en.wikipedia.org/wiki/List_of_districts_of_Manipur)."
+MANIPUR,KAMJONG,IND.21.9_1,carved_from,Created 2016 from Ukhrul (https://en.wikipedia.org/wiki/List_of_districts_of_Manipur).
+MANIPUR,KANGPOKPI,IND.21.6_1,carved_from,Created 2016 from Senapati (https://en.wikipedia.org/wiki/List_of_districts_of_Manipur).
+MANIPUR,NONEY,IND.21.7_1,carved_from,Created 2016 from Tamenglong (https://en.wikipedia.org/wiki/List_of_districts_of_Manipur).
+MANIPUR,PHERZAWAL,IND.21.3_1,carved_from,Created 2016 from Churachandpur (https://en.wikipedia.org/wiki/List_of_districts_of_Manipur).
+MANIPUR,SENAPATI,IND.21.6_1,same,
+MANIPUR,TAMENGLONG,IND.21.7_1,same,
+MANIPUR,TENGNOUPAL,IND.21.2_1,carved_from,Created 2016 from Chandel (https://en.wikipedia.org/wiki/List_of_districts_of_Manipur).
+MANIPUR,THOUBAL,IND.21.8_1,same,
+MANIPUR,UKHRUL,IND.21.9_1,same,
+MEGHALAYA,EAST GARO HILLS,IND.22.1_1,same,
+MEGHALAYA,EAST JAINTIA HILLS,IND.22.3_1,carved_from,Created 2012 from Jaintia Hills (https://en.wikipedia.org/wiki/List_of_districts_of_Meghalaya).
+MEGHALAYA,EAST KHASI HILLS,IND.22.2_1,same,
+MEGHALAYA,EASTERN WEST KHASI HILLS,IND.22.10_1,carved_from,Created 2021 from West Khasi Hills (https://en.wikipedia.org/wiki/List_of_districts_of_Meghalaya).
+MEGHALAYA,JAINTIA HILLS,IND.22.3_1,same,
+MEGHALAYA,NORTH GARO HILLS,IND.22.4_1,same,
+MEGHALAYA,RI BHOI,IND.22.5_1,same,
+MEGHALAYA,SOUTH GARO HILLS,IND.22.6_1,same,
+MEGHALAYA,SOUTH WEST GARO HILLS,IND.22.7_1,same,
+MEGHALAYA,SOUTH WEST KHASI HILLS,IND.22.8_1,same,
+MEGHALAYA,WEST GARO HILLS,IND.22.9_1,same,
+MEGHALAYA,WEST JAINTIA HILLS,IND.22.3_1,renamed,Jaintia Hills split in 2012 into West and East Jaintia Hills; West keeps the seat Jowai (https://en.wikipedia.org/wiki/List_of_districts_of_Meghalaya).
+MEGHALAYA,WEST KHASI HILLS,IND.22.10_1,same,
+MIZORAM,AIZAWL,IND.23.1_1,same,
+MIZORAM,CHAMPHAI,IND.23.2_1,same,
+MIZORAM,HNAHTHIAL,IND.23.5_1,carved_from,Created 2019 from Lunglei (https://en.wikipedia.org/wiki/List_of_districts_of_Mizoram).
+MIZORAM,KHAWZAWL,IND.23.2_1,carved_from,Created 2019 from Champhai (https://en.wikipedia.org/wiki/List_of_districts_of_Mizoram).
+MIZORAM,KOLASIB,IND.23.3_1,same,
+MIZORAM,LAWNGTLAI,IND.23.4_1,renamed,Spelling variant of GADM 4.1 'Lawangtlai'.
+MIZORAM,LUNGLEI,IND.23.5_1,same,
+MIZORAM,MAMIT,IND.23.6_1,same,
+MIZORAM,SAIHA,IND.23.7_1,same,
+MIZORAM,SAITUAL,IND.23.1_1,carved_from,Created 2019 from Aizawl and Champhai (https://en.wikipedia.org/wiki/List_of_districts_of_Mizoram).
+MIZORAM,SAITUAL,IND.23.2_1,carved_from,Created 2019 from Aizawl and Champhai (https://en.wikipedia.org/wiki/List_of_districts_of_Mizoram).
+MIZORAM,SERCHHIP,IND.23.8_1,same,
+MIZORAM,SIAHA,IND.23.7_1,renamed,Spelling variant of GADM 4.1 'Saiha'.
+NAGALAND,CHUMOUKEDIMA,IND.24.1_1,carved_from,Created 2021 from Dimapur (https://en.wikipedia.org/wiki/List_of_districts_of_Nagaland).
+NAGALAND,DIMAPUR,IND.24.1_1,same,
+NAGALAND,KIPHIRE,IND.24.2_1,same,
+NAGALAND,KOHIMA,IND.24.3_1,same,
+NAGALAND,LONGLENG,IND.24.4_1,same,
+NAGALAND,MELURI,IND.24.8_1,carved_from,Created 2024 from Phek (https://en.wikipedia.org/wiki/List_of_districts_of_Nagaland).
+NAGALAND,MOKOKCHUNG,IND.24.5_1,same,
+NAGALAND,MON,IND.24.6_1,same,
+NAGALAND,NIULAND,IND.24.1_1,carved_from,Created 2021 from Dimapur (https://en.wikipedia.org/wiki/List_of_districts_of_Nagaland).
+NAGALAND,NOKLAK,IND.24.9_1,carved_from,"Created 2017 from Tuensang, established 2021 (https://en.wikipedia.org/wiki/Noklak_district)."
+NAGALAND,PEREN,IND.24.7_1,same,
+NAGALAND,PHEK,IND.24.8_1,same,
+NAGALAND,SHAMATOR,IND.24.9_1,carved_from,"Created 2022 from Tuensang, with a few villages from Kiphire (https://en.wikipedia.org/wiki/Shamator_district)."
+NAGALAND,TSEMINYU,IND.24.3_1,carved_from,Created 2021 from Kohima (https://en.wikipedia.org/wiki/List_of_districts_of_Nagaland).
+NAGALAND,TUENSANG,IND.24.9_1,same,
+NAGALAND,WOKHA,IND.24.10_1,same,
+NAGALAND,ZUNHEBOTO,IND.24.11_1,same,
+NCT OF DELHI,CENTRAL DELHI,IND.25.1_1,carved_from,"One of Delhi's eleven revenue districts (2012 reorganization, https://en.wikipedia.org/wiki/Districts_of_Delhi), reported separately in BSR-1 from 2017; GADM 4.1 does not subdivide the NCT, so it lies inside IND.25.1_1."
+NCT OF DELHI,EAST DELHI,IND.25.1_1,carved_from,"One of Delhi's eleven revenue districts (2012 reorganization, https://en.wikipedia.org/wiki/Districts_of_Delhi), reported separately in BSR-1 from 2017; GADM 4.1 does not subdivide the NCT, so it lies inside IND.25.1_1."
+NCT OF DELHI,NEW DELHI,IND.25.1_1,renamed,"GADM 4.1 holds the whole NCT of Delhi as a single level-2 unit, IND.25.1_1, named 'West' (about 1500 km2). Statement 4A and BSR-1 before 2017 report all of Delhi under NEW DELHI (2023Q1 4A credit 14.9 lakh crore against 15.4 lakh crore summed over BSR-1's eleven Delhi districts); from 2017 BSR-1 splits out ten other districts and NEW DELHI is one of eleven, still inside this unit."
+NCT OF DELHI,NORTH DELHI,IND.25.1_1,carved_from,"One of Delhi's eleven revenue districts (2012 reorganization, https://en.wikipedia.org/wiki/Districts_of_Delhi), reported separately in BSR-1 from 2017; GADM 4.1 does not subdivide the NCT, so it lies inside IND.25.1_1."
+NCT OF DELHI,NORTH-EAST DELHI,IND.25.1_1,carved_from,"One of Delhi's eleven revenue districts (2012 reorganization, https://en.wikipedia.org/wiki/Districts_of_Delhi), reported separately in BSR-1 from 2017; GADM 4.1 does not subdivide the NCT, so it lies inside IND.25.1_1."
+NCT OF DELHI,NORTH-WEST DELHI,IND.25.1_1,carved_from,"One of Delhi's eleven revenue districts (2012 reorganization, https://en.wikipedia.org/wiki/Districts_of_Delhi), reported separately in BSR-1 from 2017; GADM 4.1 does not subdivide the NCT, so it lies inside IND.25.1_1."
+NCT OF DELHI,SHAHDARA,IND.25.1_1,carved_from,"One of Delhi's eleven revenue districts (2012 reorganization, https://en.wikipedia.org/wiki/Districts_of_Delhi), reported separately in BSR-1 from 2017; GADM 4.1 does not subdivide the NCT, so it lies inside IND.25.1_1."
+NCT OF DELHI,SOUTH DELHI,IND.25.1_1,carved_from,"One of Delhi's eleven revenue districts (2012 reorganization, https://en.wikipedia.org/wiki/Districts_of_Delhi), reported separately in BSR-1 from 2017; GADM 4.1 does not subdivide the NCT, so it lies inside IND.25.1_1."
+NCT OF DELHI,SOUTH-EAST DELHI,IND.25.1_1,carved_from,"One of Delhi's eleven revenue districts (2012 reorganization, https://en.wikipedia.org/wiki/Districts_of_Delhi), reported separately in BSR-1 from 2017; GADM 4.1 does not subdivide the NCT, so it lies inside IND.25.1_1."
+NCT OF DELHI,SOUTH-WEST DELHI,IND.25.1_1,carved_from,"One of Delhi's eleven revenue districts (2012 reorganization, https://en.wikipedia.org/wiki/Districts_of_Delhi), reported separately in BSR-1 from 2017; GADM 4.1 does not subdivide the NCT, so it lies inside IND.25.1_1."
+NCT OF DELHI,WEST DELHI,IND.25.1_1,carved_from,"One of Delhi's eleven revenue districts (2012 reorganization, https://en.wikipedia.org/wiki/Districts_of_Delhi), reported separately in BSR-1 from 2017; GADM 4.1 does not subdivide the NCT, so it lies inside IND.25.1_1."
+ODISHA,ANGUL,IND.26.1_1,renamed,Spelling variant of GADM 4.1 'Anugul'.
+ODISHA,ANUGUL,IND.26.1_1,same,
+ODISHA,BALANGIR,IND.26.2_1,same,
+ODISHA,BALESHWAR,IND.26.3_1,same,
+ODISHA,BARGARH,IND.26.4_1,same,
+ODISHA,BHADRAK,IND.26.6_1,same,
+ODISHA,BOUDH,IND.26.5_1,renamed,Spelling variant of GADM 4.1 'Bauda'.
+ODISHA,CUTTACK,IND.26.7_1,same,
+ODISHA,DEOGARH,IND.26.8_1,renamed,Spelling variant of GADM 4.1 'Debagarh'.
+ODISHA,DHENKANAL,IND.26.9_1,same,
+ODISHA,GAJAPATI,IND.26.10_1,same,
+ODISHA,GANJAM,IND.26.11_1,same,
+ODISHA,JAGATSINGHPUR,IND.26.12_1,renamed,Spelling variant of GADM 4.1 'Jagatsinghapur'.
+ODISHA,JAJPUR,IND.26.13_1,renamed,Spelling variant of GADM 4.1 'Jajapur'.
+ODISHA,JHARSUGUDA,IND.26.14_1,same,
+ODISHA,KALAHANDI,IND.26.15_1,same,
+ODISHA,KANDHAMAL,IND.26.16_1,same,
+ODISHA,KENDRAPARA,IND.26.17_1,same,
+ODISHA,KEONJHAR,IND.26.18_1,renamed,Spelling variant of GADM 4.1 'Kendujhar'.
+ODISHA,KHURDA,IND.26.19_1,renamed,Spelling variant of GADM 4.1 'Khordha'.
+ODISHA,KORAPUT,IND.26.20_1,same,
+ODISHA,MALKANGIRI,IND.26.21_1,same,
+ODISHA,MAYURBHANJ,IND.26.22_1,same,
+ODISHA,NAWAPARA,IND.26.25_1,renamed,Spelling variant of GADM 4.1 'Nuapada'.
+ODISHA,NAWRANGPUR,IND.26.23_1,renamed,Spelling variant of GADM 4.1 'Nabarangapur'.
+ODISHA,NAYAGARH,IND.26.24_1,same,
+ODISHA,PURI,IND.26.26_1,same,
+ODISHA,RAYAGADA,IND.26.27_1,same,
+ODISHA,SAMBALPUR,IND.26.28_1,same,
+ODISHA,SONEPUR,IND.26.29_1,renamed,Spelling variant of GADM 4.1 'Subarnapur'.
+ODISHA,SUNDARGARH,IND.26.30_1,same,
+PUDUCHERRY,KARAIKAL,IND.27.1_1,same,
+PUDUCHERRY,MAHE,IND.27.2_1,same,
+PUDUCHERRY,PUDUCHERRY,IND.27.3_1,same,
+PUDUCHERRY,YANAM,IND.27.4_1,same,
+PUNJAB,AMRITSAR,IND.28.1_1,same,
+PUNJAB,BARNALA,IND.28.2_1,same,
+PUNJAB,BATHINDA,IND.28.3_1,same,
+PUNJAB,FARIDKOT,IND.28.4_1,same,
+PUNJAB,FATEHGARH SAHIB,IND.28.5_1,same,
+PUNJAB,FAZILKA,IND.28.6_1,same,
+PUNJAB,FEROZPUR,IND.28.7_1,renamed,Spelling variant of GADM 4.1 'Firozpur'.
+PUNJAB,GURDASPUR,IND.28.8_1,same,
+PUNJAB,HOSHIARPUR,IND.28.9_1,same,
+PUNJAB,JALANDHAR,IND.28.10_1,same,
+PUNJAB,KAPURTHALA,IND.28.11_1,same,
+PUNJAB,LUDHIANA,IND.28.12_1,same,
+PUNJAB,MALERKOTLA,IND.28.20_1,carved_from,"Created 2021 from Sangrur (https://en.wikipedia.org/wiki/List_of_districts_of_Punjab,_India)."
+PUNJAB,MANSA,IND.28.13_1,same,
+PUNJAB,MOGA,IND.28.14_1,same,
+PUNJAB,MUKTSAR,IND.28.15_1,same,
+PUNJAB,PATHANKOT,IND.28.16_1,same,
+PUNJAB,PATIALA,IND.28.17_1,same,
+PUNJAB,RUPNAGAR,IND.28.18_1,same,
+PUNJAB,SAHIBZADA AJIT SINGH NAGAR,IND.28.19_1,same,
+PUNJAB,SANGRUR,IND.28.20_1,same,
+PUNJAB,SHAHID BHAGAT SINGH NAGAR,IND.28.21_1,same,
+PUNJAB,TARN TARAN,IND.28.22_1,same,
+RAJASTHAN,AJMER,IND.29.1_1,same,
+RAJASTHAN,ALWAR,IND.29.2_1,same,
+RAJASTHAN,ANUPGARH,IND.29.15_1,carved_from,"Created 2023 from Sri Ganganagar and Bikaner, abolished 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,ANUPGARH,IND.29.8_1,carved_from,"Created 2023 from Sri Ganganagar and Bikaner, abolished 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,BALOTRA,IND.29.5_1,carved_from,Created 2023 from Barmer (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan).
+RAJASTHAN,BANSWARA,IND.29.3_1,same,
+RAJASTHAN,BARAN,IND.29.4_1,same,
+RAJASTHAN,BARMER,IND.29.5_1,same,
+RAJASTHAN,BEAWAR,IND.29.1_1,carved_from,"Created 2023 from Ajmer, Pali (Jaitaran, Raipur) and Bhilwara (Badnor) (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,BEAWAR,IND.29.26_1,carved_from,"Created 2023 from Ajmer, Pali (Jaitaran, Raipur) and Bhilwara (Badnor) (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,BEAWAR,IND.29.7_1,carved_from,"Created 2023 from Ajmer, Pali (Jaitaran, Raipur) and Bhilwara (Badnor) (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,BHARATPUR,IND.29.6_1,same,
+RAJASTHAN,BHILWARA,IND.29.7_1,same,
+RAJASTHAN,BIKANER,IND.29.8_1,same,
+RAJASTHAN,BUNDI,IND.29.9_1,same,
+RAJASTHAN,CHITTAURGARH,IND.29.10_1,same,
+RAJASTHAN,CHURU,IND.29.11_1,same,
+RAJASTHAN,DAUSA,IND.29.12_1,same,
+RAJASTHAN,DEEG,IND.29.6_1,carved_from,Created 2023 from Bharatpur (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan).
+RAJASTHAN,DHOLPUR,IND.29.13_1,renamed,Spelling variant of GADM 4.1 'Dhaulpur'.
+RAJASTHAN,DIDWANA-KUCHAMAN,IND.29.25_1,carved_from,Created 2023 from Nagaur (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan).
+RAJASTHAN,DUDU,IND.29.17_1,carved_from,"Created 2023 from Jaipur, abolished 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,DUNGARPUR,IND.29.14_1,same,
+RAJASTHAN,GANGANAGAR,IND.29.15_1,same,
+RAJASTHAN,GANGAPURCITY,IND.29.23_1,carved_from,"Created 2023 from Sawai Madhopur and Karauli, abolished 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,GANGAPURCITY,IND.29.29_1,carved_from,"Created 2023 from Sawai Madhopur and Karauli, abolished 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,HANUMANGARH,IND.29.16_1,same,
+RAJASTHAN,JAIPUR,IND.29.17_1,same,
+RAJASTHAN,JAIPUR RURAL,IND.29.17_1,carved_from,"Created 2023 from Jaipur, abolished 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,JAISALMER,IND.29.18_1,same,
+RAJASTHAN,JALOR,IND.29.19_1,same,
+RAJASTHAN,JHALAWAR,IND.29.20_1,same,
+RAJASTHAN,JHUNJHUNU,IND.29.21_1,renamed,Spelling variant of GADM 4.1 'Jhunjhunun'.
+RAJASTHAN,JODHPUR,IND.29.22_1,same,
+RAJASTHAN,JODHPUR RURAL,IND.29.22_1,carved_from,"Created 2023 from Jodhpur, abolished 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,KARAULI,IND.29.23_1,same,
+RAJASTHAN,KEKRI,IND.29.1_1,carved_from,"Created 2023 from Ajmer and Tonk (Todaraisingh), abolished 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,KEKRI,IND.29.32_1,carved_from,"Created 2023 from Ajmer and Tonk (Todaraisingh), abolished 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,KHAIRTHAL-TIJARA,IND.29.2_1,carved_from,Created 2023 from Alwar (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan).
+RAJASTHAN,KOTA,IND.29.24_1,same,
+RAJASTHAN,KOTPUTLI-BEHROR,IND.29.17_1,carved_from,Created 2023 from Jaipur and Alwar (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan).
+RAJASTHAN,KOTPUTLI-BEHROR,IND.29.2_1,carved_from,Created 2023 from Jaipur and Alwar (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan).
+RAJASTHAN,NAGAUR,IND.29.25_1,same,
+RAJASTHAN,NEEM KA THANA,IND.29.21_1,carved_from,"Created 2023 from Sikar and Jhunjhunu, abolished 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,NEEM KA THANA,IND.29.30_1,carved_from,"Created 2023 from Sikar and Jhunjhunu, abolished 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,PALI,IND.29.26_1,same,
+RAJASTHAN,PHALODI,IND.29.22_1,carved_from,Created 2023 from Jodhpur (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan).
+RAJASTHAN,PRATAPGARH,IND.29.27_1,same,
+RAJASTHAN,RAJSAMAND,IND.29.28_1,same,
+RAJASTHAN,SALUMBER,IND.29.33_1,carved_from,Created 2023 from Udaipur (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan).
+RAJASTHAN,SANCHORE,IND.29.19_1,carved_from,"Created 2023 from Jalore, abolished 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,SAWAI MADHOPUR,IND.29.29_1,same,
+RAJASTHAN,SHAHPURA,IND.29.7_1,carved_from,"Created 2023 from Bhilwara, abolished 2024 (https://en.wikipedia.org/wiki/List_of_districts_of_Rajasthan)."
+RAJASTHAN,SIKAR,IND.29.30_1,same,
+RAJASTHAN,SIROHI,IND.29.31_1,same,
+RAJASTHAN,TONK,IND.29.32_1,same,
+RAJASTHAN,UDAIPUR,IND.29.33_1,same,
+SIKKIM,EAST SIKKIM,IND.30.1_1,same,
+SIKKIM,GANGTOK,IND.30.1_1,renamed,"East Sikkim renamed Gangtok in 2021, after Pakyong was carved out (https://en.wikipedia.org/wiki/List_of_districts_of_Sikkim)."
+SIKKIM,GYALSHING,IND.30.4_1,renamed,"West Sikkim renamed Gyalshing in 2021, after Soreng was carved out (https://en.wikipedia.org/wiki/List_of_districts_of_Sikkim)."
+SIKKIM,MANGAN,IND.30.2_1,renamed,North Sikkim renamed Mangan in 2021 (https://en.wikipedia.org/wiki/List_of_districts_of_Sikkim).
+SIKKIM,NAMCHI,IND.30.3_1,renamed,South Sikkim renamed Namchi in 2021 (https://en.wikipedia.org/wiki/List_of_districts_of_Sikkim).
+SIKKIM,NORTH SIKKIM,IND.30.2_1,same,
+SIKKIM,PAKYONG,IND.30.1_1,carved_from,Created 2021 from East Sikkim (https://en.wikipedia.org/wiki/List_of_districts_of_Sikkim).
+SIKKIM,SORENG,IND.30.4_1,carved_from,Created 2021 from West Sikkim (https://en.wikipedia.org/wiki/List_of_districts_of_Sikkim).
+SIKKIM,SOUTH SIKKIM,IND.30.3_1,same,
+SIKKIM,WEST SIKKIM,IND.30.4_1,same,
+TAMIL NADU,ARIYALUR,IND.31.1_1,same,
+TAMIL NADU,CHENGALPATTU,IND.31.8_1,carved_from,Created 2019 from Kancheepuram (https://en.wikipedia.org/wiki/List_of_districts_of_Tamil_Nadu).
+TAMIL NADU,CHENNAI,IND.31.2_1,same,
+TAMIL NADU,COIMBATORE,IND.31.3_1,same,
+TAMIL NADU,CUDDALORE,IND.31.4_1,same,
+TAMIL NADU,DHARMAPURI,IND.31.5_1,same,
+TAMIL NADU,DINDIGUL,IND.31.6_1,same,
+TAMIL NADU,ERODE,IND.31.7_1,same,
+TAMIL NADU,KALLAKURICHI,IND.31.31_1,carved_from,Created 2019 from Viluppuram (https://en.wikipedia.org/wiki/List_of_districts_of_Tamil_Nadu).
+TAMIL NADU,KANCHEEPURAM,IND.31.8_1,same,
+TAMIL NADU,KANYAKUMARI,IND.31.9_1,renamed,Spelling variant of GADM 4.1 'Kanniyakumari'.
+TAMIL NADU,KARUR,IND.31.10_1,same,
+TAMIL NADU,KRISHNAGIRI,IND.31.11_1,same,
+TAMIL NADU,MADURAI,IND.31.12_1,same,
+TAMIL NADU,MAYILADUTHURAI,IND.31.13_1,carved_from,Created 2020 from Nagapattinam (https://en.wikipedia.org/wiki/List_of_districts_of_Tamil_Nadu).
+TAMIL NADU,NAGAPATTINAM,IND.31.13_1,renamed,Spelling variant of GADM 4.1 'Nagappattinam'.
+TAMIL NADU,NAMAKKAL,IND.31.14_1,same,
+TAMIL NADU,NILGIRIS,IND.31.21_1,renamed,Spelling variant of GADM 4.1 'The Nilgiris'.
+TAMIL NADU,PERAMBALUR,IND.31.15_1,same,
+TAMIL NADU,PUDUKKOTTAI,IND.31.16_1,same,
+TAMIL NADU,RAMANATHAPURAM,IND.31.17_1,same,
+TAMIL NADU,RANIPET,IND.31.30_1,carved_from,Created 2019 from Vellore (https://en.wikipedia.org/wiki/List_of_districts_of_Tamil_Nadu).
+TAMIL NADU,SALEM,IND.31.18_1,same,
+TAMIL NADU,SIVAGANGA,IND.31.19_1,same,
+TAMIL NADU,TENKASI,IND.31.27_1,carved_from,Created 2019 from Tirunelveli (https://en.wikipedia.org/wiki/List_of_districts_of_Tamil_Nadu).
+TAMIL NADU,THANJAVUR,IND.31.20_1,same,
+TAMIL NADU,THENI,IND.31.22_1,same,
+TAMIL NADU,THIRUVALLUR,IND.31.23_1,same,
+TAMIL NADU,THIRUVARUR,IND.31.24_1,same,
+TAMIL NADU,TIRUCHIRAPALLI,IND.31.26_1,renamed,Spelling variant of GADM 4.1 'Tiruchirappalli'.
+TAMIL NADU,TIRUNELVALI,IND.31.27_1,renamed,Spelling variant of GADM 4.1 'Tirunelveli'.
+TAMIL NADU,TIRUPATHUR,IND.31.30_1,carved_from,Created 2019 from Vellore (https://en.wikipedia.org/wiki/List_of_districts_of_Tamil_Nadu).
+TAMIL NADU,TIRUPPUR,IND.31.28_1,same,
+TAMIL NADU,TIRUVANNAMALAI,IND.31.29_1,same,
+TAMIL NADU,TOOTHUKUDI,IND.31.25_1,renamed,Spelling variant of GADM 4.1 'Thoothukkudi'.
+TAMIL NADU,VELLORE,IND.31.30_1,same,
+TAMIL NADU,VILLUPURAM,IND.31.31_1,renamed,Spelling variant of GADM 4.1 'Viluppuram'.
+TAMIL NADU,VIRUDHUNAGAR,IND.31.32_1,renamed,Spelling variant of GADM 4.1 'Virudunagar'.
+TELANGANA,ADILABAD,IND.32.1_1,same,
+TELANGANA,BHADRADRI (KOTHAGUDEM),IND.32.4_1,carved_from,Created 2016 from Khammam (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,HANUMAKONDA,IND.32.10_1,carved_from,"Created 2016 as Warangal Urban from Warangal and Karimnagar, renamed Hanumakonda in 2021 (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana)."
+TELANGANA,HANUMAKONDA,IND.32.3_1,carved_from,"Created 2016 as Warangal Urban from Warangal and Karimnagar, renamed Hanumakonda in 2021 (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana)."
+TELANGANA,HYDERABAD,IND.32.2_1,same,
+TELANGANA,JAGITIAL,IND.32.3_1,carved_from,Created 2016 from Karimnagar (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,JANGAON,IND.32.10_1,carved_from,Created 2016 from Warangal (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,JAYASHANKAR (BHUPALPALLI),IND.32.10_1,carved_from,Created 2016 from Warangal and Karimnagar (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,JAYASHANKAR (BHUPALPALLI),IND.32.3_1,carved_from,Created 2016 from Warangal and Karimnagar (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,JOGULAMBA (GADWAL),IND.32.5_1,carved_from,Created 2016 from Mahbubnagar (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,KAMAREDDY,IND.32.8_1,carved_from,Created 2016 from Nizamabad (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,KARIMNAGAR,IND.32.3_1,same,
+TELANGANA,KHAMMAM,IND.32.4_1,same,
+TELANGANA,KOMRAM BHEEM (ASIFABAD),IND.32.1_1,carved_from,Created 2016 from Adilabad (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,MAHABUBABAD,IND.32.10_1,carved_from,Created 2016 from Warangal and Khammam (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,MAHABUBABAD,IND.32.4_1,carved_from,Created 2016 from Warangal and Khammam (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,MAHBUBNAGAR,IND.32.5_1,same,
+TELANGANA,MANCHERIAL,IND.32.1_1,carved_from,Created 2016 from Adilabad (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,MEDAK,IND.32.6_1,same,
+TELANGANA,MEDCHAL-MALKAJGIRI,IND.32.9_1,carved_from,Created 2016 from Ranga Reddy (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,MULUGU,IND.32.10_1,carved_from,"Created 2019 from Jayashankar Bhupalpally, which was carved from Warangal (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana)."
+TELANGANA,NAGARKURNOOL,IND.32.5_1,carved_from,Created 2016 from Mahbubnagar (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,NALGONDA,IND.32.7_1,same,
+TELANGANA,NARAYANPET,IND.32.5_1,carved_from,Created 2019 from Mahabubnagar (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,NIRMAL,IND.32.1_1,carved_from,Created 2016 from Adilabad (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,NIZAMABAD,IND.32.8_1,same,
+TELANGANA,PEDDAPALLI,IND.32.3_1,carved_from,Created 2016 from Karimnagar (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,RAJANNA(SIRCILLA),IND.32.3_1,carved_from,Created 2016 from Karimnagar (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,RANGAREDDI,IND.32.9_1,renamed,Spelling variant of GADM 4.1 'Ranga Reddy'.
+TELANGANA,SANGAREDDY,IND.32.6_1,carved_from,Created 2016 from Medak (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,SIDDIPET,IND.32.10_1,carved_from,"Created 2016 from Medak, Karimnagar and Warangal (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana)."
+TELANGANA,SIDDIPET,IND.32.3_1,carved_from,"Created 2016 from Medak, Karimnagar and Warangal (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana)."
+TELANGANA,SIDDIPET,IND.32.6_1,carved_from,"Created 2016 from Medak, Karimnagar and Warangal (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana)."
+TELANGANA,SURYAPET,IND.32.7_1,carved_from,Created 2016 from Nalgonda (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,VIKARABAD,IND.32.5_1,carved_from,Created 2016 from Ranga Reddy and Mahbubnagar (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,VIKARABAD,IND.32.9_1,carved_from,Created 2016 from Ranga Reddy and Mahbubnagar (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,WANAPARTHY,IND.32.5_1,carved_from,Created 2016 from Mahbubnagar (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,WARANGAL,IND.32.10_1,same,"Before 2018 the whole old Warangal district; from 2023 RBI uses WARANGAL for the former Warangal Rural district, renamed in 2021, which lies inside it (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana)."
+TELANGANA,WARANGAL RURAL,IND.32.10_1,carved_from,"Created 2016 from Warangal, renamed Warangal in 2021 (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana)."
+TELANGANA,WARANGAL URBAN,IND.32.10_1,carved_from,"Created 2016 from Warangal and Karimnagar, renamed Hanumakonda in 2021 (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana)."
+TELANGANA,WARANGAL URBAN,IND.32.3_1,carved_from,"Created 2016 from Warangal and Karimnagar, renamed Hanumakonda in 2021 (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana)."
+TELANGANA,YADADRI,IND.32.7_1,carved_from,Created 2016 from Nalgonda as Yadadri Bhuvanagiri (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TELANGANA,YADADRI BHUVANAGIRI,IND.32.7_1,carved_from,Created 2016 from Nalgonda (https://en.wikipedia.org/wiki/List_of_districts_of_Telangana).
+TRIPURA,DHALAI,IND.33.1_1,same,
+TRIPURA,GOMATI,IND.33.2_1,same,
+TRIPURA,KHOWAI,IND.33.3_1,same,
+TRIPURA,NORTH TRIPURA,IND.33.4_1,same,
+TRIPURA,SEPAHIJALA,IND.33.5_1,renamed,Spelling variant of GADM 4.1 'Sipahijala'.
+TRIPURA,SOUTH TRIPURA,IND.33.6_1,same,
+TRIPURA,UNAKOTI,IND.33.7_1,renamed,Spelling variant of GADM 4.1 'Unokoti'.
+TRIPURA,WEST TRIPURA,IND.33.8_1,same,
+UTTAR PRADESH,AGRA,IND.34.1_1,same,
+UTTAR PRADESH,ALIGARH,IND.34.2_1,same,
+UTTAR PRADESH,ALLAHABAD,IND.34.3_1,same,
+UTTAR PRADESH,AMBEDKAR NAGAR,IND.34.4_1,same,
+UTTAR PRADESH,AMETHI,IND.34.5_1,same,
+UTTAR PRADESH,AMROHA,IND.34.6_1,same,
+UTTAR PRADESH,AURAIYA,IND.34.7_1,same,
+UTTAR PRADESH,AYODHYA,IND.34.25_1,renamed,Faizabad renamed Ayodhya in 2018 (https://en.wikipedia.org/wiki/List_of_districts_of_Uttar_Pradesh).
+UTTAR PRADESH,AZAMGARH,IND.34.8_1,same,
+UTTAR PRADESH,BAGHPAT,IND.34.9_1,same,
+UTTAR PRADESH,BAHRAICH,IND.34.10_1,same,
+UTTAR PRADESH,BALLIA,IND.34.11_1,same,
+UTTAR PRADESH,BALRAMPUR,IND.34.12_1,same,
+UTTAR PRADESH,BANDA,IND.34.13_1,same,
+UTTAR PRADESH,BARA BANKI,IND.34.14_1,same,
+UTTAR PRADESH,BAREILLY,IND.34.15_1,same,
+UTTAR PRADESH,BASTI,IND.34.16_1,same,
+UTTAR PRADESH,BHIM NAGAR,IND.34.64_1,renamed,Bhim Nagar (created 2011) renamed Sambhal in 2012 (https://en.wikipedia.org/wiki/List_of_districts_of_Uttar_Pradesh).
+UTTAR PRADESH,BIJNOR,IND.34.17_1,same,
+UTTAR PRADESH,BUDAUN,IND.34.18_1,same,
+UTTAR PRADESH,BULANDSHAHR,IND.34.19_1,same,
+UTTAR PRADESH,CHANDAULI,IND.34.20_1,same,
+UTTAR PRADESH,CHITRAKOOT,IND.34.21_1,same,
+UTTAR PRADESH,DEORIA,IND.34.22_1,same,
+UTTAR PRADESH,ETAH,IND.34.23_1,same,
+UTTAR PRADESH,ETAWAH,IND.34.24_1,same,
+UTTAR PRADESH,FAIZABAD,IND.34.25_1,same,
+UTTAR PRADESH,FARRUKHABAD,IND.34.26_1,same,
+UTTAR PRADESH,FATEHPUR,IND.34.27_1,same,
+UTTAR PRADESH,FIROZABAD,IND.34.28_1,same,
+UTTAR PRADESH,GAUTAM BUDDHA NAGAR,IND.34.29_1,same,
+UTTAR PRADESH,GHAZIABAD,IND.34.30_1,same,
+UTTAR PRADESH,GHAZIPUR,IND.34.31_1,same,
+UTTAR PRADESH,GONDA,IND.34.32_1,same,
+UTTAR PRADESH,GORAKHPUR,IND.34.33_1,same,
+UTTAR PRADESH,HAMIRPUR,IND.34.34_1,same,
+UTTAR PRADESH,HAPUR,IND.34.35_1,same,
+UTTAR PRADESH,HARDOI,IND.34.36_1,same,
+UTTAR PRADESH,HATHRAS,IND.34.37_1,same,
+UTTAR PRADESH,JALAUN,IND.34.38_1,same,
+UTTAR PRADESH,JAUNPUR,IND.34.39_1,same,
+UTTAR PRADESH,JHANSI,IND.34.40_1,same,
+UTTAR PRADESH,JYOTIBA PHULE NAGAR,IND.34.6_1,renamed,Jyotiba Phule Nagar renamed Amroha in 2012 (https://en.wikipedia.org/wiki/List_of_districts_of_Uttar_Pradesh).
+UTTAR PRADESH,KANAUJ,IND.34.41_1,renamed,Spelling variant of GADM 4.1 'Kannauj'.
+UTTAR PRADESH,KANPUR DEHAT,IND.34.42_1,same,
+UTTAR PRADESH,KANPUR NAGAR,IND.34.43_1,same,
+UTTAR PRADESH,KANSHIRAM NAGAR,IND.34.44_1,renamed,Kanshi Ram Nagar renamed Kasganj in 2012 (https://en.wikipedia.org/wiki/List_of_districts_of_Uttar_Pradesh).
+UTTAR PRADESH,KASGANJ,IND.34.44_1,same,
+UTTAR PRADESH,KAUSHAMBI,IND.34.45_1,same,
+UTTAR PRADESH,KHERI,IND.34.47_1,renamed,Spelling variant of GADM 4.1 'Lakhimpur Kheri'.
+UTTAR PRADESH,KUSHI NAGAR,IND.34.46_1,same,
+UTTAR PRADESH,LALITPUR,IND.34.48_1,same,
+UTTAR PRADESH,LUCKNOW,IND.34.49_1,same,
+UTTAR PRADESH,MAHARAJGANJ,IND.34.50_1,same,
+UTTAR PRADESH,MAHOBA,IND.34.51_1,same,
+UTTAR PRADESH,MAINPURI,IND.34.52_1,same,
+UTTAR PRADESH,MATHURA,IND.34.53_1,same,
+UTTAR PRADESH,MAU,IND.34.54_1,same,
+UTTAR PRADESH,MEERUT,IND.34.55_1,same,
+UTTAR PRADESH,MIRZAPUR,IND.34.56_1,same,
+UTTAR PRADESH,MORADABAD,IND.34.57_1,same,
+UTTAR PRADESH,MUZAFFARNAGAR,IND.34.58_1,same,
+UTTAR PRADESH,PANCHSHEEL NAGAR,IND.34.35_1,renamed,Panchsheel Nagar (created 2011) renamed Hapur in 2012 (https://en.wikipedia.org/wiki/List_of_districts_of_Uttar_Pradesh).
+UTTAR PRADESH,PILIBHIT,IND.34.59_1,same,
+UTTAR PRADESH,PRABUDH NAGAR,IND.34.68_1,renamed,Prabuddh Nagar (created 2011) renamed Shamli in 2012 (https://en.wikipedia.org/wiki/List_of_districts_of_Uttar_Pradesh).
+UTTAR PRADESH,PRATAPGARH,IND.34.60_1,same,
+UTTAR PRADESH,PRAYAGRAJ,IND.34.3_1,renamed,Allahabad renamed Prayagraj in 2018 (https://en.wikipedia.org/wiki/List_of_districts_of_Uttar_Pradesh).
+UTTAR PRADESH,RAI BARELI,IND.34.61_1,renamed,Spelling variant of GADM 4.1 'Rae Bareli'.
+UTTAR PRADESH,RAMPUR,IND.34.62_1,same,
+UTTAR PRADESH,SAHARANPUR,IND.34.63_1,same,
+UTTAR PRADESH,SAMBHAL,IND.34.64_1,same,
+UTTAR PRADESH,SANT KABIR NAGAR,IND.34.65_1,same,
+UTTAR PRADESH,SANT RAVIDAS NAGAR,IND.34.66_1,same,
+UTTAR PRADESH,SHAHJAHANPUR,IND.34.67_1,same,
+UTTAR PRADESH,SHAMLI,IND.34.68_1,same,
+UTTAR PRADESH,SHRAVASTI,IND.34.69_1,same,
+UTTAR PRADESH,SIDHARTHANAGAR,IND.34.70_1,renamed,Spelling variant of GADM 4.1 'Siddharth Nagar'.
+UTTAR PRADESH,SITAPUR,IND.34.71_1,same,
+UTTAR PRADESH,SONBHADRA,IND.34.72_1,same,
+UTTAR PRADESH,SULTANPUR,IND.34.73_1,same,
+UTTAR PRADESH,UNNAO,IND.34.74_1,same,
+UTTAR PRADESH,VARANASI,IND.34.75_1,same,
+UTTARAKHAND,ALMORA,IND.35.1_1,same,
+UTTARAKHAND,BAGESHWAR,IND.35.2_1,same,
+UTTARAKHAND,CHAMOLI,IND.35.3_1,same,GADM 4.1 files the part of Chamoli that China claims under Z05 (Z05.35.3_1); the district is the union of IND.35.3_1 and Z05.35.3_1.
+UTTARAKHAND,CHAMOLI,Z05.35.3_1,same,GADM 4.1 files the part of Chamoli that China claims under Z05 (Z05.35.3_1); the district is the union of IND.35.3_1 and Z05.35.3_1.
+UTTARAKHAND,CHAMPAWAT,IND.35.4_1,same,
+UTTARAKHAND,DEHRA DUN,IND.35.5_1,same,
+UTTARAKHAND,GARHWAL,IND.35.6_1,same,
+UTTARAKHAND,HARIDWAR,IND.35.7_1,renamed,Spelling variant of GADM 4.1 'Hardwar'.
+UTTARAKHAND,NAINITAL,IND.35.8_1,same,
+UTTARAKHAND,PITHORAGARH,IND.35.9_1,same,GADM 4.1 files the part of Pithoragarh that China claims under Z05 (Z05.35.9_1); the district is the union of IND.35.9_1 and Z05.35.9_1.
+UTTARAKHAND,PITHORAGARH,Z05.35.9_1,same,GADM 4.1 files the part of Pithoragarh that China claims under Z05 (Z05.35.9_1); the district is the union of IND.35.9_1 and Z05.35.9_1.
+UTTARAKHAND,RUDRAPRAYAG,IND.35.10_1,same,
+UTTARAKHAND,TEHRI GARHWAL,IND.35.11_1,same,
+UTTARAKHAND,UDHAM SINGH NAGAR,IND.35.12_1,same,
+UTTARAKHAND,UTTAR KASHI,IND.35.13_1,same,GADM 4.1 files the part of Uttarkashi that China claims under Z09 (Z09.35.13_1); the district is the union of IND.35.13_1 and Z09.35.13_1.
+UTTARAKHAND,UTTAR KASHI,Z09.35.13_1,same,GADM 4.1 files the part of Uttarkashi that China claims under Z09 (Z09.35.13_1); the district is the union of IND.35.13_1 and Z09.35.13_1.
+WEST BENGAL,ALIPURDUAR,IND.36.1_1,same,
+WEST BENGAL,BANKURA,IND.36.2_1,same,
+WEST BENGAL,BARDDHAMAN,IND.36.3_1,same,
+WEST BENGAL,BIRBHUM,IND.36.4_1,same,
+WEST BENGAL,DAKSHIN DINAJPUR,IND.36.5_1,same,
+WEST BENGAL,DARJILING,IND.36.6_1,same,
+WEST BENGAL,HAORA,IND.36.7_1,same,
+WEST BENGAL,HUGLI,IND.36.8_1,same,
+WEST BENGAL,JALPAIGURI,IND.36.9_1,same,
+WEST BENGAL,JHARGRAM,IND.36.16_1,carved_from,Created 2017 from Paschim Medinipur (https://en.wikipedia.org/wiki/List_of_districts_of_West_Bengal).
+WEST BENGAL,KALIMPONG,IND.36.6_1,carved_from,Created 2017 from Darjeeling (https://en.wikipedia.org/wiki/List_of_districts_of_West_Bengal).
+WEST BENGAL,KOCH BIHAR,IND.36.10_1,same,
+WEST BENGAL,KOLKATA,IND.36.11_1,same,
+WEST BENGAL,MALDAH,IND.36.12_1,same,
+WEST BENGAL,MURSHIDABAD,IND.36.13_1,same,
+WEST BENGAL,NADIA,IND.36.14_1,same,
+WEST BENGAL,NORTH 24 PARGANAS,IND.36.15_1,same,
+WEST BENGAL,PASCHIM BARDHAMAN,IND.36.3_1,carved_from,Created 2017 by splitting Bardhaman (https://en.wikipedia.org/wiki/List_of_districts_of_West_Bengal).
+WEST BENGAL,PASCHIM MEDINIPUR,IND.36.16_1,renamed,Spelling variant of GADM 4.1 'Pashchim Medinipur'.
+WEST BENGAL,PURBA BARDHAMAN,IND.36.3_1,carved_from,Created 2017 by splitting Bardhaman (https://en.wikipedia.org/wiki/List_of_districts_of_West_Bengal).
+WEST BENGAL,PURBA MEDINIPUR,IND.36.17_1,same,
+WEST BENGAL,PURULIYA,IND.36.18_1,same,
+WEST BENGAL,SOUTH 24 PARGANAS,IND.36.19_1,same,
+WEST BENGAL,UTTAR DINAJPUR,IND.36.20_1,same,
