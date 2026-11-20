@@ -118,6 +118,7 @@ requests = ">=2.34.2,<3"
 polars = ">=2.0,<3"
 pyarrow = ">=25.0,<27"
 fastexcel = ">=0.20,<1"
+geconpy = ">=2.5.1,<3"
 
 # MLX is Apple silicon only.
 [tool.pixi.target.osx-arm64.pypi-dependencies]
@@ -178,8 +179,6 @@ docs-serve = { cmd = """\
 
 [tool.pixi.pypi-dependencies]
 climate-risk = { path = ".", editable = true }
-# From PyPI until conda-forge publishes 2.5.1.
-gEconpy = ">=2.5.1,<3"
 
 [tool.pixi.environments]
 default = { features = ["dev"], solve-group = "default" }
