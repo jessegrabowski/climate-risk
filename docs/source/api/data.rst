@@ -52,6 +52,10 @@ the license and the expected path until it is there.
     ~rbi.load_rbi_current_account
     ~rbi.load_rbi_cpi
     ~rbi.load_rbi_monthly_trade
+    ~rbi.load_rbi_district_deposits_and_credit
+    ~rbi.load_rbi_district_deposit_types
+    ~rbi.load_rbi_district_bank_credit
+    ~rbi.load_rbi_nbfc_sector_credit
     ~rbi.rbi_directory
     ~rbi.rbi_fingerprints
     ~gadm.load_admin_units
@@ -86,6 +90,10 @@ returns the frame the loader caches.
     ~rbi.transform_current_account
     ~rbi.transform_all_india_cpi
     ~rbi.transform_monthly_trade
+    ~rbi.transform_district_deposits_and_credit
+    ~rbi.transform_district_deposit_types
+    ~rbi.transform_district_bank_credit
+    ~rbi.transform_nbfc_sector_credit
     ~rbi.fiscal_quarter_to_period
     ~rbi.fiscal_year_start
     ~rbi.sum_complete_years

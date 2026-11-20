@@ -13,6 +13,7 @@ API reference
     api/geo
     api/models
     api/sample
+    api/dsge
     api/plotting
     api/stats
     api/skills

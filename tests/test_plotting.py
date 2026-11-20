@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from matplotlib.colors import Normalize
 from matplotlib.offsetbox import AnchoredText
 
 from climate_risk.plotting import (
@@ -15,10 +16,16 @@ from climate_risk.plotting import (
     panel_grid,
     plot_aggregated_series,
     plot_aggregated_series_by_region,
+    plot_clipped_densities,
     plot_descriptive,
+    plot_estimate,
     plot_fan,
+    plot_impact_heatmap,
+    plot_moment_grid,
     plot_predicted_counts,
     plot_predicted_damages,
+    plot_response_grid,
+    plot_shock_responses,
     prepare_gridspec_figure,
 )
 
@@ -329,3 +336,132 @@ def test_the_summary_box_reports_the_series_statistics():
     assert reported["Max"] == 49.0
     assert reported["Mean"] == pytest.approx(24.5)
     assert reported["Std"] == pytest.approx(np.arange(50).std(ddof=1), abs=1e-3)
+
+
+def response_quantile_grid(shocks, variables):
+    quantile_levels = [0.03, 0.5, 0.97]
+    values = np.broadcast_to(np.array(quantile_levels)[None, :, None, None], (len(shocks), 3, 4, len(variables)))
+
+    return xr.DataArray(
+        values,
+        dims=["shock", "quantile", "time", "variable"],
+        coords={"shock": shocks, "quantile": quantile_levels, "time": np.arange(4), "variable": variables},
+    )
+
+
+def test_the_response_grid_has_a_row_per_shock_and_a_column_per_variable():
+    quantiles = response_quantile_grid(shocks=["a", "b"], variables=["GDP", "C", "I"])
+
+    fig = plot_response_grid(
+        quantiles=quantiles,
+        reference=None,
+        shock_labels={"a": "shock a", "b": "shock b"},
+        variable_labels={"GDP": "GDP (%)", "C": "consumption (%)", "I": "investment (%)"},
+    )
+
+    assert len(fig.axes) == 6
+    assert [axis.get_title(loc="left") for axis in fig.axes[:3]] == ["GDP (%)", "consumption (%)", "investment (%)"]
+    plt.close(fig)
+
+
+def test_the_response_legend_names_the_interval_the_quantiles_span():
+    """The band spans the outer quantiles it is given, so a 94% label on a 90% band would misreport it."""
+    quantiles = response_quantile_grid(shocks=["a"], variables=["GDP"])
+
+    fig = plot_response_grid(
+        quantiles=quantiles, reference=None, shock_labels={"a": "shock a"}, variable_labels={"GDP": "GDP (%)"}
+    )
+
+    assert [text.get_text() for text in fig.legends[0].get_texts()] == ["median and 94% interval"]
+    plt.close(fig)
+
+
+def test_a_fixed_estimate_is_drawn_hollow_without_an_interval():
+    figure, ax = plt.subplots()
+    row = pd.Series({"value": 0.5, "lower": np.nan, "upper": np.nan, "status": "fixed"})
+
+    plot_estimate(ax=ax, row=row, y_position=0.0, color="tab:blue")
+
+    assert np.asarray(ax.collections[0].get_facecolor())[0, :3].tolist() == [1.0, 1.0, 1.0]
+    assert len(ax.collections) == 1
+    plt.close(figure)
+
+
+def test_the_moment_grid_draws_only_the_lower_triangle():
+    names = ["a", "b", "c"]
+    rng = np.random.default_rng(0)
+    acf = rng.uniform(-1, 1, size=(1, 3, 3))
+    data_moments = xr.Dataset(
+        {"std": ("variable", [0.01, 0.02, 0.03]), "acf": (("lag", "variable", "variable_aux"), acf)},
+        coords={"lag": [0], "variable": names, "variable_aux": names},
+    )
+    predictive_moments = xr.Dataset(
+        {
+            "std": (("sample", "variable"), rng.uniform(0.005, 0.04, size=(50, 3))),
+            "acf": (("sample", "lag", "variable", "variable_aux"), rng.uniform(-1, 1, size=(50, 1, 3, 3))),
+        },
+        coords={"lag": [0], "variable": names, "variable_aux": names},
+    )
+
+    fig = plot_moment_grid(
+        predictive_moments=predictive_moments,
+        data_moments=data_moments,
+        label="prior predictive",
+        short_names={"a": "A", "b": "B", "c": "C"},
+    )
+
+    assert sum(axis.axison for axis in fig.axes) == 6
+    plt.close(fig)
+
+
+def test_unused_response_panels_are_hidden():
+    """Five variables fill two rows of four, and the three spare panels would otherwise show empty axes."""
+    variables = ["GDP", "C", "I", "K", "L"]
+    quantiles = response_quantile_grid(shocks=["a"], variables=variables).sel(shock="a")
+
+    fig = plot_shock_responses(quantiles=quantiles, reference=None, variable_labels={name: name for name in variables})
+
+    assert [axis.get_title(loc="left") for axis in fig.axes if axis.axison] == variables
+    assert sum(not axis.axison for axis in fig.axes) == 3
+    plt.close(fig)
+
+
+def test_the_impact_heatmap_is_drawn_in_percent_with_each_source_marked():
+    """The impact arrives as a share and the shared colorbar is in percent, so an unscaled mesh would read 100 times too
+    small against it."""
+    x, y = np.array([0.1, 0.5, 0.9]), np.array([1.0, 2.0])
+    impact = xr.DataArray(
+        [[0.01, 0.0, -0.01], [0.02, 0.0, -0.02]], dims=["chi", "phi_H"], coords={"chi": y, "phi_H": x}
+    )
+    points = pd.DataFrame({"phi_H": [0.3], "chi": [1.5]}, index=["source A"])
+    figure, ax = plt.subplots()
+
+    mesh = plot_impact_heatmap(
+        ax=ax,
+        impact=impact,
+        literature_points=points,
+        literature_colors={"source A": "tab:green"},
+        xlabel="habit",
+        ylabel="inverse Frisch",
+        yscale="linear",
+        norm=Normalize(vmin=-2, vmax=2),
+    )
+
+    assert np.asarray(mesh.get_array()).ravel().tolist() == pytest.approx([1.0, 0.0, -1.0, 2.0, 0.0, -2.0])
+    assert ax.get_legend_handles_labels()[1] == ["source A"]
+    plt.close(figure)
+
+
+def test_clipped_density_legend_carries_each_mean_when_asked():
+    """Means too close to label on the curve go in the legend, which must name the right mean for each variable."""
+    rng = np.random.default_rng(0)
+    a_draws, b_draws = rng.normal(1.0, 0.1, 500), rng.normal(2.0, 0.1, 500)
+    samples = xr.Dataset({"a": ("sample", a_draws), "b": ("sample", b_draws)})
+
+    ax = plot_clipped_densities(
+        samples=samples, colors=["tab:blue", "tab:orange"], xlabel="x", title="t", mean_labels="legend"
+    )
+
+    labels = [text.get_text() for text in ax.figure.legends[0].get_texts()]
+    assert labels == [f"a, mean {a_draws.mean():.3g}", f"b, mean {b_draws.mean():.3g}"]
+    plt.close(ax.get_figure(root=True))
