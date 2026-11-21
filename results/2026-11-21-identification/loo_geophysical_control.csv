@@ -1,0 +1,4 @@
+,rank,elpd_diff,dse,p_worse,diag_diff,diag_elpd,p,elpd,se,weight
+2d_joint_separate_walks,0,0.0,0.0,,,5 k̂ > 0.70,338.86,-10324.87,121.75,0.72
+2c_joint_co2_free,1,-6.39,5.48,0.88,,5 k̂ > 0.70,329.16,-10331.26,121.69,0.28
+2b_joint_co2_hydro_only,2,-7.44,5.33,0.92,,5 k̂ > 0.70,327.66,-10332.31,121.73,0.0

@@ -1,0 +1,5 @@
+,rank,elpd_diff,dse,p_worse,diag_diff,diag_elpd,p,elpd,se,weight
+1c_hamilton_shock,0,0.0,0.0,,,2 k̂ > 0.70,211.67,-8152.65,89.82,0.83
+1b_no_co2,1,-0.43,1.15,0.65,|elpd_diff| < 4,2 k̂ > 0.70,211.03,-8153.08,89.83,0.17
+1a_co2,2,-0.8,1.2,0.75,|elpd_diff| < 4,3 k̂ > 0.70,211.58,-8153.45,89.86,0.0
+1c_prime_stl_deviation,3,-1.25,0.74,0.95,|elpd_diff| < 4,2 k̂ > 0.70,212.64,-8153.89,89.86,0.0
