@@ -43,6 +43,7 @@ dependencies = [
     "tqdm>=4.70,<5",
     "anyascii>=0.3.3,<1",
     "requests>=2.34,<3",
+    "cdsapi>=0.7.2",
 ]
 
 [project.optional-dependencies]

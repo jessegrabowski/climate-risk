@@ -19,3 +19,10 @@
 - Is the shared-year-effect assumption credible, i.e. does reporting drift move hydro and geophysical counts equally?
 - Is Test 3's negative plain `co2` coefficient falling deaths per event over time?
 - Next phase if `co2` is dropped: country-level anomaly covariates and a scenario hook (see issue 218).
+
+## 2026-11-24 — global covariates (Jan-experiment-climate-module)
+- Built global yearly covariate grids 1981-2025 (ERA5 daily rx5day/total/anomaly, ERA5-Land soil moisture/temperature/PET, CHIRPS v2.0 IRI 0.25 deg, RONI) and country and admin-1 year tables
+  (`data/processed/covariates/global_country_year.parquet`, mean/max/popmean). Details and caveats: `results/2026-11-23-global-covariates/summary.md`.
+- GloFAS v5.0 global (q_annual_max, q_days_over_rp5) is still running, about 4 days; then re-run `global_country_year.py` and `finalize_global.py`.
+- Point table not built: synthetic non-disaster points no longer exist in the repo; extractor `point_extract.py` is ready.
+- CHIRPS is v2.0 as a stand-in, not v3.
