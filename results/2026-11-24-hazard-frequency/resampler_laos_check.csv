@@ -1,0 +1,11 @@
+column,years,worst_relative_gap,ok
+precip_era5_mean,45,6.04205200309216e-05,True
+rx5day_mean,45,0.0001222894449151917,True
+precip_anom_std_mean,45,0.00022967703180745702,True
+chirps_precip_mean,45,0.0001047315817748644,True
+chirps_rx5day_mean,45,0.0001368378371241922,True
+soilm_mean_mean,45,2.8264360688590173e-06,True
+soilm_max_month_mean,45,4.925522865684151e-07,True
+t2m_mean_mean,45,7.618393892209723e-06,True
+precip_land_mean,45,6.666528576409523e-05,True
+pet_annual_mean,45,2.594221741815757e-05,True

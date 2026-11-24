@@ -5,6 +5,7 @@ import io
 from datetime import date
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import requests
 
@@ -55,6 +56,6 @@ def annual_roni(monthly: pd.DataFrame) -> pd.DataFrame:
     read as a quiet one.
     """
     by_year = monthly.groupby("year")["roni"]
-    strongest = by_year.apply(lambda values: values.loc[values.abs().idxmax()])
+    strongest = by_year.apply(lambda values: values.iloc[int(np.argmax(values.abs().to_numpy()))])
     frame = pd.DataFrame({"roni_annual_mean": by_year.mean(), "roni_peak": strongest, "seasons": by_year.size()})
     return frame[frame["seasons"] == 12].drop(columns="seasons").reset_index()

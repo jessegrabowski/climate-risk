@@ -26,3 +26,10 @@
 - GloFAS v5.0 global (q_annual_max, q_days_over_rp5) is still running, about 4 days; then re-run `global_country_year.py` and `finalize_global.py`.
 - Point table not built: synthetic non-disaster points no longer exist in the repo; extractor `point_extract.py` is ready.
 - CHIRPS is v2.0 as a stand-in, not v3.
+
+## 2026-11-24 (later) — hazard covariates in the frequency model, and the resampler
+- `climate_risk/data/resample.py` (`atom_year_table`): yearly global grids onto any shapes (10 km lattice cells or GADM units), area-weighted and population-weighted means. On the Laos 10 km lattice the area-weighted mean reproduces the LAO country row to 0.014% (limit 1%). ADM2 tables built for LAO, NPL, CRI, ZMB, MAR, BFA (`data/processed/covariates/adm2_year_<ISO>.parquet`, not in git). The `sea` region config exists (`climate_risk/config/regions/sea.toml`).
+- Frequency model with within-country z-scored hazard covariates in place of `co2`: `experiments/hazard_frequency/`, results in `results/2026-11-24-hazard-frequency/summary.md`. rx5day slope 0.36 (89% interval 0.31 to 0.41); LOO gain over the matching base 124 to 138 (dse about 17) on hydro, 0.09 (dse 3.2) on the geophysical placebo. Regional RONI slopes are not reliable (placebo has 5 divergences). H4 (GloFAS) still to add.
+- The synthetic points stay retired (`global_points.parquet` dropped from the plan); `point_extract.py` kept, not built on.
+- Fixed 13 mypy errors in the 01d2487 data modules (types only, one `cdsapi` stub override in `pyproject.toml`). Before this `pixi run typecheck` did not pass.
+- GloFAS download now runs as two workers (ascending and descending, with claim files); the per-country ERA5 jobs were cancelled.

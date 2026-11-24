@@ -40,7 +40,7 @@ def values_at_points(points: pd.DataFrame, directory: Path) -> pd.DataFrame:
             result[RENAME.get((stem, variable), variable)] = np.nan
     for year, rows in points.groupby("year"):
         for stem, variables in POINT_SOURCES.items():
-            path = directory / f"{stem}_{int(year)}.nc"
+            path = directory / f"{stem}_{int(str(year))}.nc"
             if not path.exists():
                 continue
             data = xr.open_dataset(path)

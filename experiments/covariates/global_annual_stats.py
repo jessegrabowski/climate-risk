@@ -17,6 +17,7 @@ data/processed/covariates/global/ (git-ignored).
 
 import argparse
 import logging
+import os
 
 from pathlib import Path
 
@@ -43,12 +44,49 @@ def save(dataset: xr.Dataset, target: Path, **attrs: str) -> None:
     partial.replace(target)
 
 
-def run_source(name: str, years, request_for, dataset: str, url: str, reduce, raw_name: str, keep_raw: bool) -> None:
+def claim(name: str, year: int) -> bool:
+    """
+    Take a year for this worker, so two workers never request the same one.
+
+    A claim is a small file holding the worker's process id. A claim whose process has died is taken over.
+    """
+    lock = RAW / name / f"{name}_{year}.lock"
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    for _ in range(2):
+        try:
+            descriptor = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            try:
+                os.kill(int(lock.read_text() or 0), 0)
+                return False  # its owner is alive
+            except ProcessLookupError, ValueError:
+                lock.unlink(missing_ok=True)
+                continue
+            except PermissionError:
+                return False
+        with os.fdopen(descriptor, "w") as handle:
+            handle.write(str(os.getpid()))
+        return True
+    return False
+
+
+def run_source(
+    name: str,
+    years,
+    request_for,
+    dataset: str,
+    url: str,
+    reduce,
+    raw_name: str,
+    keep_raw: bool,
+    *,
+    locked: bool = False,
+) -> None:
     """Download each missing year, reduce it, save the result, and delete the raw file unless told to keep it."""
     client = cop.make_client(url)
     for year in years:
         result = OUT / f"{name}_{year}.nc"
-        if result.exists():
+        if result.exists() or (locked and not claim(name, year)):
             continue
         raw = RAW / name / raw_name.format(year=year)
         cop.retrieve(client, dataset, request_for(year), raw)
@@ -101,16 +139,18 @@ def do_era5land() -> None:
     )
 
 
-def do_glofas() -> None:
+def do_glofas(descending: bool = False) -> None:
+    """GloFAS, one year per request. ``descending`` starts from the latest year, for a second worker."""
     run_source(
         "glofas",
-        GLOFAS_YEARS,
+        list(GLOFAS_YEARS)[::-1] if descending else GLOFAS_YEARS,
         lambda year: cop.global_request(cop.glofas_request([year], (0, 0, 0, 0))),
         cop.GLOFAS,
         cop.EWDS_URL,
         gs.glofas_annual_max,
         "glofas_{year}.nc",
         keep_raw=True,
+        locked=descending,
     )
 
 
@@ -158,4 +198,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("step", choices=STEPS)
-    STEPS[parser.parse_args().step]()
+    parser.add_argument("--descending", action="store_true", help="glofas only: work from the latest year backwards")
+    args = parser.parse_args()
+    if args.descending and args.step == "glofas":
+        do_glofas(descending=True)
+    else:
+        STEPS[args.step]()

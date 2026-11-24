@@ -264,6 +264,7 @@ enable_error_code = ["possibly-undefined"]
 [[tool.mypy.overrides]]
 module = [
     "arviz.*",
+    "cdsapi.*",
     "pymc.*",
     "preliz.*",
     "pymc_extras.*",

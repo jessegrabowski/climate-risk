@@ -15,7 +15,8 @@ mpl.use("Agg")
 
 SOURCES = {
     "1a  hydro alone, with co2": CACHE / "idata" / "frequency_stage2_yeareffect_long.nc",
-    "2b  joint, one shared year effect, co2 on hydro only": FITS / "test2_geophysical_control_2b_joint_co2_hydro_only.nc",
+    "2b  joint, one shared year effect, co2 on hydro only": FITS
+    / "test2_geophysical_control_2b_joint_co2_hydro_only.nc",
 }
 
 

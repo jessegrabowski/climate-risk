@@ -152,7 +152,7 @@ def gumbel_return_level(annual_maxima: np.ndarray, period: float = RETURN_PERIOD
     l2 = 2 * b1 - l1
     beta = l2 / np.log(2)
     mu = l1 - EULER_GAMMA * beta
-    return mu - beta * np.log(-np.log(1 - 1 / period))
+    return np.asarray(mu - beta * np.log(-np.log(1 - 1 / period)))
 
 
 def month_lengths(times: pd.DatetimeIndex) -> np.ndarray:
@@ -163,7 +163,8 @@ def month_lengths(times: pd.DatetimeIndex) -> np.ndarray:
 def long_frame(values: np.ndarray, years: np.ndarray, cell_ids: np.ndarray, name: str) -> pd.DataFrame:
     """Turn a (year, cell) array into one row per cell and year."""
     frame = pd.DataFrame(values, index=pd.Index(years, name="year"), columns=pd.Index(cell_ids, name="cell_id"))
-    return frame.stack(future_stack=True).rename(name).reset_index()
+    stacked = pd.Series(frame.stack(future_stack=True), name=name)
+    return stacked.reset_index()
 
 
 def standardise_against_baseline(

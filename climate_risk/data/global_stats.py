@@ -6,6 +6,8 @@ in memory, and returns a small ``xarray.Dataset`` with one value per pixel. The 
 deleted. Longitudes are always returned as -180..180, sorted, so the sources line up.
 """
 
+from pathlib import Path
+
 import numpy as np
 import xarray as xr
 
@@ -38,7 +40,7 @@ def sliding_max_sum(values: np.ndarray, window: int = WINDOW_DAYS) -> np.ndarray
     """
     cumulative = np.cumsum(values, axis=0, dtype="float64")
     padded = np.concatenate([np.zeros_like(cumulative[:1]), cumulative], axis=0)
-    return (padded[window:] - padded[:-window]).max(axis=0).astype("float32")
+    return np.asarray((padded[window:] - padded[:-window]).max(axis=0), dtype="float32")
 
 
 def daily_precip_stats(data: xr.Dataset, variable: str, to_mm: float) -> xr.Dataset:
@@ -70,18 +72,18 @@ def daily_precip_stats(data: xr.Dataset, variable: str, to_mm: float) -> xr.Data
     return wrap_longitude(out)
 
 
-def era5_daily_stats(path) -> xr.Dataset:
+def era5_daily_stats(path: Path) -> xr.Dataset:
     """ERA5 daily total precipitation (metres) for one year, reduced to ``precip_total`` and ``rx5day`` (mm)."""
     return daily_precip_stats(xr.open_dataset(path), "tp", 1000.0)
 
 
-def chirps_global_stats(path) -> xr.Dataset:
+def chirps_global_stats(path: Path) -> xr.Dataset:
     """CHIRPS v2.0 daily precipitation, box-averaged to 0.25 degrees by the IRI, reduced the same way."""
     data = xr.open_dataset(path, decode_times=False).rename({"X": "longitude", "Y": "latitude"})
     return daily_precip_stats(data, "prcp", 1.0)
 
 
-def era5_land_stats(path) -> xr.Dataset:
+def era5_land_stats(path: Path) -> xr.Dataset:
     """
     From one year of ERA5-Land monthly means: soil moisture, temperature, precipitation and PET.
 
@@ -105,34 +107,34 @@ def era5_land_stats(path) -> xr.Dataset:
     return wrap_longitude(out)
 
 
-def glofas_annual_max(path) -> xr.Dataset:
+def glofas_annual_max(path: Path) -> xr.Dataset:
     """Largest daily discharge in the year per pixel (m3/s), read in time slabs."""
     data = xr.open_dataset(path)
     time = _time_name(data)
-    running = None
+    running: np.ndarray | None = None
     for start in range(0, data.sizes[time], TIME_SLAB):
         slab = data["avg_dis"].isel({time: slice(start, start + TIME_SLAB)}).to_numpy()
         slab_max = np.fmax.reduce(slab, axis=0)
         running = slab_max if running is None else np.fmax(running, slab_max)
     out = xr.Dataset(
-        {"q_annual_max": (("latitude", "longitude"), running.astype("float32"))},
+        {"q_annual_max": (("latitude", "longitude"), np.asarray(running, dtype="float32"))},
         coords={"latitude": data["latitude"], "longitude": data["longitude"]},
     )
     return wrap_longitude(out)
 
 
-def glofas_days_over(path, level: xr.DataArray) -> xr.Dataset:
+def glofas_days_over(path: Path, level: xr.DataArray) -> xr.Dataset:
     """Number of days in the year with discharge above each pixel's return ``level``."""
     data = xr.open_dataset(path)
     time = _time_name(data)
     threshold = wrap_longitude(level.to_dataset(name="level"))["level"]
-    threshold = threshold.reindex(latitude=data["latitude"], longitude=data["longitude"], method="nearest").to_numpy()
+    limit = threshold.reindex(latitude=data["latitude"], longitude=data["longitude"], method="nearest").to_numpy()
     # the raw file is 0..360 only if the source says so; GloFAS is already -180..180, so no shift is needed
-    count = np.zeros(threshold.shape, dtype="int16")
+    count = np.zeros(limit.shape, dtype="int16")
     for start in range(0, data.sizes[time], TIME_SLAB):
         slab = data["avg_dis"].isel({time: slice(start, start + TIME_SLAB)}).to_numpy()
         with np.errstate(invalid="ignore"):
-            count += (slab > threshold).sum(axis=0, dtype="int16")
+            count += (slab > limit).sum(axis=0, dtype="int16")
     out = xr.Dataset(
         {"q_days_over_rp5": (("latitude", "longitude"), count)},
         coords={"latitude": data["latitude"], "longitude": data["longitude"]},
