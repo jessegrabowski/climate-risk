@@ -1,0 +1,7 @@
+model,sample,geo_includes_0,geo_under_third_of_hydro,hydro_excludes_0,pass
+4a,all,true,true,true,true
+4c,all,true,true,true,true
+4a_ocean,all,true,true,true,true
+4a,from1990,true,false,true,false
+4c,from1990,true,false,true,false
+4a_ocean,from1990,true,true,true,true

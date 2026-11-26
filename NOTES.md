@@ -40,3 +40,8 @@
 - Space-time areal model (`results/2026-11-24-spatial-hazard/summary.md`): notebook 12's Laos river slope reproduces (-1.01). On ADM2 x year, Southeast Asia: rx5day slope 0.22 (0.17 to 0.27), LOO +18 (dse 6) over the same model without it. River slope differs in sign from the notebook; unexplained.
 - The robustness script holds one saved fit in memory at a time; holding all of them ran this 12 GB WSL machine out of memory.
 - GloFAS downloads: `experiments/covariates/glofas_workers.sh` restarts the two workers after a reboot; `glofas_fetch_finished.py` collects requests that finished while no worker was waiting. H4 still to do.
+
+## 2026-11-26 — non-linearity, cyclones, reporting model (parts 1, 2 and 4)
+- rx5day response (`results/2026-11-26-rx5day-nonlinear/`): no flattening shown by LOO; linear and piecewise reported side by side. The 24 Nov CMIP6 multipliers used a log link but the model link is softplus; rebuilt.
+- Cyclone wind exposure (`results/2026-11-26-tc-exposure/`): share of people at 34 knots or more predicts storm counts (LOO +112, dse 15), not flood counts. Wind fields are built in the separate `climada_env`.
+- Reporting model with global temperature (`results/2026-11-26-reporting-model/`): FAIL. Passes on all years, fails on 1990 onward (geophysical temperature slope more than a third of hydro). Predicts worse than the year-effect model (by 21 to 31, dse 8 to 12). HadCRUT5 is the main series; Test 1's series is ocean heat content, run as a check in 4a only.

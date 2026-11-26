@@ -1,0 +1,3 @@
+sample,rows_published,rows_used,rows_lost,lost_1991_1995,blank_ln_population_density,blank_ln_gdp_pc,blank_square_ln_gdp_pc,blank_population,blank_internet_users_pct,blank_mobile_per_100,blank_gmst,blank_ocean_heat,blank_rx5day_popmean,blank_tc_share_34kt,events_hydro,events_geophysical
+all,7710,6789,921,532,0,0,0,0,814,225,0,0,0,0,9032.0,1157.0
+from1990,6365,5476,889,532,0,0,0,0,814,193,0,0,0,0,8101.0,982.0
