@@ -31,10 +31,17 @@ SOURCES: dict[str, tuple[str, ...]] = {
     "era5land": ("soilm_mean", "soilm_max_month", "t2m_mean", "precip_land", "pet_annual"),
     "glofas": ("q_annual_max",),
     "glofas_days": ("q_days_over_rp5",),
+    # IBTrACS winds modelled with CLIMADA: annual maximum wind and 0/1 flags at 34 and 64 knots, ERA5 lattice.
+    "tc": ("tc_wind", "tc_over_34kt", "tc_over_64kt"),
 }
 
 # Sources that also get a population-weighted mean, and the lattice whose GHS-POP block sums they use.
-POPULATION_LATTICE = {"era5_daily": "era5_daily", "era5_anom": "era5_daily", "era5land": "era5land"}
+POPULATION_LATTICE = {
+    "era5_daily": "era5_daily",
+    "era5_anom": "era5_daily",
+    "era5land": "era5land",
+    "tc": "era5_daily",
+}
 
 # Column names that would clash between sources.
 RENAME = {
@@ -90,7 +97,7 @@ def atom_year_table(
     -------
     table : DataFrame
         One row per atom and year: ``id_column``, ``year``, then ``<name>_mean`` for every statistic and
-        ``<name>_popmean`` for the ERA5 and ERA5-Land ones. Atoms a lattice does not reach (CHIRPS north of
+        ``<name>_popmean`` for the ERA5, ERA5-Land and cyclone ones. Atoms a lattice does not reach (CHIRPS north of
         50 degrees, ERA5-Land small islands) are NaN.
     """
     ids = np.asarray(list(atom_ids))

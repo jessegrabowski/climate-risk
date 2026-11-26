@@ -77,6 +77,33 @@ MANIFEST = [
         "url": "https://gadm.org",
         "licence": "Non-commercial use only; not redistributed",
     },
+    {
+        "source": "IBTrACS tropical cyclone tracks",
+        "dataset": "IBTrACS.ALL.v04r01.nc",
+        "version": "v04r01 (file created 2026-11-14)",
+        "product": "best tracks, all basins; modelled to annual maximum winds with CLIMADA TropCyclone (Holland 2008)",
+        "url": "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r01/access/netcdf/",
+        "licence": "May be redistributed and used without restriction (file licence attribute)",
+        "access_date": "2026-11-26",
+    },
+    {
+        "source": "HadCRUT5 global mean surface temperature",
+        "dataset": "summary_series.global.annual",
+        "version": "HadCRUT.5.0.2.0",
+        "product": "annual global anomaly against 1961-1990",
+        "url": "https://www.metoffice.gov.uk/hadobs/hadcrut5",
+        "licence": "Open Government Licence v3",
+        "access_date": "2026-11-26",
+    },
+    {
+        "source": "World Bank reporting indicators",
+        "dataset": "World Development Indicators",
+        "version": "as served on the access date",
+        "product": "IT.NET.USER.ZS, IT.CEL.SETS.P2",
+        "url": "https://databank.worldbank.org/source/world-development-indicators",
+        "licence": "CC BY 4.0",
+        "access_date": "2026-11-26",
+    },
 ]
 
 
@@ -89,7 +116,7 @@ def main() -> None:
         table.to_parquet(PROCESSED / f"{name}.parquet")
         print(level, table.shape)
     for row in MANIFEST:
-        row["access_date"] = ACCESS
+        row.setdefault("access_date", ACCESS)
     (PROCESSED / "manifest.json").write_text(json.dumps(MANIFEST, indent=2))
 
 
