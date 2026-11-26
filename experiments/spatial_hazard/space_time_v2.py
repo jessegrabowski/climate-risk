@@ -13,8 +13,12 @@ Models
     M4          3a: all hydrometeorological and climatological events, river + rx5day
     M4_placebo  3a: the same on geophysical events
     M5          3b: floods (with wet mass movements) and storms, each with river + rx5day + tropical-cyclone share
+    M5_flood    the flood half of M5 on its own, for a finer field
 
-Usage: ``pixi run python experiments/spatial_hazard/space_time_v2.py M4 [target_accept]``
+A smaller boundary factor or more basis functions resolve shorter lengthscales (a smaller factor handles long ones less
+well). Such sensitivity runs are saved with ``_c<factor x 10>`` and ``_m<basis per axis>`` suffixes.
+
+Usage: ``pixi run python experiments/spatial_hazard/space_time_v2.py M4 [target_accept] [boundary_factor] [basis]``
 Output: results/2026-11-26-spatial-hazard-v2/<model>.json and data/idata/spatial_v2_<model>.nc
 """
 
@@ -64,6 +68,10 @@ MODELS: dict[str, dict] = {
     "M4_placebo": {"hazards": {"geophysical": tuple(GEOPHYSICAL_TYPES)}, "covariates": ("river", "rx5day")},
     "M5": {
         "hazards": {"flood": ("Flood", "Mass movement (wet)"), "storm": ("Storm",)},
+        "covariates": ("river", "rx5day", "tc_share_34kt"),
+    },
+    "M5_flood": {
+        "hazards": {"flood": ("Flood", "Mass movement (wet)")},
         "covariates": ("river", "rx5day", "tc_share_34kt"),
     },
 }
@@ -163,7 +171,13 @@ def tc_share(geo: dict) -> np.ndarray:
     return (values - values.mean()) / values.std()
 
 
-def build_model(geo: dict, records: dict[str, dict], covariates: dict[str, np.ndarray]) -> pm.Model:
+def build_model(
+    geo: dict,
+    records: dict[str, dict],
+    covariates: dict[str, np.ndarray],
+    boundary_factor: float = HSGP_BOUNDARY_FACTOR,
+    basis: int = HSGP_BASIS_PER_AXIS,
+) -> pm.Model:
     """One rate per hazard (shared detection), each with covariates, offsets, a spatial field and a year effect."""
     atoms = geo["atoms"]
     n_atoms, n_years, n_levels = len(atoms), len(YEARS), len(LEVELS)
@@ -208,8 +222,8 @@ def build_model(geo: dict, records: dict[str, dict], covariates: dict[str, np.nd
             lengthscale = pm.InverseGamma(f"{prefix}field_lengthscale", alpha=3.0, beta=0.4)
             amplitude = pm.HalfNormal(f"{prefix}field_amplitude", sigma=1.0)
             gp = pm.gp.HSGP(
-                m=[HSGP_BASIS_PER_AXIS, HSGP_BASIS_PER_AXIS],
-                c=HSGP_BOUNDARY_FACTOR,
+                m=[basis, basis],
+                c=boundary_factor,
                 cov_func=amplitude**2 * pm.gp.cov.Matern32(input_dim=2, ls=lengthscale),
             )
             spatial = spatial + gp.prior(f"{prefix}field", X=positions, dims="atom")
@@ -242,7 +256,7 @@ def build_model(geo: dict, records: dict[str, dict], covariates: dict[str, np.nd
     return model
 
 
-def main(label: str, target_accept: float) -> None:
+def main(label: str, target_accept: float, boundary_factor: float, basis: int) -> None:
     RESULTS.mkdir(parents=True, exist_ok=True)
     spec = MODELS[label]
     geo = build_geography(tuple(resolve_isos(load_place(PLACE))))
@@ -257,17 +271,19 @@ def main(label: str, target_accept: float) -> None:
     info = {
         "model": label,
         "target_accept": target_accept,
+        "boundary_factor": boundary_factor,
+        "basis_per_axis": basis,
         "atoms": len(geo["atoms"]),
         "years": len(YEARS),
         "events": {name: record["n_events"] for name, record in records.items()},
         "distinct_records": {name: len(record["keys"]) for name, record in records.items()},
         "domain_longer_side_km": round(side_km),
         # Matern 3/2 rule of thumb: the basis resolves lengthscales above 3.42 * c * half-width / m.
-        "smallest_resolved_lengthscale": 3.42 * HSGP_BOUNDARY_FACTOR * 0.5 / HSGP_BASIS_PER_AXIS,
+        "smallest_resolved_lengthscale": 3.42 * boundary_factor * 0.5 / basis,
     }
     print(json.dumps(info), flush=True)
 
-    model = build_model(geo, records, covariates)
+    model = build_model(geo, records, covariates, boundary_factor, basis)
     names = [f"{'' if len(records) == 1 else name + '_'}record_count" for name in records]
     began = time.time()
     with model:
@@ -275,6 +291,10 @@ def main(label: str, target_accept: float) -> None:
         pm.compute_log_likelihood(fit, var_names=names, progressbar=False)
     info["seconds"] = round(time.time() - began)
     suffix = "" if target_accept == SAMPLE_KWARGS["target_accept"] else f"_ta{round(target_accept * 100)}"
+    if boundary_factor != HSGP_BOUNDARY_FACTOR:
+        suffix += f"_c{round(boundary_factor * 10)}"
+    if basis != HSGP_BASIS_PER_AXIS:
+        suffix += f"_m{basis}"
     fit.to_netcdf(CACHE / "idata" / f"spatial_v2_{label}{suffix}.nc")
 
     info["divergences"] = int(fit.sample_stats["diverging"].sum())
@@ -300,4 +320,9 @@ def main(label: str, target_accept: float) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], float(sys.argv[2]) if len(sys.argv) > 2 else SAMPLE_KWARGS["target_accept"])
+    main(
+        sys.argv[1],
+        float(sys.argv[2]) if len(sys.argv) > 2 else SAMPLE_KWARGS["target_accept"],
+        float(sys.argv[3]) if len(sys.argv) > 3 else HSGP_BOUNDARY_FACTOR,
+        int(sys.argv[4]) if len(sys.argv) > 4 else HSGP_BASIS_PER_AXIS,
+    )
