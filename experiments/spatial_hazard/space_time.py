@@ -228,6 +228,11 @@ def build_record(geo: dict) -> dict:
     }
 
 
+def counted_logp(count, probability):
+    """Log probability of ``count`` events sharing one record, given the record's probability under the model."""
+    return count * pt.log(probability)
+
+
 def build_model(geo: dict, record: dict, rx: np.ndarray, *, river: bool, rain: bool, year_effect: bool) -> pm.Model:
     """The space-time event likelihood with detection. See the module docstring for the structure."""
     atoms = geo["atoms"]
@@ -301,7 +306,7 @@ def build_model(geo: dict, record: dict, rx: np.ndarray, *, river: bool, rain: b
         pm.CustomDist(
             "record_count",
             union_operator.aggregate_symbolic(recorded.ravel()) / recorded_rate,
-            logp=lambda count, probability: count * pt.log(probability),
+            logp=counted_logp,
             observed=record["multiplicity"],
             dims="record",
         )
