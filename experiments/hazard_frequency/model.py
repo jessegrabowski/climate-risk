@@ -47,6 +47,7 @@ def build_hazard_model(
     *,
     regional_feature: str | None = None,
     region_column: str = "region",
+    country_trend: bool = False,
     target: str = TARGET,
     year_effect_sd_prior: float = 0.3,
     regional_sd_prior: float = 0.5,
@@ -64,6 +65,9 @@ def build_hazard_model(
         A covariate whose slope is ``beta_shared + regional_sd * offset[region]``. Default None (no such term).
     region_column : str, optional
         Region label of each row. Default ``region``.
+    country_trend : bool, optional
+        Add a linear trend per country, ``trend_sd * offset[ISO] * (year - 2000) / 10``, centred on 0 because the
+        shared year effect already carries the common trend. Default False.
     target : str, optional
         Count column. Default ``hydrological_disasters``.
     year_effect_sd_prior : float, optional
@@ -111,6 +115,11 @@ def build_hazard_model(
         )
 
         linear = country_effect[iso_idx_data] + year_effect[year_idx_data] + X @ beta
+        if country_trend:
+            decades = pm.Data("decades", (years[year_idx] - 2000) / 10.0, dims="obs_id")
+            trend_sd = pm.HalfNormal("trend_sd", sigma=0.1)
+            trend_offset = pm.Normal("trend_offset", mu=0.0, sigma=1.0, dims="ISO")
+            linear = linear + decades * (trend_sd * trend_offset)[iso_idx_data]
         if regional_feature:
             region_idx_data = pm.Data("region_idx", region_idx, dims="obs_id")
             z = pm.Data("regional_x", standardized[f"{regional_feature}__standardized"].to_numpy(), dims="obs_id")
