@@ -1,0 +1,5 @@
+,rank,elpd_diff,dse,p_worse,diag_diff,diag_elpd,p,elpd,se,weight
+M2_river_rx5day_year,0,0.0,0.0,,,,28.57,-11899.55,97.63,0.73
+M3_rx5day_year,1,-2.67,3.21,0.8,|elpd_diff| < 4,,27.51,-11902.22,98.33,0.23
+M1_river_year,2,-18.34,6.22,1.0,,,28.9,-11917.89,97.41,0.0
+M0_stationary,3,-58.94,11.04,1.0,,,13.87,-11958.49,95.39,0.04

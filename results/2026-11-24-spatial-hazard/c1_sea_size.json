@@ -1,0 +1,11 @@
+{
+  "place": "sea",
+  "countries": 9,
+  "atoms": 4400,
+  "years": 34,
+  "atom_years": 149600,
+  "events": 1294,
+  "distinct_records": 1260,
+  "atoms_without_rx5day": 0,
+  "setup_seconds": 51
+}

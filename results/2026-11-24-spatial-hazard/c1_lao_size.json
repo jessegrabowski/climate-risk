@@ -1,0 +1,11 @@
+{
+  "place": "lao",
+  "countries": 1,
+  "atoms": 142,
+  "years": 34,
+  "atom_years": 4828,
+  "events": 36,
+  "distinct_records": 34,
+  "atoms_without_rx5day": 0,
+  "setup_seconds": 16
+}

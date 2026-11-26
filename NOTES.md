@@ -33,3 +33,10 @@
 - The synthetic points stay retired (`global_points.parquet` dropped from the plan); `point_extract.py` kept, not built on.
 - Fixed 13 mypy errors in the 01d2487 data modules (types only, one `cdsapi` stub override in `pyproject.toml`). Before this `pixi run typecheck` did not pass.
 - GloFAS download now runs as two workers (ascending and descending, with claim files); the per-country ERA5 jobs were cancelled.
+
+## 2026-11-26 — rx5day robustness, CMIP6 link, space-time areal model (task 24b)
+- Robustness (`results/2026-11-24-rx5day-robustness/summary.md`): rx5day slope 0.36 holds with country trends (0.35) and detrending (0.34); next year's rx5day -0.01; CHIRPS 0.22 against ERA5 0.40 (area means, same rows); geophysical placebo -0.11 survives, no predictive gain.
+- CMIP6 (`results/2026-11-24-cmip6-rx5day/summary.md`): country changes in annual rx5day, 27 models, and illustrative rate multipliers exp(0.36 x dz). Large dz (3 or more) is extrapolation.
+- Space-time areal model (`results/2026-11-24-spatial-hazard/summary.md`): notebook 12's Laos river slope reproduces (-1.01). On ADM2 x year, Southeast Asia: rx5day slope 0.22 (0.17 to 0.27), LOO +18 (dse 6) over the same model without it. River slope differs in sign from the notebook; unexplained.
+- The robustness script holds one saved fit in memory at a time; holding all of them ran this 12 GB WSL machine out of memory.
+- GloFAS downloads: `experiments/covariates/glofas_workers.sh` restarts the two workers after a reboot; `glofas_fetch_finished.py` collects requests that finished while no worker was waiting. H4 still to do.
